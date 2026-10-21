@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { isPortfolio, runNode, type Node, type NodeResult } from '../engine/portfolio'
-import type { Component, ProjectInput } from '../engine/project'
+import { ENGINE_VERSION, type Component, type ProjectInput } from '../engine/project'
 import type { Simulation, TornadoBar } from '../engine/uncertainty'
 import { createSnapshot, diffInputs, lock, verify, type Snapshot } from '../scenario/snapshot'
 import { saveScenario } from '../cloud/cloud'
@@ -8,7 +8,7 @@ import { Tornado } from './charts'
 import { MetricLabel } from './Glossary'
 import { Button, Card, Chip, NumberField, SourceChip, TableWrap, cx, td, tdNum, th } from './components'
 import { coverage, type CoverageStatus } from './coverage'
-import { findings, findingsCovered, stageLabel } from './data'
+import { dataContext, findings, findingsCovered, stageLabel } from './data'
 import { metricValue, money, monthLabel, pct } from './format'
 import type { SimRequest } from './simulate.worker'
 import { atLeast } from './store'
@@ -301,7 +301,7 @@ export function Scenarios() {
 
   const save = async () => {
     setBusy(true)
-    const snapshot = lock(await createSnapshot({ input: draft, label: label.trim(), note: note.trim(), createdAt: new Date().toISOString(), parentId: project.draftParentId, sequence: project.scenarios.length + 1 }))
+    const snapshot = lock(await createSnapshot({ input: draft, attributes: project.attributes, context: dataContext, label: label.trim(), note: note.trim(), createdAt: new Date().toISOString(), parentId: project.draftParentId, sequence: project.scenarios.length + 1 }))
     if (cloud.projectId) {
       // the database re-checks the hash; a locked scenario must exist in the account before it shows as locked
       try {
@@ -337,7 +337,7 @@ export function Scenarios() {
           <Button type="submit" variant="primary" disabled={busy || !label.trim() || !note.trim()}>Lock scenario</Button>
         </form>
         {saveError && <p role="alert" className="mt-2 text-sm text-bad">{saveError}</p>}
-        <p className="mt-2 text-xs text-ink-mute">Locked scenarios are hashed (SHA-256 of the canonical inputs) and never change. Editing one branches a new draft. {cloud.projectId ? 'Saved to your account: the database re-verifies the hash and refuses edits or deletion.' : 'Saved in this browser only: sign in to keep them in your account.'}</p>
+        <p className="mt-2 text-xs text-ink-mute">Locked scenarios are hashed (SHA-256 of the canonical inputs, site and policy variables, reference-data versions and engine version) and never change. Editing one branches a new draft. {cloud.projectId ? 'Saved to your account: the database re-verifies the hash and refuses edits or deletion.' : 'Saved in this browser only: sign in to keep them in your account.'}</p>
       </Card>
 
       <Card title={`Scenarios (${project.scenarios.length})`} actions={<Button onClick={() => dispatch({ type: 'resetDraft' })}>Reset draft to {demo.name.split(':')[0]}</Button>}>
@@ -352,7 +352,7 @@ export function Scenarios() {
                 <td className={`${td} num text-xs`}>{s.parentId ?? '—'}</td>
                 <td className={`${td} num text-xs`} title={s.inputHash}>{s.inputHash.slice(0, 12)}</td>
                 <td className={td}>{integrity[s.id] === undefined ? '…' : integrity[s.id] ? <Chip tone="good">verified</Chip> : <Chip tone="bad">changed</Chip>}</td>
-                <td className={td}><Button variant="ghost" onClick={() => dispatch({ type: 'branch', snapshotId: s.id })}>Branch</Button></td>
+                <td className={td}><Button variant="ghost" disabled={integrity[s.id] !== true} title={integrity[s.id] === false ? 'This scenario no longer matches its hash, so it cannot be branched' : undefined} onClick={() => dispatch({ type: 'branch', snapshotId: s.id })}>Branch</Button></td>
               </tr>
             ))}</tbody>
           </TableWrap>
@@ -362,7 +362,13 @@ export function Scenarios() {
       {compared.length > 0 && (
         <Card title="Compare">
           <TableWrap caption="Scenario comparison">
-            <thead><tr><th scope="col" className={th}>Metric</th>{results.map(({ s }) => <th key={s.id} scope="col" className={`${th} text-right`}>{s.label}</th>)}<th scope="col" className={`${th} text-right`}>Current draft</th></tr></thead>
+            <thead><tr><th scope="col" className={th}>Metric</th>{results.map(({ s }) => (
+              <th key={s.id} scope="col" className={`${th} text-right`}>
+                {s.label}
+                {s.engineVersion !== ENGINE_VERSION && <span className="block text-xs font-normal text-warn">locked under engine {s.engineVersion}; recomputed with {ENGINE_VERSION}</span>}
+                {integrity[s.id] === false && <span className="block text-xs font-normal text-bad">hash mismatch: results not trusted</span>}
+              </th>
+            ))}<th scope="col" className={`${th} text-right`}>Current draft</th></tr></thead>
             <tbody>{rows.map((id) => {
               const m = draftResult?.metrics[id]
               if (!m) return null

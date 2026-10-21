@@ -4,7 +4,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { Attributes } from '../engine/catalogue'
 import type { Node } from '../engine/portfolio'
-import { canonical, type Snapshot } from '../scenario/snapshot'
+import { canonical, envelope, fromEnvelope, lock, type Snapshot } from '../scenario/snapshot'
 import type { Receipt, TaskRecord, TrackerState } from '../tracker/tracker'
 
 const url = import.meta.env.VITE_SUPABASE_URL as string | undefined
@@ -22,7 +22,7 @@ export interface CloudProject {
 }
 
 interface ScenarioRow {
-  client_id: string; parent_client_id: string | null; label: string; note: string; input: Node
+  client_id: string; parent_client_id: string | null; label: string; note: string; input: unknown // envelope (schema 2) or bare Node (schema 1)
   input_hash: string; engine_version: string; convention_version: string; created_at: string
 }
 interface TaskRow { task_key: string; status: TaskRecord['status']; actual: number | string | null; notes: string; updated_at: string }
@@ -39,9 +39,9 @@ function fail(error: { message: string } | null, what: string): void {
 
 /** Rows → app state. Exported for tests. */
 export function toSnapshot(r: ScenarioRow): Snapshot {
-  return Object.freeze({
-    id: r.client_id, parentId: r.parent_client_id, label: r.label, note: r.note, createdAt: r.created_at,
-    engineVersion: r.engine_version, conventionVersion: r.convention_version, inputHash: r.input_hash, locked: true, input: r.input,
+  return lock({
+    ...fromEnvelope(r.input), id: r.client_id, parentId: r.parent_client_id, label: r.label, note: r.note, createdAt: r.created_at,
+    engineVersion: r.engine_version, conventionVersion: r.convention_version, inputHash: r.input_hash, locked: true,
   })
 }
 
@@ -89,13 +89,15 @@ export async function loadOrCreateProject(args: { demoId: string; name: string; 
 }
 
 export async function saveDraft(projectId: string, draft: Node, attributes: Attributes, draftParentId: string | null): Promise<void> {
-  const { error } = await need().from('projects').update({ draft, attributes, draft_parent_client_id: draftParentId }).eq('id', projectId)
+  const { data, error } = await need().from('projects').update({ draft, attributes, draft_parent_client_id: draftParentId }).eq('id', projectId).select('id')
   fail(error, 'Saving draft')
+  // RLS filters rows silently: no error and no row means nothing was saved (signed out, or not this account's project)
+  if (!data?.length) throw new Error('Saving draft: no project was updated (signed out, or the project belongs to another account)')
 }
 
-/** Append-only. The database recomputes SHA-256 of `input_canonical` and refuses a mismatch. */
+/** Append-only. The database recomputes SHA-256 of `input_canonical` (the whole envelope) and refuses a mismatch. */
 export async function saveScenario(projectId: string, s: Snapshot): Promise<void> {
-  const text = canonical(s.input)
+  const text = canonical(envelope(s))
   const { error } = await need().from('scenarios').insert({
     project_id: projectId, client_id: s.id, parent_client_id: s.parentId, label: s.label, note: s.note,
     input_canonical: text, input: JSON.parse(text), input_hash: s.inputHash, engine_version: s.engineVersion, convention_version: s.conventionVersion,

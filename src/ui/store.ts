@@ -39,6 +39,7 @@ interface ProjectState {
 }
 
 export interface State {
+  account: string | null // signed-in user id; null = guest workspace (the only state kept in this browser)
   projectId: string
   projects: Record<string, ProjectState>
   section: SectionId
@@ -48,6 +49,7 @@ export interface State {
 }
 
 export type Action =
+  | { type: 'account'; userId: string | null }
   | { type: 'selectProject'; id: string }
   | { type: 'section'; id: SectionId }
   | { type: 'mode'; mode: Mode }
@@ -64,11 +66,11 @@ export type Action =
 
 const STORAGE_KEY = 'gta-proforma:v1'
 
-function initial(): State {
+export function initialState(): State {
   const projects: Record<string, ProjectState> = Object.fromEntries(
     demoProjects.map((p) => [p.id, { draft: p.input, draftParentId: null, scenarios: [] as Snapshot[], attributes: p.attributes, tracker: {} as TrackerState }]),
   )
-  const base: State = { projectId: demoProjects[0]!.id, projects, section: 'overview', mode: 'professional', path: [], inspect: null }
+  const base: State = { account: null, projectId: demoProjects[0]!.id, projects, section: 'overview', mode: 'professional', path: [], inspect: null }
   // Per-viewer convenience only (ADR-001: durable storage moves to Supabase). Must work when storage is unavailable.
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null') as Partial<State> | null
@@ -82,10 +84,17 @@ function initial(): State {
   }
 }
 
-function reducer(state: State, action: Action): State {
+export function reducer(state: State, action: Action): State {
   const project = state.projects[state.projectId]!
   const withProject = (p: Partial<ProjectState>): State => ({ ...state, projects: { ...state.projects, [state.projectId]: { ...project, ...p } } })
   switch (action.type) {
+    case 'account': {
+      // A different account (or signing out) never inherits the previous account's projects: start again from the
+      // guest workspace saved in this browser; the signed-in account then loads its own copies from the cloud.
+      if (action.userId === state.account) return state
+      const guest = initialState()
+      return { ...guest, account: action.userId, section: state.section, mode: state.mode, projectId: state.projectId in guest.projects ? state.projectId : guest.projectId }
+    }
     case 'selectProject': return { ...state, projectId: action.id, path: [], inspect: null }
     case 'section': return { ...state, section: action.id }
     case 'mode': return { ...state, mode: action.mode }
@@ -95,7 +104,8 @@ function reducer(state: State, action: Action): State {
     case 'addSnapshot': return withProject({ scenarios: [...project.scenarios, action.snapshot], draftParentId: action.snapshot.id })
     case 'branch': {
       const s = project.scenarios.find((x) => x.id === action.snapshotId)
-      return s ? { ...withProject({ draft: structuredClone(s.input), draftParentId: s.id }), path: [] } : state
+      // schema-2 snapshots also restore the site and policy variables they were locked with
+      return s ? { ...withProject({ draft: structuredClone(s.input), draftParentId: s.id, ...(s.attributes ? { attributes: structuredClone(s.attributes) } : {}) }), path: [] } : state
     }
     case 'resetDraft': {
       const demo = demoProjects.find((p) => p.id === state.projectId)!
@@ -115,13 +125,14 @@ function reducer(state: State, action: Action): State {
 }
 
 export function useStore() {
-  const [state, dispatch] = useReducer(reducer, undefined, initial)
+  const [state, dispatch] = useReducer(reducer, undefined, initialState)
   useEffect(() => {
+    if (state.account) return // signed-in work lives in the account, not in this browser's guest cache
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ projectId: state.projectId, mode: state.mode, projects: state.projects }))
     } catch {
       // storage unavailable (private window, blocked): the app still works for this session
     }
-  }, [state.projectId, state.mode, state.projects])
+  }, [state.account, state.projectId, state.mode, state.projects])
   return [state, dispatch] as const
 }

@@ -31,8 +31,22 @@ describe('tracker', () => {
     const v = buildTracker({ scope: [], stages, entries, budgets: new Map([['land-price', 50_000]]), state })
     expect(v.stages[0]!.complete).toBe(true)
     expect(v.current).toBe('s2')
-    expect(v.actual).toBe(52_000)
+    expect(v.actual).toEqual({ known: 52_000, unknown: 0 })
     expect(v.done).toBe(2)
+  })
+
+  it('keeps unknown actuals and forecasts visible instead of counting them as zero', () => {
+    const budgets = new Map([['land-price', 50_000], ['geotech', 20_000]])
+    const state = {
+      [taskKey([], 'land-price')]: { status: 'done' as const, actual: null, receipts: [], notes: '' }, // finished, spend not recorded
+      [taskKey([], 'geotech')]: { status: 'in-progress' as const, actual: 5_000, receipts: [], notes: '' }, // partial invoice
+    }
+    const v = buildTracker({ scope: [], stages, entries, budgets, state })
+    expect(v.actual).toEqual({ known: 5_000, unknown: 1 })
+    // land: done, unknown · survey: open, no budget → unknown · geotech: open, max(20,000, 5,000)
+    expect(v.forecast).toEqual({ known: 20_000, unknown: 2 })
+    const over = buildTracker({ scope: [], stages, entries, budgets, state: { [taskKey([], 'geotech')]: { status: 'in-progress' as const, actual: 26_000, receipts: [], notes: '' } } })
+    expect(over.stages[1]!.forecast).toEqual({ known: 26_000, unknown: 0 })
   })
 
   it('scopes keys by building so two buildings track separately', () => {
@@ -40,10 +54,10 @@ describe('tracker', () => {
     expect(taskKey([], 'building-permit')).not.toBe(taskKey(['block-b'], 'building-permit'))
   })
 
-  it('an actual replaces the estimate as an exact lump sum', () => {
-    const land = tinyProject().costLines.find((l) => l.id === 'hard')!
+  it('a final actual replaces the estimate as an exact lump sum that is not escalated again', () => {
+    const land = { ...tinyProject().costLines.find((l) => l.id === 'hard')!, escalate: true }
     const updated = lineFromActual(land, 104_500)
-    expect(updated).toMatchObject({ driver: { kind: 'lumpSum', amount: 104_500 }, estimateClass: 'exact', timing: land.timing })
+    expect(updated).toMatchObject({ driver: { kind: 'lumpSum', amount: 104_500 }, estimateClass: 'exact', timing: land.timing, escalate: false })
   })
 
   it('adds a missing item to the model with stage-appropriate timing and a unique id', () => {

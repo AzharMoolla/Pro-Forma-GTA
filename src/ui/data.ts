@@ -2,6 +2,7 @@ import catalogueJson from '../../data/costs/catalogue.json'
 import mockAJson from '../../data/projects/mock-a-toronto-mixed-use.json'
 import demoRentalJson from '../../data/projects/demo-rental.json'
 import findingsJson from '../../handoff/data/audit/findings.json'
+import geoLayersJson from '../../data/geo/layers.json'
 import { mockB, mockBMeta } from '../../data/projects/mock-b-durham-master-plan'
 import type { Attributes, Catalogue, CatalogueItem } from '../engine/catalogue'
 import type { Node } from '../engine/portfolio'
@@ -12,6 +13,12 @@ export const catalogue = catalogueJson as unknown as Catalogue
 export const catalogueItem = new Map<string, CatalogueItem>(catalogue.items.map((i) => [i.id, i]))
 export const stageLabel = new Map(catalogue.stages.map((s) => [s.id, s.label]))
 export const variableInfo = new Map(catalogue.variables.map((v) => [v.id, v]))
+
+/** Versions of the reference data a result depends on; pinned into every locked scenario's hash. */
+export const dataContext: Record<string, string> = {
+  catalogue: `${catalogue.version} (as of ${catalogue.asOf})`,
+  mapLayers: `retrieved ${geoLayersJson.generatedAt}`,
+}
 
 export interface DemoProject {
   id: string

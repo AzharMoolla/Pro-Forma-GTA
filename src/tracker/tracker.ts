@@ -39,7 +39,11 @@ export interface Task {
   coverageNote: string
   budget: number | null // modelled total for this item in this scope; null when not a cost line
   record: TaskRecord
+  forecast: number | null // forecast at completion; null when unknown (see taskForecast)
 }
+
+/** Money totals that keep unknowns visible: `known` sums only known values, `unknown` counts the gaps. */
+export interface Tally { known: number; unknown: number }
 
 export interface StageProgress {
   id: string
@@ -48,7 +52,8 @@ export interface StageProgress {
   done: number // done or not-applicable
   total: number
   budget: number
-  actual: number
+  actual: Tally // spend to date; done tasks without a recorded actual count as unknown, open tasks with none as nothing yet
+  forecast: Tally // forecast at completion
   complete: boolean
 }
 
@@ -58,10 +63,28 @@ export interface TrackerView {
   done: number
   total: number
   budget: number
-  actual: number
+  actual: Tally
+  forecast: Tally
 }
 
 const closed = (s: TaskStatus) => s === 'done' || s === 'not-applicable'
+
+/**
+ * Forecast at completion for one task, on a simple basis until commitments are tracked:
+ * not applicable → 0; done → the recorded actual (unknown if none); open → the larger of budget and spend so far
+ * (a partial invoice never lowers the forecast below budget); open with no budget → unknown.
+ */
+export function taskForecast(budget: number | null, r: TaskRecord): number | null {
+  if (r.status === 'not-applicable') return 0
+  if (r.status === 'done') return r.actual
+  return budget === null ? null : Math.max(budget, r.actual ?? 0)
+}
+
+const tally = (values: Array<number | null>): Tally => ({
+  known: values.reduce<number>((s, v) => s + (v ?? 0), 0),
+  unknown: values.filter((v) => v === null).length,
+})
+const addTally = (list: Tally[]): Tally => ({ known: list.reduce((s, t) => s + t.known, 0), unknown: list.reduce((s, t) => s + t.unknown, 0) })
 
 export function buildTracker(args: {
   scope: string[]
@@ -74,13 +97,16 @@ export function buildTracker(args: {
     .filter((e) => e.status !== 'to-confirm')
     .map((e) => {
       const key = taskKey(args.scope, e.item.id)
+      const budget = args.budgets.get(e.item.id) ?? null
+      const record = args.state[key] ?? emptyRecord()
       return {
         key,
         item: e.item,
         inModel: e.status === 'line' ? 'line' : e.status === 'covered' ? 'covered' : 'missing',
         coverageNote: e.note,
-        budget: args.budgets.get(e.item.id) ?? null,
-        record: args.state[key] ?? emptyRecord(),
+        budget,
+        record,
+        forecast: taskForecast(budget, record),
       }
     })
   const stages = args.stages
@@ -90,7 +116,8 @@ export function buildTracker(args: {
       return {
         id: s.id, label: s.label, tasks: inStage, done, total: inStage.length,
         budget: inStage.reduce((sum, t) => sum + (t.budget ?? 0), 0),
-        actual: inStage.reduce((sum, t) => sum + (t.record.actual ?? 0), 0),
+        actual: tally(inStage.map((t) => (t.record.status === 'done' ? t.record.actual : t.record.actual ?? 0))),
+        forecast: tally(inStage.map((t) => t.forecast)),
         complete: inStage.length > 0 && done === inStage.length,
       }
     })
@@ -101,7 +128,8 @@ export function buildTracker(args: {
     done: stages.reduce((s, x) => s + x.done, 0),
     total: stages.reduce((s, x) => s + x.total, 0),
     budget: stages.reduce((s, x) => s + x.budget, 0),
-    actual: stages.reduce((s, x) => s + x.actual, 0),
+    actual: addTally(stages.map((x) => x.actual)),
+    forecast: addTally(stages.map((x) => x.forecast)),
   }
 }
 
@@ -116,9 +144,13 @@ export function defaultTiming(stage: string, node: Node): Timing {
   return { kind: 'completion' }
 }
 
-/** A recorded actual replaces the estimate: the line becomes an exact lump sum (class tightens to "exact"). */
+/**
+ * The final actual of a finished task replaces the estimate: the line becomes an exact lump sum and is not escalated
+ * again (it is already in spent dollars). Callers only offer this once the task is done; a partial invoice is not
+ * the cost of the whole work package.
+ */
 export function lineFromActual(line: CostLine, actual: number): CostLine {
-  return { ...line, driver: { kind: 'lumpSum', amount: actual }, estimateClass: 'exact', band: undefined }
+  return { ...line, driver: { kind: 'lumpSum', amount: actual }, estimateClass: 'exact', band: undefined, escalate: false }
 }
 
 export function lineFromItem(item: CatalogueItem, amount: number, node: Node, existingIds: Set<string>): CostLine {

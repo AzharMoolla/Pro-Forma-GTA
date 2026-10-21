@@ -122,7 +122,10 @@ export function scheduleLine(total: number, line: CostLine, ctx: ScheduleContext
 
 export function validateCostLines(lines: CostLine[], allowConstructionTiming = true): string[] {
   const errors: string[] = []
+  const ids = new Set<string>()
   for (const line of lines) {
+    if (ids.has(line.id)) errors.push(`cost line id "${line.id}" is repeated`)
+    ids.add(line.id)
     const t = line.timing
     if (!allowConstructionTiming && t.kind !== 'month' && t.kind !== 'spread') {
       errors.push(`${line.id}: only month/spread timing is allowed here`)

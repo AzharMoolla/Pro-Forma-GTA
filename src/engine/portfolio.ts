@@ -41,10 +41,14 @@ export function runNode(node: Node): NodeResult {
   if (!isPortfolio(node)) return wrapProject(runProject(node))
 
   const errors = validateCostLines(node.costLines, false)
-  if (errors.length) throw new RangeError(`Invalid portfolio "${node.id}":\n- ${errors.join('\n- ')}`)
+  if (!(node.costEscalation > -1)) errors.push('costEscalation must be > -100%')
+  const childIds = new Set<string>()
   for (const child of node.children) {
-    if (!(Number.isInteger(child.offsetMonths) && child.offsetMonths >= 0)) throw new RangeError(`${node.id}/${child.node.id}: offsetMonths must be a whole number ≥ 0`)
+    if (!(Number.isInteger(child.offsetMonths) && child.offsetMonths >= 0)) errors.push(`${child.node.id}: offsetMonths must be a whole number ≥ 0`)
+    if (childIds.has(child.node.id)) errors.push(`child id "${child.node.id}" is repeated`)
+    childIds.add(child.node.id)
   }
+  if (errors.length) throw new RangeError(`Invalid portfolio "${node.id}":\n- ${errors.join('\n- ')}`)
 
   const children = node.children.map((c) => ({ offsetMonths: c.offsetMonths, result: runNode(c.node) }))
   const totals = lineTotals(node.costLines)

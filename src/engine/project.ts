@@ -5,7 +5,7 @@ import { lineTotals, scheduleLine, validateCostLines, type Band, type CostLine }
 import { annualizeMonthly, annuityPayment, irr, monthlyFromEffectiveAnnual, monthlyFromNominalAnnual, npv, sizeLoan, type LoanSizing } from './finance'
 import { roundCents, sumCents } from './money'
 
-export const ENGINE_VERSION = '0.2.0'
+export const ENGINE_VERSION = '0.2.1' // 0.2.1: C8 land and pre-construction all equity; full numeric validation
 export const CONVENTION_VERSION = '0.2'
 
 // ---------------------------------------------------------------- components
@@ -162,8 +162,16 @@ export interface ProjectResult {
 
 // ---------------------------------------------------------------- validation
 
+/** Paths of every number in a value that is NaN or ±Infinity (JSON would silently turn them into null). */
+export function nonFinitePaths(value: unknown, path = ''): string[] {
+  if (typeof value === 'number') return Number.isFinite(value) ? [] : [path || '(root)']
+  if (Array.isArray(value)) return value.flatMap((v, i) => nonFinitePaths(v, `${path}[${i}]`))
+  if (value && typeof value === 'object') return Object.entries(value).flatMap(([k, v]) => nonFinitePaths(v, path ? `${path}.${k}` : k))
+  return []
+}
+
 export function validateProject(p: ProjectInput): string[] {
-  const errors = validateCostLines(p.costLines)
+  const errors = [...nonFinitePaths(p).map((at) => `${at} must be a finite number`), ...validateCostLines(p.costLines)]
   const t = p.timing
   const completion = t.preConstructionMonths + t.constructionMonths
   if (!Number.isInteger(t.preConstructionMonths) || t.preConstructionMonths < 0) errors.push('preConstructionMonths must be a whole number ≥ 0')
@@ -176,17 +184,30 @@ export function validateProject(p: ProjectInput): string[] {
   if (!(p.debt.dscr > 0)) errors.push('debt.dscr must be > 0')
   if (!(p.debt.amortizationYears > 0)) errors.push('debt.amortizationYears must be > 0')
   if (!(p.discountRate > -1)) errors.push('discountRate must be > -100%')
-  if (!Number.isFinite(p.costEscalation)) errors.push('costEscalation must be a number')
+  if (!(p.costEscalation > -1)) errors.push('costEscalation must be > -100%')
+  if (p.debt.presaleThreshold !== undefined && !(p.debt.presaleThreshold >= 0 && p.debt.presaleThreshold <= 1)) errors.push('debt.presaleThreshold must be in [0, 1]')
   const r = p.debt.refinance
-  if (r && !(Number.isInteger(r.month) && r.month > completion && r.month < t.exitMonth)) errors.push('refinance.month must fall after completion and before exit')
+  if (r) {
+    if (!(Number.isInteger(r.month) && r.month > completion && r.month < t.exitMonth)) errors.push('refinance.month must fall after completion and before exit')
+    if (!(r.annualRate >= 0)) errors.push('refinance.annualRate must be ≥ 0')
+    if (!(r.amortizationYears > 0)) errors.push('refinance.amortizationYears must be > 0')
+    if (!(r.dscr > 0)) errors.push('refinance.dscr must be > 0')
+    if (!(r.ltv >= 0 && r.ltv <= 1)) errors.push('refinance.ltv must be in [0, 1]')
+    if (!(r.feeFraction >= 0 && r.feeFraction < 1)) errors.push('refinance.feeFraction must be in [0, 1)')
+  }
 
   const ids = new Set<string>()
   for (const c of p.components) {
     if (ids.has(c.id)) errors.push(`component id "${c.id}" is repeated`)
     ids.add(c.id)
     const fail = (msg: string) => errors.push(`${c.id}: ${msg}`)
+    const uniqueIds = (list: Array<{ id: string }>) => {
+      const seen = new Set<string>()
+      for (const { id } of list) if (seen.has(id)) fail(`unit type id "${id}" is repeated`); else seen.add(id)
+    }
     if (c.kind === 'rental') {
       if (!c.unitMix.length) fail('unitMix needs at least one unit type')
+      uniqueIds(c.unitMix)
       for (const u of c.unitMix) {
         if (!Number.isInteger(u.count) || u.count < 0) fail(`${u.id} count must be a whole number ≥ 0`)
         if (!(u.vacancy >= 0 && u.vacancy < 1)) fail(`${u.id} vacancy must be in [0, 1)`)
@@ -194,21 +215,35 @@ export function validateProject(p: ProjectInput): string[] {
       }
       if (!(c.opexPerUnitMonthly >= 0) || !(c.otherIncomeMonthly >= 0)) fail('opex and other income must be ≥ 0')
       if (!(Number.isInteger(c.leaseUpMonths) && c.leaseUpMonths >= 0)) fail('leaseUpMonths must be a whole number ≥ 0')
+      if (!(c.rentGrowth > -1) || !(c.opexInflation > -1)) fail('rentGrowth and opexInflation must be > -100%')
       if (!(c.exitCapRate > 0)) fail('exitCapRate must be > 0')
     } else if (c.kind === 'condo') {
       if (!c.units.length) fail('units needs at least one unit type')
+      uniqueIds(c.units)
+      for (const u of c.units) {
+        if (!Number.isInteger(u.count) || u.count < 0) fail(`${u.id} count must be a whole number ≥ 0`)
+        if (!(u.pricePerSqft >= 0) || !(u.netSqftPerUnit >= 0)) fail(`${u.id} price and area must be ≥ 0`)
+      }
       if (!(c.salesPerMonth > 0)) fail('salesPerMonth must be > 0')
       if (!(c.depositFraction >= 0 && c.depositFraction <= 1)) fail('depositFraction must be in [0, 1]')
+      if (!(c.commissionFraction >= 0 && c.commissionFraction < 1)) fail('commissionFraction must be in [0, 1)')
+      if (!(c.occupancyFeePerUnitMonthly >= 0)) fail('occupancyFeePerUnitMonthly must be ≥ 0')
       if (!(Number.isInteger(c.occupancyMonths) && c.occupancyMonths >= 0)) fail('occupancyMonths must be a whole number ≥ 0')
       if (!(Number.isInteger(c.salesStartMonth) && c.salesStartMonth >= 0)) fail('salesStartMonth must be a whole number ≥ 0')
     } else if (c.kind === 'commercial') {
       if (!(c.netLeasableSqft >= 0)) fail('netLeasableSqft must be ≥ 0')
       if (!(c.vacancy >= 0 && c.vacancy < 1)) fail('vacancy must be in [0, 1)')
+      if (!(c.rentPerSqftYear >= 0)) fail('rentPerSqftYear must be ≥ 0')
+      if (!(c.rentGrowth > -1)) fail('rentGrowth must be > -100%')
+      if (!(c.tiPerSqft >= 0) || !(c.leasingCommissionPerSqft >= 0) || !(c.unrecoveredOpexPerSqftYear >= 0)) fail('TI, leasing commission and unrecovered opex must be ≥ 0')
       if (!(Number.isInteger(c.leaseUpMonths) && c.leaseUpMonths >= 0)) fail('leaseUpMonths must be a whole number ≥ 0')
       if (!(Number.isInteger(c.freeRentMonths) && c.freeRentMonths >= 0)) fail('freeRentMonths must be a whole number ≥ 0')
       if (!(c.exitCapRate > 0)) fail('exitCapRate must be > 0')
     } else {
-      for (const s of c.sales) if (!(Number.isInteger(s.month) && s.month >= 0 && s.month <= t.exitMonth)) fail('land sale months must fall within the project')
+      for (const s of c.sales) {
+        if (!(Number.isInteger(s.month) && s.month >= 0 && s.month <= t.exitMonth)) fail('land sale months must fall within the project')
+        if (!(s.amount >= 0)) fail('land sale amounts must be ≥ 0')
+      }
     }
   }
   return errors
@@ -399,7 +434,8 @@ export function runProject(p: ProjectInput): ProjectResult {
       interestCapitalized = interest
       const need = roundCents(totalCost - inflow)
       if (need >= 0) {
-        equityDraw = Math.max(0, Math.min(need, roundCents(equityRequired - equityUsed)))
+        // C8: land and pre-construction are all equity; then equity until (1 − LTC) × budget is met; then debt
+        equityDraw = m < constructionStart ? need : Math.max(0, Math.min(need, roundCents(equityRequired - equityUsed)))
         debtDraw = roundCents(need - equityDraw)
       } else {
         repayment = Math.min(-need, roundCents(openingDebt + interestCapitalized))

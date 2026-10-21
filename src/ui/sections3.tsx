@@ -136,8 +136,12 @@ export function Progress() {
           </div>
           <div>
             <p className="text-xs text-ink-soft">Spent to date vs modelled budget</p>
-            <p className="num text-xl font-semibold">{money(view.actual)} <span className="text-sm font-normal text-ink-mute">of {money(view.budget)}</span></p>
-            <p className="text-xs text-ink-soft">Cost to complete <span className="num text-ink">{money(Math.max(0, view.budget - view.actual))}</span></p>
+            <p className="num text-xl font-semibold">{money(view.actual.known)} <span className="text-sm font-normal text-ink-mute">of {money(view.budget)}</span></p>
+            {view.actual.unknown > 0 && <p className="text-xs text-warn">{view.actual.unknown} finished task{view.actual.unknown === 1 ? '' : 's'} without a recorded actual (not counted as $0)</p>}
+            <p className="text-xs text-ink-soft">
+              Forecast at completion <span className="num text-ink">{money(view.forecast.known)}</span>
+              {view.forecast.unknown > 0 && <span className="text-warn"> + {view.forecast.unknown} unknown</span>}
+            </p>
           </div>
           <div>
             <p className="text-xs text-ink-soft">Current stage</p>
@@ -153,16 +157,16 @@ export function Progress() {
         {view.stages.map((s, idx) => {
           const isCurrent = s.id === view.current
           const expanded = openStage === s.id
-          const variance = s.actual - s.budget
+          const variance = s.forecast.unknown === 0 ? s.forecast.known - s.budget : null
           return (
             <li key={s.id} className={cx('rounded-lg border bg-surface', isCurrent ? 'border-accent' : 'border-line')}>
               <button type="button" aria-expanded={expanded} onClick={() => setOpen(expanded ? '' : s.id)} className="flex w-full flex-wrap items-center gap-3 px-4 py-3 text-left">
                 <span aria-hidden className={cx('flex size-7 shrink-0 items-center justify-center rounded-full border text-xs font-semibold', s.complete ? 'border-good bg-good-soft text-good' : isCurrent ? 'border-accent bg-accent text-on-accent' : 'border-line-strong text-ink-soft')}>{s.complete ? '✓' : idx + 1}</span>
                 <span className="min-w-0 flex-1">
                   <span className="block font-medium">{s.label}</span>
-                  <span className="text-xs text-ink-soft">{s.complete ? 'Complete' : isCurrent ? 'Current stage' : 'Upcoming'} · {s.done}/{s.total} closed · budget {money(s.budget)}{s.actual ? ` · spent ${money(s.actual)}` : ''}</span>
+                  <span className="text-xs text-ink-soft">{s.complete ? 'Complete' : isCurrent ? 'Current stage' : 'Upcoming'} · {s.done}/{s.total} closed · budget {money(s.budget)}{s.actual.known ? ` · spent ${money(s.actual.known)}` : ''}{s.actual.unknown ? ` · ${s.actual.unknown} actual unknown` : ''}</span>
                 </span>
-                {s.actual > 0 && <Chip tone={variance > 0.005 * Math.max(1, s.budget) ? 'bad' : 'good'}>{variance > 0 ? '+' : ''}{money(variance)} vs budget</Chip>}
+                {variance !== null && s.actual.known > 0 && <Chip tone={variance > 0.005 * Math.max(1, s.budget) ? 'bad' : 'good'}>forecast {variance > 0 ? '+' : ''}{money(variance)} vs budget</Chip>}
               </button>
               {expanded && (
                 <ul className="flex flex-col divide-y divide-line border-t border-line">
@@ -188,7 +192,8 @@ function TaskRow({ task }: { task: Task }) {
     if (cloud.projectId) saveTask(cloud.projectId, task.key, { ...r, ...p }).catch((e: Error) => setError(e.message))
   }
   const lines = node.costLines.filter((l) => l.catalogueId === task.item.id)
-  const variance = r.actual !== null && task.budget !== null ? r.actual - task.budget : null
+  // Only a finished task's actual is a final cost; an open task is never "under budget" on a partial invoice
+  const variance = task.forecast !== null && task.budget !== null && (r.status === 'done' || task.forecast > task.budget) ? task.forecast - task.budget : null
 
   const addReceipts = async (files: FileList | null) => {
     if (!files) return
@@ -246,7 +251,7 @@ function TaskRow({ task }: { task: Task }) {
     patch({ receipts: r.receipts.filter((x) => x.id !== rec.id) })
   }
   const useActual = () => {
-    if (r.actual === null || lines.length !== 1) return
+    if (r.actual === null || r.status !== 'done' || lines.length !== 1) return
     const line = lines[0]!
     dispatch({ type: 'edit', path: state.path, update: (n) => ({ ...n, costLines: n.costLines.map((l) => (l.id === line.id ? lineFromActual(l, r.actual!) : l)) }) })
   }
@@ -273,10 +278,10 @@ function TaskRow({ task }: { task: Task }) {
       </div>
       <div className="flex flex-col gap-2">
         <p className="text-xs text-ink-soft">Budget <span className="num text-ink">{task.budget === null ? '—' : money(task.budget)}</span></p>
-        <NumberField label="Actual spent" suffix="$" value={r.actual ?? 0} onCommit={(v) => patch({ actual: v > 0 ? v : null })} />
-        {variance !== null && <Chip tone={variance > 0 ? 'bad' : 'good'}>{variance > 0 ? 'Over' : 'Under'} by {money(Math.abs(variance))}</Chip>}
+        <NumberField label="Actual spent" suffix="$" value={r.actual ?? 0} onCommit={(v) => patch({ actual: v >= 0 ? v : null })} />
+        {variance !== null && <Chip tone={variance > 0 ? 'bad' : 'good'}>{variance > 0 ? (r.status === 'done' ? 'Over' : 'Forecast over') : 'Under'} by {money(Math.abs(variance))}</Chip>}
         {task.inModel === 'line' && r.actual !== null && (
-          <Button onClick={useActual} disabled={lines.length !== 1} title={lines.length !== 1 ? 'Several lines map to this item: edit them in Cost & budget' : undefined}>Use actual in model</Button>
+          <Button onClick={useActual} disabled={lines.length !== 1 || r.status !== 'done'} title={r.status !== 'done' ? 'Mark the task done first: a partial invoice is not the final cost' : lines.length !== 1 ? 'Several lines map to this item: edit them in Cost & budget' : undefined}>Use final actual in model</Button>
         )}
         {task.inModel === 'missing' && (
           <div className="flex items-end gap-2">

@@ -101,7 +101,7 @@ test('tracker: close tasks, record an actual with a receipt, push it into the mo
   await expect(row.getByText(/Over by/)).toBeVisible()
   await row.locator('input[type=file]').setInputFiles({ name: 'invoice.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4 test invoice') })
   await expect(row.getByRole('button', { name: 'invoice.pdf', exact: true })).toBeVisible()
-  await row.getByRole('button', { name: 'Use actual in model' }).click()
+  await row.getByRole('button', { name: 'Use final actual in model' }).click()
   await openSection(page, 'Cost & budget')
   await expect(page.getByRole('textbox', { name: /Market study and appraisal Amount/ })).toHaveValue('75000')
   void task
