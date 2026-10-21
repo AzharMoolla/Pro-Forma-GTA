@@ -89,7 +89,7 @@ export interface DebtTerms {
 export interface ProjectInput {
   id: string
   name: string
-  program?: { lotAreaSqft: number | null; planningGfaSqft: number | null; gcaAboveSqft: number; gcaBelowSqft: number }
+  program?: { lotAreaSqft: number | null; planningGfaSqft: number | null; gcaAboveSqft: number; gcaBelowSqft: number; storeys?: number; podiumStoreys?: number }
   timing: { preConstructionMonths: number; constructionMonths: number; exitMonth: number }
   costLines: CostLine[]
   costEscalation: number // annual, applied to lines with escalate: true (C19)
@@ -257,12 +257,12 @@ function componentFlows(c: Component, completion: number, exitMonth: number): Fl
     const stabilizedMonthly = (month: number, grow: boolean) => {
       const g = grow ? stepGrowth(c.rentGrowth, month) : 1
       const i = grow ? stepGrowth(c.opexInflation, month) : 1
-      return roundCents(c.unitMix.reduce((s, u) => s + u.count * u.monthlyRent * g * (1 - u.vacancy), 0) + c.otherIncomeMonthly * g - c.opexPerUnitMonthly * units * i)
+      return roundCents(c.unitMix.reduce((s, u) => s + (u.count * u.monthlyRent * g * (1 - u.vacancy)), 0) + (c.otherIncomeMonthly * g) - (c.opexPerUnitMonthly * units * i))
     }
     for (let m = completion + 1; m < n; m++) {
       const g = stepGrowth(c.rentGrowth, m)
-      flows.rentalOccupied[m] = c.unitMix.reduce((s, u) => s + u.count * ramp(m, completion, c.leaseUpMonths, 1 - u.vacancy), 0)
-      flows.revenue[m] = roundCents(c.unitMix.reduce((s, u) => s + u.count * u.monthlyRent * g * ramp(m, completion, c.leaseUpMonths, 1 - u.vacancy), 0) + c.otherIncomeMonthly * g)
+      flows.rentalOccupied[m] = c.unitMix.reduce((s, u) => s + (u.count * ramp(m, completion, c.leaseUpMonths, 1 - u.vacancy)), 0)
+      flows.revenue[m] = roundCents(c.unitMix.reduce((s, u) => s + (u.count * u.monthlyRent * g * ramp(m, completion, c.leaseUpMonths, 1 - u.vacancy)), 0) + (c.otherIncomeMonthly * g))
       flows.opex[m] = roundCents(c.opexPerUnitMonthly * units * stepGrowth(c.opexInflation, m))
     }
     flows.forwardNoi = (month) => sumCents(Array.from({ length: 12 }, (_, k) => stabilizedMonthly(month + k + 1, true)))
@@ -272,7 +272,7 @@ function componentFlows(c: Component, completion: number, exitMonth: number): Fl
     const stabilized = 1 - c.vacancy
     const leased = (m: number) => ramp(m, completion, c.leaseUpMonths, stabilized)
     const stabilizedMonthly = (month: number, grow: boolean) =>
-      roundCents((c.netLeasableSqft * stabilized * c.rentPerSqftYear * (grow ? stepGrowth(c.rentGrowth, month) : 1) - c.netLeasableSqft * c.unrecoveredOpexPerSqftYear) / 12)
+      roundCents(((c.netLeasableSqft * stabilized * c.rentPerSqftYear * (grow ? stepGrowth(c.rentGrowth, month) : 1)) - (c.netLeasableSqft * c.unrecoveredOpexPerSqftYear)) / 12)
     for (let m = completion + 1; m < n; m++) {
       flows.revenue[m] = roundCents((c.netLeasableSqft * leased(m - c.freeRentMonths) * c.rentPerSqftYear * stepGrowth(c.rentGrowth, m)) / 12)
       flows.opex[m] = roundCents((c.netLeasableSqft * c.unrecoveredOpexPerSqftYear) / 12)
@@ -287,7 +287,7 @@ function componentFlows(c: Component, completion: number, exitMonth: number): Fl
     flows.capRate = c.exitCapRate
   } else if (c.kind === 'condo') {
     const units = c.units.reduce((s, u) => s + u.count, 0)
-    const avgPrice = units ? c.units.reduce((s, u) => s + u.count * u.netSqftPerUnit * u.pricePerSqft, 0) / units : 0
+    const avgPrice = units ? c.units.reduce((s, u) => s + (u.count * u.netSqftPerUnit * u.pricePerSqft), 0) / units : 0
     const sold = (m: number) => (m < c.salesStartMonth ? 0 : Math.min(units, (m - c.salesStartMonth + 1) * c.salesPerMonth))
     const finalClosing = completion + c.occupancyMonths
     flows.condoUnits = units
@@ -298,9 +298,9 @@ function componentFlows(c: Component, completion: number, exitMonth: number): Fl
       const deposits = newSales * avgPrice * c.depositFraction
       flows.condoSold[m] = sold(m)
       flows.sales[m] = c.depositsUsable
-        ? roundCents(deposits + closing * avgPrice * (1 - c.depositFraction))
+        ? roundCents(deposits + (closing * avgPrice * (1 - c.depositFraction)))
         : roundCents(closing * avgPrice)
-      if (!c.depositsUsable) held = roundCents(held + deposits - closing * avgPrice * c.depositFraction)
+      if (!c.depositsUsable) held = roundCents(held + deposits - (closing * avgPrice * c.depositFraction))
       flows.depositsHeld[m] = held
       if (m > completion && m <= finalClosing) flows.revenue[m] = roundCents(c.occupancyFeePerUnitMonthly * sold(completion))
       if (closing > 0) flows.costs[m]![`${c.id}:commission`] = roundCents(closing * avgPrice * c.commissionFraction)
@@ -522,7 +522,7 @@ function summarize(
   const condoComponents = p.components.filter((c): c is CondoComponent => c.kind === 'condo')
   const commercialComponents = p.components.filter((c): c is CommercialComponent => c.kind === 'commercial')
   const totalUnits = rentalComponents.reduce((s, c) => s + c.unitMix.reduce((t, u) => t + u.count, 0), 0) + condoComponents.reduce((s, c) => s + c.units.reduce((t, u) => t + u.count, 0), 0)
-  const residentialNsf = rentalComponents.reduce((s, c) => s + c.unitMix.reduce((t, u) => t + u.count * u.netSqftPerUnit, 0), 0) + condoComponents.reduce((s, c) => s + c.units.reduce((t, u) => t + u.count * u.netSqftPerUnit, 0), 0)
+  const residentialNsf = rentalComponents.reduce((s, c) => s + c.unitMix.reduce((t, u) => t + (u.count * u.netSqftPerUnit), 0), 0) + condoComponents.reduce((s, c) => s + c.units.reduce((t, u) => t + (u.count * u.netSqftPerUnit), 0), 0)
   const commercialNla = commercialComponents.reduce((s, c) => s + c.netLeasableSqft, 0)
   const netArea = residentialNsf + commercialNla
   const prog = p.program

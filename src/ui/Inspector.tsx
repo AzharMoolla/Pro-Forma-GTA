@@ -3,6 +3,7 @@ import { CONVENTION_VERSION, ENGINE_VERSION } from '../engine/project'
 import { isPortfolio } from '../engine/portfolio'
 import { Button, Chip, SourceChip } from './components'
 import { catalogueItem, stageLabel, variableInfo } from './data'
+import { termForMetric } from './Glossary'
 import { metricValue, money, pct } from './format'
 import { getNode, getResult } from './tree'
 import { useWorkspace } from './workspace'
@@ -51,6 +52,18 @@ export function Inspector() {
           <dd className="flex flex-wrap gap-1">{m.dependsOn.map((d) => <Chip key={d}>{d}</Chip>)}</dd>
           <dt className="text-ink-mute">Selection</dt><dd>{ws.node.name}</dd>
         </dl>
+        {termForMetric(m.id) && (() => {
+          const t = termForMetric(m.id)!
+          return (
+            <div className="rounded border border-line bg-sunken p-3">
+              <p className="font-medium">{t.acronym ? `${t.acronym}: ` : ''}{t.term}</p>
+              <p className="mt-1 text-ink-soft">{t.definition}</p>
+              {t.formula && <p className="num mt-2 text-xs">Standard: {t.formula}</p>}
+              {t.note && <p className="mt-1 text-xs text-ink-soft">{t.note}</p>}
+              {t.source && <p className="mt-1 text-xs text-ink-mute">{t.url ? <a className="text-accent underline" href={t.url} target="_blank" rel="noreferrer">{t.source}</a> : t.source}</p>}
+            </div>
+          )
+        })()}
         {m.missing.length > 0 && (
           <div className="rounded border border-warn bg-warn-soft p-2 text-warn">
             <p className="font-medium">Withheld: not yet estimated</p>

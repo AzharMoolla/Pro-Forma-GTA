@@ -4,6 +4,7 @@ import { Chip, cx } from './components'
 import { demoProjects } from './data'
 import { metricValue } from './format'
 import { Inspector } from './Inspector'
+import { MetricLabel } from './Glossary'
 import { Sections } from './sections'
 import { atLeast, SECTIONS, useStore, type Mode } from './store'
 import { flatten, getNode, getResult } from './tree'
@@ -84,13 +85,14 @@ export function App() {
         <div className="border-b border-line bg-surface">
           <ul className="mx-auto grid max-w-[1600px] grid-cols-2 gap-px bg-line sm:grid-cols-4 xl:grid-cols-8" aria-label={`Headline results for ${node.name}`}>
             {KPIS.map((id) => nodeResult.metrics[id]).filter((m) => m !== undefined).map((m) => (
-              <li key={m.id} className="bg-surface">
+              <li key={m.id} className={cx('flex flex-col bg-surface', state.inspect?.kind === 'metric' && state.inspect.id === m.id && 'bg-accent-soft')}>
+                <span className="px-4 pt-3 text-xs text-ink-soft"><MetricLabel id={m.id} label={m.label} /></span>
                 <button
                   type="button"
+                  aria-label={`${m.label}: ${metricValue(m)}. Show how it is calculated`}
                   onClick={() => dispatch({ type: 'inspect', inspect: { kind: 'metric', id: m.id } })}
-                  className={cx('flex h-full w-full flex-col items-start gap-0.5 px-4 py-3 text-left hover:bg-sunken', state.inspect?.kind === 'metric' && state.inspect.id === m.id && 'bg-accent-soft')}
+                  className="flex flex-1 flex-col items-start gap-0.5 px-4 pb-3 text-left hover:bg-sunken"
                 >
-                  <span className="text-xs text-ink-soft">{m.label}</span>
                   <span className="num text-xl font-semibold">{metricValue(m)}</span>
                   <span className="line-clamp-1 text-xs text-ink-mute">{m.value === null && m.missing.length ? `withheld: ${m.missing.length} unknown` : m.basis}</span>
                 </button>

@@ -27,7 +27,7 @@ function condoTower(id: string, name: string, units1b: number, units2b: number, 
   const stalls = Math.round(units * 0.6)
   return {
     id, name,
-    program: { lotAreaSqft: null, planningGfaSqft: null, gcaAboveSqft: gcaAbove, gcaBelowSqft: stalls * 350 },
+    program: { lotAreaSqft: null, planningGfaSqft: null, gcaAboveSqft: gcaAbove, gcaBelowSqft: stalls * 350, storeys: Math.ceil(gcaAbove / 2 / 9_000), podiumStoreys: 2 },
     timing: { preConstructionMonths: 12, constructionMonths: 36, exitMonth: 54 },
     costEscalation: 0.025,
     costLines: [
@@ -75,7 +75,7 @@ function rentalBlock(id: string, name: string, scale: number, retailSqft: number
   const stalls = Math.round(units * 0.8)
   const project: ProjectInput = {
     id, name,
-    program: { lotAreaSqft: null, planningGfaSqft: null, gcaAboveSqft: gca, gcaBelowSqft: stalls * 350 },
+    program: { lotAreaSqft: null, planningGfaSqft: null, gcaAboveSqft: gca, gcaBelowSqft: stalls * 350, storeys: Math.min(12, Math.ceil(gca / 30_000)), podiumStoreys: retailSqft > 0 ? 1 : 0 },
     timing: { preConstructionMonths: 12, constructionMonths: 30, exitMonth: 108 },
     costEscalation: 0.025,
     costLines: [
@@ -134,7 +134,7 @@ const lotSales: ProjectInput = {
 
 const innovationOffice: ProjectInput = {
   id: 'block-g-office', name: 'Block G: innovation-district office',
-  program: { lotAreaSqft: null, planningGfaSqft: null, gcaAboveSqft: 140_000, gcaBelowSqft: 0 },
+  program: { lotAreaSqft: null, planningGfaSqft: null, gcaAboveSqft: 140_000, gcaBelowSqft: 0, storeys: 8 },
   timing: { preConstructionMonths: 12, constructionMonths: 26, exitMonth: 96 },
   costEscalation: 0.025,
   costLines: [

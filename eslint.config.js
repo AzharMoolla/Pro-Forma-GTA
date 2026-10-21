@@ -20,4 +20,9 @@ export default defineConfig([
       'no-restricted-properties': ['error', { object: 'Math', property: 'random' }],
     },
   },
+  {
+    // BEDMAS made explicit: any expression mixing arithmetic operators of different precedence must use brackets.
+    files: ['src/engine/**/*.ts', 'src/tracker/**/*.ts', 'src/scenario/**/*.ts'],
+    rules: { 'no-mixed-operators': ['error', { groups: [['+', '-', '*', '/', '%', '**']], allowSamePrecedence: true }] },
+  },
 ])

@@ -113,8 +113,8 @@ export function scheduleLine(total: number, line: CostLine, ctx: ScheduleContext
   const perMonth = roundCents(total / months.length)
   const schedule = new Map<number, number>()
   months.forEach((month, i) => {
-    const base = i < months.length - 1 ? perMonth : roundCents(total - perMonth * (months.length - 1))
-    const amount = line.escalate ? roundCents(base * (1 + ctx.escalation) ** (month / 12)) : base
+    const base = i < months.length - 1 ? perMonth : roundCents(total - (perMonth * (months.length - 1)))
+    const amount = line.escalate ? roundCents(base * ((1 + ctx.escalation) ** (month / 12))) : base
     schedule.set(month, roundCents((schedule.get(month) ?? 0) + amount))
   })
   return schedule

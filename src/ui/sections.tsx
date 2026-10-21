@@ -8,6 +8,8 @@ import { catalogue, catalogueItem, variableInfo } from './data'
 import { metricValue, money, num, pct } from './format'
 import { lineTotal } from './Inspector'
 import { Audit, Finance, Returns, Revenue, Scenarios } from './sections2'
+import { Analysis, Progress } from './sections3'
+import { BuildingSketch } from './BuildingSketch'
 import { atLeast, type SectionId } from './store'
 import { getResult } from './tree'
 import { useWorkspace } from './workspace'
@@ -15,6 +17,7 @@ import { useWorkspace } from './workspace'
 export function Sections({ section }: { section: SectionId }) {
   switch (section) {
     case 'overview': return <Overview />
+    case 'progress': return <Progress />
     case 'market': return <Market />
     case 'program': return <Program />
     case 'costs': return <Costs />
@@ -39,6 +42,10 @@ function Overview() {
   const flows = basis === 'project' ? nodeResult.projectCashFlow : nodeResult.equityCashFlow
   return (
     <div className="flex flex-col gap-4">
+      <Card title="At a glance">
+        <BuildingSketch node={node} result={nodeResult} />
+      </Card>
+      <Analysis />
       <Card title={state.path.length ? node.name : 'About this project'}>
         <p className="text-sm text-ink-soft">{demo.reference}</p>
         {!state.path.length && (

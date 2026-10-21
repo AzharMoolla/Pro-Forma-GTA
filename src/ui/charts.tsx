@@ -86,12 +86,12 @@ export function Tornado({ base, rows, format }: { base: number; rows: TornadoRow
         <span>Base {format(base)}</span>
       </p>
       <ul className="flex flex-col gap-1">
-        {rows.map((r) => {
+        {rows.map((r, idx) => {
           const ends = [r.low, r.high].filter((v): v is number => v !== null)
           const worst = Math.min(...ends, base)
           const best = Math.max(...ends, base)
           return (
-            <li key={r.label} className="grid grid-cols-[minmax(0,1fr)_4.5rem_minmax(6rem,1.4fr)_4.5rem] items-center gap-2 text-xs">
+            <li key={`${idx}-${r.label}`} className="grid grid-cols-[minmax(0,1fr)_4.5rem_minmax(6rem,1.4fr)_4.5rem] items-center gap-2 text-xs">
               <span className="truncate" title={r.label}>{r.label}</span>
               <span className="num text-right text-ink-soft">{format(worst)}</span>
               <span className="relative h-4" role="img" aria-label={`${r.label}: ${format(worst)} to ${format(best)}`}>

@@ -4,6 +4,7 @@ import type { Component, ProjectInput } from '../engine/project'
 import type { Simulation, TornadoBar } from '../engine/uncertainty'
 import { createSnapshot, diffInputs, lock, verify, type Snapshot } from '../scenario/snapshot'
 import { Tornado } from './charts'
+import { MetricLabel } from './Glossary'
 import { Button, Card, Chip, NumberField, SourceChip, TableWrap, cx, td, tdNum, th } from './components'
 import { coverage, type CoverageStatus } from './coverage'
 import { findings, findingsCovered, stageLabel } from './data'
@@ -233,8 +234,8 @@ export function Returns() {
           <thead><tr><th scope="col" className={th}>Metric</th><th scope="col" className={`${th} text-right`}>Value</th><th scope="col" className={th}>Basis</th></tr></thead>
           <tbody>{Object.values(nodeResult.metrics).map((m) => (
             <tr key={m.id} className={cx(state.inspect?.kind === 'metric' && state.inspect.id === m.id && 'bg-accent-soft')}>
-              <td className={td}><button type="button" className="text-left hover:underline" onClick={() => dispatch({ type: 'inspect', inspect: { kind: 'metric', id: m.id } })}>{m.label}</button></td>
-              <td className={tdNum}>{m.value === null && m.missing.length ? <Chip tone="warn">withheld</Chip> : metricValue(m)}</td>
+              <td className={td}><MetricLabel id={m.id} label={m.label} /></td>
+              <td className={tdNum}><button type="button" className="hover:underline" aria-label={`Show how ${m.label} is calculated`} onClick={() => dispatch({ type: 'inspect', inspect: { kind: 'metric', id: m.id } })}>{m.value === null && m.missing.length ? <Chip tone="warn">withheld</Chip> : metricValue(m)}</button></td>
               <td className={`${td} text-xs text-ink-soft`}>{m.basis}</td>
             </tr>
           ))}</tbody>

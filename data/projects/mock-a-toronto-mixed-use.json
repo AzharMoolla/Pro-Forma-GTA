@@ -100,7 +100,7 @@
   "input": {
     "id": "mock-a",
     "name": "Mock A: Toronto mixed-use rental",
-    "program": { "lotAreaSqft": 64583, "planningGfaSqft": 380000, "gcaAboveSqft": 389000, "gcaBelowSqft": 120000 },
+    "program": { "lotAreaSqft": 64583, "planningGfaSqft": 380000, "gcaAboveSqft": 389000, "gcaBelowSqft": 120000, "storeys": 38, "podiumStoreys": 3 },
     "timing": { "preConstructionMonths": 18, "constructionMonths": 40, "exitMonth": 120 },
     "costEscalation": 0.025,
     "costLines": [

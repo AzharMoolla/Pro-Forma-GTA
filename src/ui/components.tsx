@@ -1,4 +1,5 @@
 import { useId, useState, type ButtonHTMLAttributes, type ReactNode } from 'react'
+import { GlossaryText } from './Glossary'
 
 export const cx = (...parts: Array<string | false | null | undefined>) => parts.filter(Boolean).join(' ')
 
@@ -48,7 +49,7 @@ export function Card({ title, actions, children, className }: { title: string; a
   return (
     <section aria-labelledby={id} className={cx('rounded-lg border border-line bg-surface', className)}>
       <header className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3">
-        <h2 id={id} className="text-base font-semibold">{title}</h2>
+        <h2 id={id} className="text-base font-semibold"><GlossaryText text={title} /></h2>
         {actions}
       </header>
       <div className="p-4">{children}</div>

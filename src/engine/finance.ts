@@ -5,28 +5,28 @@ export function monthlyFromNominalAnnual(annualRate: number): number {
 }
 
 export function monthlyFromEffectiveAnnual(annualRate: number): number {
-  return (1 + annualRate) ** (1 / 12) - 1 // C4: discount rates are effective annual
+  return ((1 + annualRate) ** (1 / 12)) - 1 // C4: discount rates are effective annual
 }
 
 export function annualizeMonthly(monthlyRate: number): number {
-  return (1 + monthlyRate) ** 12 - 1
+  return ((1 + monthlyRate) ** 12) - 1
 }
 
 export function annuityPayment(principal: number, rate: number, periods: number): number {
   if (periods <= 0) throw new RangeError('periods must be positive')
   if (rate === 0) return principal / periods
-  return (principal * rate) / (1 - (1 + rate) ** -periods)
+  return (principal * rate) / (1 - ((1 + rate) ** -periods))
 }
 
 export function annuityPresentValue(payment: number, rate: number, periods: number): number {
   if (periods <= 0) throw new RangeError('periods must be positive')
   if (rate === 0) return payment * periods
-  return (payment * (1 - (1 + rate) ** -periods)) / rate
+  return (payment * (1 - ((1 + rate) ** -periods))) / rate
 }
 
 /** Flows at period ends; index 0 is undiscounted. */
 export function npv(rate: number, flows: number[]): number {
-  return flows.reduce((total, flow, t) => total + flow / (1 + rate) ** t, 0)
+  return flows.reduce((total, flow, t) => total + (flow / ((1 + rate) ** t)), 0)
 }
 
 export interface IrrResult {

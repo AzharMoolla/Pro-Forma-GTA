@@ -10,7 +10,7 @@ export function roundCents(amount: number): number {
   if (fraction > 0.5 + TIE_EPSILON) rounded = floor + 1
   else if (fraction < 0.5 - TIE_EPSILON) rounded = floor
   else rounded = floor % 2 === 0 ? floor : floor + 1
-  return rounded / 100 + 0 // + 0 turns -0 into 0
+  return (rounded / 100) + 0 // + 0 turns -0 into 0
 }
 
 export function sumCents(amounts: number[]): number {

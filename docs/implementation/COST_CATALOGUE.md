@@ -273,6 +273,24 @@ Structure follows CIQS elemental (Uniformat II) so quotes, benchmarks and quanti
 
 ---
 
+## Benchmark and industry references (added 2026-10-21, from owner-supplied links)
+
+Dated references used for context, heuristics and future ingestion. Benchmarks are cited with their date; tables are not copied.
+
+| Reference | What it gives | Use in the tool |
+|---|---|---|
+| Altus Canadian Cost Guide 2026 | Hard cost $/ft² by building type and city | Class C benchmark (licence check D-14) |
+| Turner & Townsend Canada annual cost guide, Q1 2026 | $/ft² GFA (BOMA) across real-estate types from 800+ projects; infrastructure $/km | Second benchmark, master-plan transit/infrastructure |
+| Cushman & Wakefield office fit-out cost guide 2026 | Toronto $204.45/ft² construction; $306.68/ft² all-in incl. soft, IT, A/V, furniture **[V]** | Office TI / fit-out allowance |
+| HKC Construction blog (2025 data) | Commercial $/ft² ranges by type (some figures inconsistent) | Secondary reference only |
+| CMHC Housing Design Catalogue | Regional Class B construction cost summaries for standard designs | Missing-middle / infill benchmarks |
+| Bullpen & Batory GTA High-Rise Land Insights, Q4-2019 | Land $/buildable ft² ($111 GTA avg; $187 former Toronto 2019) and land-to-revenue (~10–15%) **[V, dated]** | Land-to-revenue insight; land comps method |
+| Brandon Donnelly, "Demystifying the development pro forma" | Worked Toronto mid-rise: land $231/ft², hard $360/ft², soft ≈ 75% of hard incl. levies and interest; <5% margin unviable, ~15% in range | Calibration of insights; definition note on "soft" |
+| Finnegan Marshall (cost consultant) | QS scope: ~70-item budgets, monthly cost-to-complete, draw approvals, lender reports | Tracker cost-to-complete; future lender reporting |
+| Toronto Multiplex Proforma | 50+ hard-cost components over 8 phases; timeline Gantt; cash-on-cash | Backlog: phase-level hard costs, Gantt view |
+| RealPAC pro forma course; Spacing "What is a development pro forma" | Section structure (land, zoning, design, soft, financing, leasing, ops, valuation, sensitivity, partnership hurdles) | Coverage check on stages; waterfall backlog |
+| City of Toronto Development Pipeline dashboard; UrbanToronto project database | Pipeline and comparable projects | Market evidence card (Milestone D, terms to check) |
+
 ## Open source questions to close before ingestion
 
 1. Toronto 2026 DC by-law and DC Reduction Program: enacted rates and eligibility (was a draft at review).

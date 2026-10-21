@@ -27,7 +27,7 @@ test('every section renders without axe violations', async ({ page }) => {
 
 test('editing a cost line recalculates the headline', async ({ page }) => {
   await fresh(page)
-  const tdc = page.getByRole('button', { name: /Total development cost/ })
+  const tdc = page.getByRole('button', { name: /^Total development cost: / })
   const before = await tdc.innerText()
   await openSection(page, 'Cost & budget')
   const field = page.getByRole('textbox', { name: /Above-grade hard cost.*Rate/ })
@@ -63,8 +63,54 @@ test('master plan: plan tree, roll-up and range run in a worker', async ({ page 
   await page.getByLabel('Project', { exact: true }).selectOption('mock-b')
   await expect(page.getByRole('table', { name: 'Children of this level' })).toContainText('Phase 3')
   await page.getByRole('button', { name: 'Block A: condo towers' }).click()
-  await expect(page.getByRole('button', { name: /Total development cost/ })).toBeVisible()
+  await expect(page.getByRole('button', { name: /^Total development cost: / })).toBeVisible()
   await openSection(page, 'Returns & range')
   await page.getByRole('button', { name: 'Run', exact: true }).click()
   await expect(page.getByRole('table', { name: 'Monte Carlo percentiles' })).toBeVisible({ timeout: 60_000 })
+})
+
+test('overview shows the sketch and colour-coded analysis', async ({ page }) => {
+  await fresh(page)
+  await expect(page.getByRole('img', { name: /Sketch of .*38 storeys/ })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /Analysis/ })).toBeVisible()
+  await expect(page.getByText('Negative development spread')).toBeVisible()
+  await expect(page.getByText(/Land-to-revenue/).first()).toBeVisible()
+})
+
+test('glossary: definitions and formulas on hover and keyboard focus', async ({ page }) => {
+  await fresh(page)
+  const kpis = page.getByRole('list', { name: /Headline results/ })
+  await kpis.getByRole('button', { name: 'Yield on cost', exact: true }).focus()
+  await expect(page.getByRole('tooltip')).toContainText('Yield on cost = stabilized NOI ÷ TDC')
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('tooltip')).toHaveCount(0)
+  await kpis.getByRole('button', { name: 'Levered IRR', exact: true }).hover()
+  await expect(page.getByRole('tooltip')).toContainText('Internal rate of return')
+})
+
+test('tracker: close tasks, record an actual with a receipt, push it into the model', async ({ page }) => {
+  await fresh(page)
+  await openSection(page, 'Development tracker')
+  await expect(page.getByText('Current stage', { exact: true })).toBeVisible()
+  const task = page.getByRole('listitem').filter({ has: page.getByText('Market study and appraisal', { exact: false }) }).first()
+  const row = page.locator('li', { hasText: 'Market study, appraisal, broker opinion of value' }).last()
+  await row.getByLabel('Status').selectOption('done')
+  const actual = row.getByRole('textbox', { name: 'Actual spent' })
+  await actual.fill('75000')
+  await actual.press('Enter')
+  await expect(row.getByText(/Over by/)).toBeVisible()
+  await row.locator('input[type=file]').setInputFiles({ name: 'invoice.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4 test invoice') })
+  await expect(row.getByRole('button', { name: 'invoice.pdf', exact: true })).toBeVisible()
+  await row.getByRole('button', { name: 'Use actual in model' }).click()
+  await openSection(page, 'Cost & budget')
+  await expect(page.getByRole('textbox', { name: /Market study and appraisal Amount/ })).toHaveValue('75000')
+  void task
+})
+
+test('plan change: adding a building turns a single tower into a plan', async ({ page }) => {
+  await fresh(page)
+  await openSection(page, 'Development tracker')
+  await page.getByRole('button', { name: /Add a building like/ }).click()
+  await expect(page.getByRole('navigation', { name: 'Workspace sections' }).getByText('Plan structure')).toBeVisible()
+  await expect(page.getByRole('button', { name: /\(building 2\)/ })).toBeVisible()
 })

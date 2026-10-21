@@ -214,16 +214,16 @@ Shape follows Lakeview Village (Spanier Group reference project): 177-acre forme
 
 | Driver | Profit at low | Profit at high | Swing |
 |---|---|---|---|
-| Hard cost, $/ft² GCA (incl. GCs and fee) (class C) | $84.58M | −$39.80M | $124M |
-| Hard cost, $/ft² GCA (incl. GCs and fee) (class C) | $80.75M | −$34.06M | $115M |
-| Hard cost, $/ft² GCA (incl. GCs and fee) (class C) | $80.75M | −$34.06M | $115M |
-| Hard cost, $/ft² GCA (incl. GCs and fee) (class C) | $74.96M | −$25.37M | $100M |
-| Hard cost, $/ft² GCA (incl. GCs and fee) (class C) | $72.78M | −$22.10M | $94.88M |
-| Hard cost, $/ft² GCA (incl. GCs and fee) (class C) | $71.47M | −$20.14M | $91.61M |
-| residential rents/prices | −$1.46M | $62.04M | $63.51M |
-| suites rents/prices | −$2.97M | $57.51M | $60.48M |
-| residential rents/prices | $0.52M | $60.56M | $60.05M |
-| suites rents/prices | −$1.28M | $56.49M | $57.77M |
+| Hard cost, $/ft² GCA (incl. GCs and fee) (class C) · Block E: condo towers | $84.58M | −$39.80M | $124M |
+| Hard cost, $/ft² GCA (incl. GCs and fee) (class C) · Block A: condo towers | $80.75M | −$34.06M | $115M |
+| Hard cost, $/ft² GCA (incl. GCs and fee) (class C) · Block H: condo towers | $80.75M | −$34.06M | $115M |
+| Hard cost, $/ft² GCA (incl. GCs and fee) (class C) · Block F: rental | $74.96M | −$25.37M | $100M |
+| Hard cost, $/ft² GCA (incl. GCs and fee) (class C) · Block B: rental + retail podium | $72.78M | −$22.10M | $94.88M |
+| Hard cost, $/ft² GCA (incl. GCs and fee) (class C) · Block I: rental | $71.47M | −$20.14M | $91.61M |
+| residential rents/prices · Block F: rental | −$1.46M | $62.04M | $63.51M |
+| suites rents/prices · Block E: condo towers | −$2.97M | $57.51M | $60.48M |
+| residential rents/prices · Block I: rental | $0.52M | $60.56M | $60.05M |
+| suites rents/prices · Block H: condo towers | −$1.28M | $56.49M | $57.77M |
 
 ### Cost by stage
 
