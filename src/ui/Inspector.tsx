@@ -1,4 +1,5 @@
-import { bandOf, lineTotals, type CostLine } from '../engine/costs'
+import { useState } from 'react'
+import { bandOf, lineTotals, type CostLine, type SourceRecord } from '../engine/costs'
 import { CONVENTION_VERSION, ENGINE_VERSION } from '../engine/project'
 import { isPortfolio } from '../engine/portfolio'
 import { Button, Chip, SourceChip } from './components'
@@ -104,6 +105,69 @@ export function Inspector() {
           {item.when && (<><dt className="text-ink-mute">Triggered by</dt><dd><ul className="list-disc pl-4">{item.when.map((c) => <li key={c}>{variableInfo.get(c.split(/>=|=/)[0]!)?.label ?? c}{c.includes('=') ? ` (${c.split(/>=|=/)[1]})` : ''}</li>)}</ul></dd></>)}
         </>)}
       </dl>
+      <SourceEditor
+        key={`${inspect.path.join('/')}|${line.id}`}
+        source={line.source}
+        onSave={(source) => dispatch({ type: 'edit', path: inspect.path, update: (n) => ({ ...n, costLines: n.costLines.map((l) => (l.id === line.id ? { ...l, source } : l)) }) })}
+      />
     </>
   ))
+}
+
+const KINDS: Array<[SourceRecord['kind'], string]> = [
+  ['quote', 'Quote'], ['contract', 'Contract'], ['schedule', 'Published schedule or by-law'], ['benchmark', 'Benchmark (cost guide)'],
+  ['actual', 'Actual (invoice)'], ['estimate', 'Own estimate'], ['synthetic', 'Synthetic placeholder'],
+]
+const today = () => new Date().toISOString().slice(0, 10)
+
+/** Per-line provenance. Saving any change clears an earlier review: a reviewer approved the old record, not the new one. */
+function SourceEditor({ source, onSave }: { source: SourceRecord | undefined; onSave: (s: SourceRecord | undefined) => void }) {
+  const [draft, setDraft] = useState<SourceRecord>(source ?? { kind: 'estimate' })
+  const [reviewer, setReviewer] = useState('')
+  const set = (patch: Partial<SourceRecord>) => setDraft((d) => ({ ...d, ...patch }))
+  const changed = JSON.stringify({ ...draft, reviewed: undefined }) !== JSON.stringify({ ...(source ?? { kind: 'estimate' }), reviewed: undefined })
+  const field = 'min-h-9 w-full rounded border border-line-strong bg-surface px-2 text-sm'
+  const clean = (s: SourceRecord): SourceRecord => Object.fromEntries(Object.entries(s).filter(([, v]) => v !== '' && v !== undefined)) as unknown as SourceRecord
+  return (
+    <form
+      className="flex flex-col gap-2 rounded border border-line p-3"
+      aria-label="Source of this figure"
+      onSubmit={(e) => {
+        e.preventDefault()
+        const saved = clean({ ...draft, reviewed: undefined, retrievedAt: draft.retrievedAt || today() })
+        setDraft(saved)
+        onSave(saved)
+      }}
+    >
+      <p className="font-medium">Source of this figure</p>
+      {!source && <p className="text-xs text-warn">No source recorded.</p>}
+      {source?.reviewed ? <Chip tone="good">Reviewed by {source.reviewed.by} on {source.reviewed.at}</Chip> : source && <Chip tone="warn">Not reviewed</Chip>}
+      <label className="flex flex-col gap-1 text-xs text-ink-soft">Kind
+        <select className={field} value={draft.kind} onChange={(e) => set({ kind: e.target.value as SourceRecord['kind'] })}>
+          {KINDS.map(([k, label]) => <option key={k} value={k}>{label}</option>)}
+        </select>
+      </label>
+      <label className="flex flex-col gap-1 text-xs text-ink-soft">Reference (document, URL or quote number)
+        <input className={field} value={draft.ref ?? ''} onChange={(e) => set({ ref: e.target.value })} />
+      </label>
+      <label className="flex flex-col gap-1 text-xs text-ink-soft">Value date (when the figure applies)
+        <input type="date" className={field} value={draft.valueDate ?? ''} onChange={(e) => set({ valueDate: e.target.value || undefined })} />
+      </label>
+      <label className="flex flex-col gap-1 text-xs text-ink-soft">Assumption owner
+        <input className={field} value={draft.owner ?? ''} onChange={(e) => set({ owner: e.target.value })} />
+      </label>
+      <label className="flex flex-col gap-1 text-xs text-ink-soft">Note
+        <input className={field} value={draft.note ?? ''} onChange={(e) => set({ note: e.target.value })} />
+      </label>
+      <Button type="submit" disabled={!changed}>{source ? 'Save source (clears review)' : 'Save source'}</Button>
+      {source && !source.reviewed && !changed && source.kind !== 'synthetic' && (
+        <div className="flex items-end gap-2">
+          <label className="flex flex-1 flex-col gap-1 text-xs text-ink-soft">Reviewed by
+            <input className={field} value={reviewer} onChange={(e) => setReviewer(e.target.value)} />
+          </label>
+          <Button disabled={!reviewer.trim()} onClick={() => onSave({ ...source, reviewed: { by: reviewer.trim(), at: today() } })}>Mark reviewed</Button>
+        </div>
+      )}
+    </form>
+  )
 }

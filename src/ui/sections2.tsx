@@ -7,7 +7,7 @@ import { saveScenario } from '../cloud/cloud'
 import { Tornado } from './charts'
 import { MetricLabel } from './Glossary'
 import { Button, Card, Chip, NumberField, SourceChip, TableWrap, cx, td, tdNum, th } from './components'
-import { coverage, type CoverageStatus } from './coverage'
+import { coverage, readiness, SOURCE_MAX_AGE_MONTHS, type CoverageStatus, type Readiness } from './coverage'
 import { dataContext, findings, findingsCovered, stageLabel } from './data'
 import { metricValue, money, monthLabel, pct } from './format'
 import type { SimRequest } from './simulate.worker'
@@ -408,11 +408,61 @@ function InputDiff({ before, after }: { before: Snapshot; after: Node }) {
 
 // ---------------------------------------------------------------- audit
 
-const STATUS: Record<CoverageStatus, { label: string; tone: 'good' | 'accent' | 'bad' | 'warn' }> = {
+const STATUS: Record<CoverageStatus, { label: string; tone: 'good' | 'accent' | 'bad' | 'warn' | 'neutral' }> = {
   line: { label: 'cost line', tone: 'good' },
   covered: { label: 'covered', tone: 'accent' },
+  excluded: { label: 'excluded', tone: 'neutral' },
+  gap: { label: 'known gap', tone: 'warn' },
+  stale: { label: 'stale note', tone: 'bad' },
   unaccounted: { label: 'not in model', tone: 'bad' },
   'to-confirm': { label: 'to confirm', tone: 'warn' },
+}
+
+/** Model, scope and source readiness for the open project (whole draft, not the selected building). */
+export function useReadiness(): Readiness {
+  const { demo, state, draft, result } = useWorkspace()
+  const attributes = state.projects[state.projectId]!.attributes
+  return useMemo(() => {
+    const entries = coverage(demo.projectType, attributes, draft, demo.coverage)
+    return readiness(entries, draft, result?.missing ?? [], new Date().toISOString().slice(0, 10))
+  }, [demo, attributes, draft, result])
+}
+
+export function readinessLabels(r: Readiness) {
+  const s = r.scope.counts
+  const open = s.unaccounted + s.stale + s['to-confirm']
+  return {
+    model: r.model.complete ? { tone: 'good' as const, text: 'Model: calculates' } : { tone: 'warn' as const, text: `Model: ${r.model.unknown.length} unknown` },
+    scope: open === 0 ? { tone: s.gap ? 'warn' as const : 'good' as const, text: s.gap ? `Scope: ${s.gap} known gaps` : 'Scope: accounted for' } : { tone: 'bad' as const, text: `Scope: ${open} open` },
+    sources: { tone: r.sources.reviewed === r.sources.lines && r.sources.lines > 0 ? 'good' as const : 'warn' as const, text: `Sources: ${r.sources.reviewed}/${r.sources.lines} reviewed` },
+  }
+}
+
+function ReadinessCard({ r }: { r: Readiness }) {
+  const l = readinessLabels(r)
+  const s = r.scope.counts
+  return (
+    <Card title="Readiness: three separate questions">
+      <div className="grid gap-4 md:grid-cols-3">
+        <section aria-label="Model calculation">
+          <Chip tone={l.model.tone}>{l.model.text}</Chip>
+          <p className="mt-2 text-sm text-ink-soft">Does every cost line in the model have a value? Results that depend on an unknown are withheld, never calculated as zero.</p>
+          {!r.model.complete && <ul className="mt-1 list-disc pl-5 text-xs">{r.model.unknown.map((m) => <li key={m} className="num">{m}</li>)}</ul>}
+        </section>
+        <section aria-label="Scope">
+          <Chip tone={l.scope.tone}>{l.scope.text}</Chip>
+          <p className="mt-2 text-sm text-ink-soft">Is everything that applies accounted for? {r.scope.applicable} catalogue items apply: {s.line} own lines, {s.covered} inside other figures, {s.excluded} excluded with a reason, {s.gap} known gaps, {s.stale} stale notes, {s.unaccounted} not in the model, {s['to-confirm']} waiting on a project variable.</p>
+          <p className="mt-1 text-xs text-ink-mute">A model can calculate and still leave out costs: the total is then a known subtotal, not the full cost.</p>
+        </section>
+        <section aria-label="Sources and review">
+          <Chip tone={l.sources.tone}>{l.sources.text}</Chip>
+          <p className="mt-2 text-sm text-ink-soft">Who stands behind each figure? {r.sources.sourced} of {r.sources.lines} cost lines record a source, {r.sources.reviewed} were reviewed by a person{r.sources.synthetic ? `, ${r.sources.synthetic} are marked synthetic` : ''}{r.sources.undated ? `, ${r.sources.undated} sourced lines have no value date` : ''}.</p>
+          {r.sources.old.length > 0 && <p className="mt-1 text-xs text-warn">Older than {SOURCE_MAX_AGE_MONTHS} months: {r.sources.old.join(', ')}</p>}
+          <p className="mt-1 text-xs text-ink-mute">Record a source on any cost line from its inspector. A catalogue "verified" tag means the rule's source was checked, not this project's figure.</p>
+        </section>
+      </div>
+    </Card>
+  )
 }
 
 export function Audit() {
@@ -420,11 +470,13 @@ export function Audit() {
   const attributes = state.projects[state.projectId]!.attributes
   const entries = useMemo(() => coverage(demo.projectType, attributes, draft, demo.coverage), [demo, attributes, draft])
   const [filter, setFilter] = useState<CoverageStatus | 'all'>('unaccounted')
-  const counts = Object.fromEntries((['line', 'covered', 'unaccounted', 'to-confirm'] as CoverageStatus[]).map((s) => [s, entries.filter((e) => e.status === s).length])) as Record<CoverageStatus, number>
+  const ready = useReadiness()
+  const counts = ready.scope.counts
   const shown = filter === 'all' ? entries : entries.filter((e) => e.status === filter)
 
   return (
     <div className="flex flex-col gap-4">
+      <ReadinessCard r={ready} />
       {result && result.missing.length > 0 && (
         <Card title={`Not yet estimated (${result.missing.length})`}>
           <p className="mb-2 text-sm text-ink-soft">These values are unknown, so every result that depends on them is withheld rather than calculated as zero.</p>
@@ -435,7 +487,7 @@ export function Audit() {
         <p className="mb-3 text-sm text-ink-soft">Every catalogue item that applies to a <strong>{demo.projectType}</strong> project with these variables, and where the model carries it. Change variables under Site &amp; program to see costs switch on or off.</p>
         <fieldset className="mb-3 flex flex-wrap gap-2 text-sm">
           <legend className="sr-only">Filter by status</legend>
-          {(['unaccounted', 'to-confirm', 'line', 'covered', 'all'] as const).map((f) => (
+          {(['unaccounted', 'stale', 'to-confirm', 'gap', 'line', 'covered', 'excluded', 'all'] as const).map((f) => (
             <label key={f} className={cx('cursor-pointer rounded-md border px-3 py-1.5', filter === f ? 'border-accent bg-accent-soft text-accent' : 'border-line text-ink-soft')}>
               <input type="radio" name="cov" className="sr-only" checked={filter === f} onChange={() => setFilter(f)} />
               {f === 'all' ? `All (${entries.length})` : `${STATUS[f].label} (${counts[f]})`}

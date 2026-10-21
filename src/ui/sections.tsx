@@ -225,7 +225,7 @@ function Costs() {
   const editable = atLeast(state.mode, 'professional')
   const stageOf = (l: CostLine) => (l.catalogueId && catalogueItem.get(l.catalogueId)?.stage) || 's8'
   const editLine = (lineId: string, key: string, value: number) =>
-    dispatch({ type: 'edit', path: state.path, update: (n) => ({ ...n, costLines: n.costLines.map((l) => (l.id === lineId && l.driver ? { ...l, driver: { ...l.driver, [key]: value } as Driver } : l)) }) })
+    dispatch({ type: 'edit', path: state.path, update: (n) => ({ ...n, costLines: n.costLines.map((l) => (l.id === lineId && l.driver ? { ...l, driver: { ...l.driver, [key]: value } as Driver, source: l.source && { ...l.source, reviewed: undefined } } : l)) }) })
 
   const componentCosts = new Map<string, number>()
   nodeResult?.project?.ledger.forEach((r) => Object.entries(r.costs).forEach(([k, v]) => k.includes(':') && componentCosts.set(k, (componentCosts.get(k) ?? 0) + v)))

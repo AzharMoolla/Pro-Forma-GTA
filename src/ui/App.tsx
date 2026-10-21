@@ -8,11 +8,23 @@ import { Inspector } from './Inspector'
 import { useCloud } from './useCloud'
 import { MetricLabel } from './Glossary'
 import { Sections } from './sections'
+import { readinessLabels, useReadiness } from './sections2'
 import { atLeast, SECTIONS, useStore, type Mode } from './store'
 import { flatten, getNode, getResult } from './tree'
 import { WorkspaceContext, type Workspace } from './workspace'
 
 const KPIS = ['totalDevelopmentCost', 'profit', 'profitOnCost', 'yieldOnCost', 'unleveredIrr', 'leveredIrr', 'unleveredNpv', 'equityContributed']
+
+function ReadinessChips({ onOpen }: { onOpen: () => void }) {
+  const l = readinessLabels(useReadiness())
+  return (
+    <button type="button" onClick={onOpen} className="flex min-h-10 flex-wrap items-center gap-1 rounded-md hover:bg-sunken" aria-label={`${l.model.text}. ${l.scope.text}. ${l.sources.text}. Open sources and audit`}>
+      <Chip tone={l.model.tone}>{l.model.text}</Chip>
+      <Chip tone={l.scope.tone}>{l.scope.text}</Chip>
+      <Chip tone={l.sources.tone}>{l.sources.text}</Chip>
+    </button>
+  )
+}
 
 export function App() {
   const [state, dispatch] = useStore()
@@ -77,7 +89,7 @@ export function App() {
             <Account state={cloudState} />
             <Chip tone="warn" title="All demo figures are synthetic placeholders, not market evidence">Synthetic demo</Chip>
             <Chip tone="neutral">{parent ? `Draft from scenario ${parent}` : 'Unsaved draft'}</Chip>
-            {error ? <Chip tone="bad">Input error</Chip> : result?.complete ? <Chip tone="good">Complete</Chip> : <Chip tone="warn">{`Incomplete: ${result?.missing.length} unknown`}</Chip>}
+            {error ? <Chip tone="bad">Input error</Chip> : <ReadinessChips onOpen={() => dispatch({ type: 'section', id: 'audit' })} />}
           </div>
         </div>
         <p className="mx-auto max-w-[1600px] px-4 pb-2 text-xs text-ink-mute">

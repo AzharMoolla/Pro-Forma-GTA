@@ -89,7 +89,7 @@ const addTally = (list: Tally[]): Tally => ({ known: list.reduce((s, t) => s + t
 export function buildTracker(args: {
   scope: string[]
   stages: Array<{ id: string; label: string }>
-  entries: Array<{ item: CatalogueItem; status: 'line' | 'covered' | 'unaccounted' | 'to-confirm'; note: string }>
+  entries: Array<{ item: CatalogueItem; status: 'line' | 'covered' | 'excluded' | 'gap' | 'stale' | 'unaccounted' | 'to-confirm'; note: string }>
   budgets: Map<string, number> // catalogueId → modelled total in this scope
   state: TrackerState
 }): TrackerView {
@@ -102,7 +102,7 @@ export function buildTracker(args: {
       return {
         key,
         item: e.item,
-        inModel: e.status === 'line' ? 'line' : e.status === 'covered' ? 'covered' : 'missing',
+        inModel: e.status === 'line' ? 'line' : e.status === 'covered' || e.status === 'excluded' ? 'covered' : 'missing',
         coverageNote: e.note,
         budget,
         record,
@@ -150,7 +150,10 @@ export function defaultTiming(stage: string, node: Node): Timing {
  * the cost of the whole work package.
  */
 export function lineFromActual(line: CostLine, actual: number): CostLine {
-  return { ...line, driver: { kind: 'lumpSum', amount: actual }, estimateClass: 'exact', band: undefined, escalate: false }
+  return {
+    ...line, driver: { kind: 'lumpSum', amount: actual }, estimateClass: 'exact', band: undefined, escalate: false,
+    source: { kind: 'actual', ref: 'development tracker (receipts on the task)', note: `replaced ${line.source?.kind ?? 'unsourced'} estimate` },
+  }
 }
 
 export function lineFromItem(item: CatalogueItem, amount: number, node: Node, existingIds: Set<string>): CostLine {

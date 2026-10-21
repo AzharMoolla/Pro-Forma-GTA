@@ -34,6 +34,22 @@ export type Timing =
   | { kind: 'construction' } // C7: straight-line over construction months
   | { kind: 'completion' }
 
+/**
+ * Where a cost line's figure comes from (per-field provenance). Review is recorded by a person; a catalogue
+ * "verified" tag says the rule's source was checked, not that this project's figure was.
+ */
+export interface SourceRecord {
+  kind: 'quote' | 'benchmark' | 'schedule' | 'contract' | 'actual' | 'estimate' | 'synthetic'
+  ref?: string // document, URL or quote number
+  valueDate?: string // YYYY-MM-DD the figure applies to (quote date, schedule effective date, benchmark edition)
+  retrievedAt?: string // YYYY-MM-DD it was looked up
+  owner?: string // who stands behind the assumption
+  reviewed?: { by: string; at: string } // YYYY-MM-DD
+  note?: string
+}
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
+
 export interface CostLine {
   id: string
   label: string
@@ -43,6 +59,7 @@ export interface CostLine {
   estimateClass: EstimateClass
   band?: Band // overrides the class default
   escalate?: boolean // C19: escalate from month 0 to the month spent
+  source?: SourceRecord
 }
 
 export interface ScheduleContext {
@@ -136,6 +153,13 @@ export function validateCostLines(lines: CostLine[], allowConstructionTiming = t
     }
     const band = bandOf(line)
     if (!(band.low <= 0 && band.low > -1 && band.high >= 0)) errors.push(`${line.id}: band must satisfy -1 < low ≤ 0 ≤ high`)
+    const src = line.source
+    if (src) {
+      for (const [k, v] of [['valueDate', src.valueDate], ['retrievedAt', src.retrievedAt], ['reviewed.at', src.reviewed?.at]] as const) {
+        if (v !== undefined && !ISO_DATE.test(v)) errors.push(`${line.id}: source.${k} must be YYYY-MM-DD`)
+      }
+      if (src.reviewed && !src.reviewed.by.trim()) errors.push(`${line.id}: source.reviewed.by must name the reviewer`)
+    }
     const d = line.driver
     if (d) {
       const numbers = Object.values(d).filter((v): v is number => typeof v === 'number')

@@ -34,11 +34,17 @@ export interface DemoProject {
 const demoRentalInput: ProjectInput = { ...toProject(demoRentalJson.input as RentalInput), id: 'demo-rental', name: demoRentalJson.name }
 // Levies are unknown in the handoff demo: the UI shows what "incomplete" looks like.
 
+/** Demo figures are placeholders: every cost line without a source is labelled synthetic, so it never counts as sourced. */
+function labelSynthetic(node: Node): Node {
+  const costLines = node.costLines.map((l) => (l.source ? l : { ...l, source: { kind: 'synthetic' as const, note: 'demo placeholder' } }))
+  return 'children' in node ? { ...node, costLines, children: node.children.map((c) => ({ ...c, node: labelSynthetic(c.node) })) } : { ...node, costLines }
+}
+
 export const demoProjects: DemoProject[] = [
   { id: mockAJson.id, name: mockAJson.name, projectType: mockAJson.projectType, reference: mockAJson.reference, notes: mockAJson.notes, attributes: mockAJson.attributes as Attributes, coverage: mockAJson.coverage, input: mockAJson.input as ProjectInput },
   { id: mockBMeta.id, name: mockBMeta.name, projectType: mockBMeta.projectType, reference: mockBMeta.reference, notes: mockBMeta.notes, attributes: mockBMeta.attributes as Attributes, coverage: mockBMeta.coverage, input: mockB },
   { id: 'demo-rental', name: demoRentalJson.name, projectType: 'rental-midrise', reference: 'Handoff synthetic project (Oshawa). Levies are unknown, so cost-dependent results are withheld.', notes: demoRentalJson.notes, attributes: { 'site.municipality': 'oshawa' }, coverage: {}, input: demoRentalInput },
-]
+].map((d) => ({ ...d, input: labelSynthetic(d.input) }))
 
 export interface Finding {
   id: string
