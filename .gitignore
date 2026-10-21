@@ -12,3 +12,5 @@ data/planning-map/*
 !data/planning-map/manifest.json
 !data/planning-map/README.md
 !data/planning-map/regional-policy-sources.json
+# Research downloads (third-party page copies, screenshots, seeds): local only
+data/research/
