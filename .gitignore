@@ -1,8 +1,8 @@
+node_modules/
+dist/
+test-results/
+playwright-report/
+.env*
 !.env.example
 # Third-party/student workbooks: keep locally, never commit or redistribute
-.env*
-dist/
 handoff/reference-workbooks/
-node_modules/
-playwright-report/
-test-results/

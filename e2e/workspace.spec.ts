@@ -114,3 +114,15 @@ test('plan change: adding a building turns a single tower into a plan', async ({
   await expect(page.getByRole('navigation', { name: 'Workspace sections' }).getByText('Plan structure')).toBeVisible()
   await expect(page.getByRole('button', { name: /\(building 2\)/ })).toBeVisible()
 })
+
+test('account: signed-out state is honest and the sign-in form is accessible', async ({ page }) => {
+  await fresh(page)
+  await expect(page.getByText('Not signed in: saved in this browser only')).toBeVisible()
+  await page.getByRole('button', { name: 'Sign in to save' }).click()
+  await expect(page.getByLabel('Email')).toBeVisible()
+  await expect(page.getByLabel('Password')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Create account' })).toBeDisabled()
+  // @axe-core/playwright types lag @playwright/test by a minor version; runtime API is identical
+  const { violations } = await new AxeBuilder({ page: page as never }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze()
+  expect(violations.map((v) => `${v.id} (${v.nodes.length})`)).toEqual([])
+})

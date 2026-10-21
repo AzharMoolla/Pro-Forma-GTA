@@ -15,6 +15,7 @@ export interface Receipt {
   size: number
   sha256: string
   addedAt: string
+  storagePath?: string // set when the file is stored in the cloud bucket rather than this browser
 }
 
 export interface TaskRecord {

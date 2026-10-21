@@ -3,6 +3,7 @@ import { isPortfolio, runNode, type Node, type NodeResult } from '../engine/port
 import type { Component, ProjectInput } from '../engine/project'
 import type { Simulation, TornadoBar } from '../engine/uncertainty'
 import { createSnapshot, diffInputs, lock, verify, type Snapshot } from '../scenario/snapshot'
+import { saveScenario } from '../cloud/cloud'
 import { Tornado } from './charts'
 import { MetricLabel } from './Glossary'
 import { Button, Card, Chip, NumberField, SourceChip, TableWrap, cx, td, tdNum, th } from './components'
@@ -283,8 +284,9 @@ export function Returns() {
 // ---------------------------------------------------------------- scenarios
 
 export function Scenarios() {
-  const { state, dispatch, draft, demo } = useWorkspace()
+  const { state, dispatch, draft, demo, cloud } = useWorkspace()
   const project = state.projects[state.projectId]!
+  const [saveError, setSaveError] = useState<string | null>(null)
   const [label, setLabel] = useState('')
   const [note, setNote] = useState('')
   const [selected, setSelected] = useState<string[]>([])
@@ -300,6 +302,17 @@ export function Scenarios() {
   const save = async () => {
     setBusy(true)
     const snapshot = lock(await createSnapshot({ input: draft, label: label.trim(), note: note.trim(), createdAt: new Date().toISOString(), parentId: project.draftParentId, sequence: project.scenarios.length + 1 }))
+    if (cloud.projectId) {
+      // the database re-checks the hash; a locked scenario must exist in the account before it shows as locked
+      try {
+        await saveScenario(cloud.projectId, snapshot)
+      } catch (e) {
+        setSaveError((e as Error).message)
+        setBusy(false)
+        return
+      }
+    }
+    setSaveError(null)
     dispatch({ type: 'addSnapshot', snapshot })
     setLabel('')
     setNote('')
@@ -323,7 +336,8 @@ export function Scenarios() {
           </label>
           <Button type="submit" variant="primary" disabled={busy || !label.trim() || !note.trim()}>Lock scenario</Button>
         </form>
-        <p className="mt-2 text-xs text-ink-mute">Locked scenarios are hashed (SHA-256 of the canonical inputs) and never change. Editing one branches a new draft. Saved in this browser only until accounts arrive.</p>
+        {saveError && <p role="alert" className="mt-2 text-sm text-bad">{saveError}</p>}
+        <p className="mt-2 text-xs text-ink-mute">Locked scenarios are hashed (SHA-256 of the canonical inputs) and never change. Editing one branches a new draft. {cloud.projectId ? 'Saved to your account: the database re-verifies the hash and refuses edits or deletion.' : 'Saved in this browser only: sign in to keep them in your account.'}</p>
       </Card>
 
       <Card title={`Scenarios (${project.scenarios.length})`} actions={<Button onClick={() => dispatch({ type: 'resetDraft' })}>Reset draft to {demo.name.split(':')[0]}</Button>}>

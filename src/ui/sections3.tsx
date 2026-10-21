@@ -8,6 +8,7 @@ import { coverage } from './coverage'
 import { catalogue, catalogueItem } from './data'
 import { money, pct } from './format'
 import { deleteReceipt, getReceipt, putReceipt, sha256File } from './receipts'
+import { receiptUrl, removeReceipt as removeCloudReceipt, saveTask, uploadReceipt } from '../cloud/cloud'
 import { useWorkspace } from './workspace'
 
 const stageOf = (id?: string) => (id ? catalogueItem.get(id)?.stage : undefined)
@@ -143,7 +144,7 @@ export function Progress() {
             <p className="text-base font-semibold">{view.current ? catalogue.stages.find((s) => s.id === view.current)?.label : 'All stages closed'}</p>
           </div>
         </div>
-        <p className="mt-3 text-xs text-ink-mute">One task per catalogue item that applies here. Check items off as studies complete and bills arrive, record what was actually spent, attach the receipt, and push the actual into the model so that line becomes exact. Receipts are stored in this browser until accounts arrive.</p>
+        <p className="mt-3 text-xs text-ink-mute">One task per catalogue item that applies here. Check items off as studies complete and bills arrive, record what was actually spent, attach the receipt, and push the actual into the model so that line becomes exact. Receipts are stored in your account when signed in, otherwise in this browser.</p>
       </Card>
 
       <PlanChanges />
@@ -177,12 +178,15 @@ export function Progress() {
 }
 
 function TaskRow({ task }: { task: Task }) {
-  const { state, dispatch, node } = useWorkspace()
+  const { state, dispatch, node, cloud } = useWorkspace()
   const [error, setError] = useState<string | null>(null)
   const [estimate, setEstimate] = useState(0)
   const r = task.record
   const at = () => new Date().toISOString()
-  const patch = (p: Partial<typeof r>) => dispatch({ type: 'task', key: task.key, patch: p, at: at() })
+  const patch = (p: Partial<typeof r>) => {
+    dispatch({ type: 'task', key: task.key, patch: p, at: at() })
+    if (cloud.projectId) saveTask(cloud.projectId, task.key, { ...r, ...p }).catch((e: Error) => setError(e.message))
+  }
   const lines = node.costLines.filter((l) => l.catalogueId === task.item.id)
   const variance = r.actual !== null && task.budget !== null ? r.actual - task.budget : null
 
@@ -196,10 +200,19 @@ function TaskRow({ task }: { task: Task }) {
         setError(problem)
         continue
       }
+      const sha256 = await sha256File(file)
+      if (cloud.projectId) {
+        try {
+          added.push(await uploadReceipt({ projectId: cloud.projectId, taskKey: task.key, file, sha256 }))
+        } catch (e) {
+          setError((e as Error).message)
+        }
+        continue
+      }
       const id = `${task.key}#${crypto.randomUUID()}`
       try {
         await putReceipt(id, file)
-        added.push({ id, name: file.name, type: file.type, size: file.size, sha256: await sha256File(file), addedAt: at() })
+        added.push({ id, name: file.name, type: file.type, size: file.size, sha256, addedAt: at() })
       } catch {
         setError('This browser blocked receipt storage (private mode or storage disabled).')
       }
@@ -207,6 +220,14 @@ function TaskRow({ task }: { task: Task }) {
     if (added.length) patch({ receipts: [...r.receipts, ...added], status: r.status === 'todo' ? 'in-progress' : r.status })
   }
   const openReceipt = async (rec: Receipt) => {
+    if (rec.storagePath) {
+      try {
+        window.open(await receiptUrl(rec.storagePath), '_blank', 'noopener')
+      } catch (e) {
+        setError((e as Error).message)
+      }
+      return
+    }
     const blob = await getReceipt(rec.id)
     if (!blob) return setError(`${rec.name} is not stored in this browser.`)
     const url = URL.createObjectURL(blob)
@@ -214,8 +235,14 @@ function TaskRow({ task }: { task: Task }) {
     setTimeout(() => URL.revokeObjectURL(url), 60_000)
   }
   const removeReceipt = async (rec: Receipt) => {
-    if (!window.confirm(`Remove ${rec.name}? The file is deleted from this browser.`)) return
-    await deleteReceipt(rec.id).catch(() => undefined)
+    if (!window.confirm(rec.storagePath ? `Hide ${rec.name} from this task? The file and its record are kept in your account for the audit trail.` : `Remove ${rec.name}? The file is deleted from this browser.`)) return
+    if (rec.storagePath) {
+      try {
+        await removeCloudReceipt(rec.id)
+      } catch (e) {
+        return setError((e as Error).message)
+      }
+    } else await deleteReceipt(rec.id).catch(() => undefined)
     patch({ receipts: r.receipts.filter((x) => x.id !== rec.id) })
   }
   const useActual = () => {

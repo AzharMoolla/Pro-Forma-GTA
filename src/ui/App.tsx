@@ -3,7 +3,9 @@ import { isPortfolio, runNode } from '../engine/portfolio'
 import { Chip, cx } from './components'
 import { demoProjects } from './data'
 import { metricValue } from './format'
+import { Account } from './Account'
 import { Inspector } from './Inspector'
+import { useCloud } from './useCloud'
 import { MetricLabel } from './Glossary'
 import { Sections } from './sections'
 import { atLeast, SECTIONS, useStore, type Mode } from './store'
@@ -14,6 +16,7 @@ const KPIS = ['totalDevelopmentCost', 'profit', 'profitOnCost', 'yieldOnCost', '
 
 export function App() {
   const [state, dispatch] = useStore()
+  const cloudState = useCloud(state, dispatch)
   const demo = demoProjects.find((p) => p.id === state.projectId)!
   const draft = state.projects[state.projectId]!.draft
 
@@ -35,7 +38,7 @@ export function App() {
   }, [draft, state.path])
   const node = getNode(draft, path)
   const nodeResult = result ? getResult(result, path) : null
-  const ws: Workspace = { state: { ...state, path }, dispatch, demo, draft, result, error, node, nodeResult }
+  const ws: Workspace = { state: { ...state, path }, dispatch, demo, draft, result, error, node, nodeResult, cloud: cloudState }
   const tree = isPortfolio(draft) ? flatten(draft) : []
   const visible = SECTIONS.filter((s) => atLeast(state.mode, s.minMode))
   const section = visible.some((s) => s.id === state.section) ? state.section : 'overview'
@@ -71,6 +74,7 @@ export function App() {
             ))}
           </fieldset>
           <div className="ml-auto flex flex-wrap items-center gap-2 text-sm" aria-live="polite">
+            <Account state={cloudState} />
             <Chip tone="warn" title="All demo figures are synthetic placeholders, not market evidence">Synthetic demo</Chip>
             <Chip tone="neutral">{parent ? `Draft from scenario ${parent}` : 'Unsaved draft'}</Chip>
             {error ? <Chip tone="bad">Input error</Chip> : result?.complete ? <Chip tone="good">Complete</Chip> : <Chip tone="warn">{`Incomplete: ${result?.missing.length} unknown`}</Chip>}

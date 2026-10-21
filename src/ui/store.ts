@@ -60,6 +60,7 @@ export type Action =
   | { type: 'attribute'; id: string; value: Attributes[string] }
   | { type: 'task'; key: string; patch: Partial<TaskRecord>; at: string }
   | { type: 'replaceDraft'; draft: Node; path: NodePath }
+  | { type: 'hydrate'; projectId: string; draft: Node; attributes: Attributes; draftParentId: string | null; scenarios: Snapshot[]; tracker: TrackerState }
 
 const STORAGE_KEY = 'gta-proforma:v1'
 
@@ -106,6 +107,10 @@ function reducer(state: State, action: Action): State {
       return withProject({ tracker: { ...project.tracker, [action.key]: { ...current, ...action.patch, updatedAt: action.at } } })
     }
     case 'replaceDraft': return { ...withProject({ draft: action.draft }), path: action.path, inspect: null }
+    case 'hydrate': {
+      const { projectId, draft, attributes, draftParentId, scenarios, tracker } = action
+      return { ...state, projects: { ...state.projects, [projectId]: { ...state.projects[projectId]!, draft, attributes, draftParentId, scenarios, tracker } } }
+    }
   }
 }
 
