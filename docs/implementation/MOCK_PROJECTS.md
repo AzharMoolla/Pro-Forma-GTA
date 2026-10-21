@@ -98,15 +98,17 @@ Shape follows Spanier Group's mall-site intensification thesis: build on a strip
 
 ### Checklist coverage
 
-Given its variables, **149 catalogue items apply** to this project. **100** are their own cost lines; the rest are accounted for below. A test fails if any applicable item is left unaccounted.
+Given its variables, **155 catalogue items apply** to this project. **100** are their own cost lines; the rest are accounted for below. A test fails if any applicable item is left unaccounted.
 
-**Inside another cost line** (6)
+**Inside another cost line** (8)
 
 - Construction cost benchmark (Altus Canadian Cost Guide 2026, released 2026-04-23) — hard-benchmark
 - Site plan / landscaping securities (letter of credit) — letters-of-credit
 - Toronto DC Reduction Program credit (−40% studio/1-bed, −60% 2+ bed; draft at review) — dc-city-toronto amount is net of the reduction
 - Statutory purpose-built rental DC discount by bedroom count (DCA s.26.2) — dc-city-toronto uses rental rates
 - Affordable/attainable unit DC exemption (Ontario bulletin effective 2026-07-01) — dc-city-toronto excludes the 42 affordable units
+- Water meter installation fees — inside water and sewer connections
+- Driveway / entrance access permit — inside vehicle access line
 - Soft costs as % of hard (allowance until consultants are itemized) — consultants itemized instead of an allowance
 
 **Inside the hard-cost benchmark** (12)
@@ -123,6 +125,11 @@ Given its variables, **149 catalogue items apply** to this project. **100** are 
 - Tower crane rental, operators, foundations — inside the above-grade $/ft² hard cost
 - Winter heat and protection — inside the above-grade $/ft² hard cost
 - Construction manager / GC fee — inside the above-grade $/ft² hard cost
+
+**Inside a soft-cost or studies allowance** (2)
+
+- Grading, stormwater, drainage and erosion-control review fees — inside the site plan fee allowance
+- Pre-consultation and review fees (planning, engineering, urban design) — inside planning, architecture and legal through approvals
 
 **Handled by a revenue/operating component** (14)
 
@@ -149,18 +156,20 @@ Given its variables, **149 catalogue items apply** to this project. **100** are 
 - Sale commission, legal, marketing at exit — exit selling costs 1.5%
 - Refinance: new lender fees, prepayment penalty — refinance fee 3.5%
 
-**Excluded, with reason** (5)
+**Excluded, with reason** (6)
 
 - Market data subscriptions (Altus Data Studio, Urbanation, CoStar) — corporate overhead
 - Brokerage commission on purchase — vendor pays the listing commission
 - Performance and labour & material bonds — construction-management delivery, no bonds
 - Interest-rate hedge — unhedged
 - Toronto Vacant Home Tax (unsold or unoccupied units) — rental units are leased
+- Stormwater user fee (based on impervious area), where the municipality charges one — Toronto recovers stormwater through water rates in rental opex
 
-****Gaps: not modelled yet**** (7)
+****Gaps: not modelled yet**** (8)
 
 - HST on land (taxable supply; registrant self-assesses) — GST/HST timing not modelled yet (C17)
 - Zoning review / compliance letter — small fee, schedule not loaded
+- Frontage / local improvement charges — Toronto local-improvement charges not checked for this frontage
 - Construction Act 10% holdback (cash timing, not cost) — Construction Act holdback cash timing not modelled yet
 - Self-supply HST on first occupancy of rental (fair market value) — GST/HST timing not modelled yet (C17)
 - Federal GST rental rebate / NRRP / Ontario ENRRP (construction start 2026-04-01 to 2027-03-31) — GST/HST timing not modelled yet (C17)
@@ -270,7 +279,7 @@ Shape follows Lakeview Village (Spanier Group reference project): 177-acre forme
 
 ### Checklist coverage
 
-Given its variables, **143 catalogue items apply** to this project. **49** are their own cost lines; the rest are accounted for below. A test fails if any applicable item is left unaccounted.
+Given its variables, **147 catalogue items apply** to this project. **49** are their own cost lines; the rest are accounted for below. A test fails if any applicable item is left unaccounted.
 
 **Inside another cost line** (12)
 
@@ -317,7 +326,7 @@ Given its variables, **143 catalogue items apply** to this project. **49** are t
 - Winter heat and protection — inside each block’s $/ft² hard cost
 - Amenity furniture, fixtures and equipment — inside each block’s $/ft² hard cost
 
-**Inside a soft-cost or studies allowance** (32)
+**Inside a soft-cost or studies allowance** (35)
 
 - Market study, appraisal, broker opinion of value — inside each block’s 18–20% soft-cost line or the master-plan studies lines
 - Concept massing / test-fit — inside each block’s 18–20% soft-cost line or the master-plan studies lines
@@ -333,13 +342,16 @@ Given its variables, **143 catalogue items apply** to this project. **49** are t
 - Noise and vibration study — inside each block’s 18–20% soft-cost line or the master-plan studies lines
 - Pedestrian wind and sun/shadow studies — inside each block’s 18–20% soft-cost line or the master-plan studies lines
 - Functional servicing and stormwater management report — inside each block’s 18–20% soft-cost line or the master-plan studies lines
+- Grading, stormwater, drainage and erosion-control review fees — inside the master-plan studies lines
 - Energy strategy, energy model, Toronto Green Standard checklist — inside each block’s 18–20% soft-cost line or the master-plan studies lines
 - Planning justification report, urban design brief, community consultation — inside each block’s 18–20% soft-cost line or the master-plan studies lines
 - Site plan application fee — inside each block’s 18–20% soft-cost line or the master-plan studies lines
 - Draft plan of condominium fee — inside each block’s 18–20% soft-cost line or the master-plan studies lines
+- Pre-consultation and review fees (planning, engineering, urban design) — inside the master-plan studies lines
 - Demolition permit — inside each block’s 18–20% soft-cost line or the master-plan studies lines
 - Electrical connection and capacity expansion (Toronto Hydro / Elexicon) — inside each block’s 18–20% soft-cost line or the master-plan studies lines
 - Gas, telecom and fibre connections — inside each block’s 18–20% soft-cost line or the master-plan studies lines
+- Driveway / entrance access permit — inside each block’s soft-cost line
 - Sign permits (sign by-law) — inside each block’s 18–20% soft-cost line or the master-plan studies lines
 - Architect (OAA fee guideline) — inside each block’s 18–20% soft-cost line or the master-plan studies lines
 - Structural, mechanical, electrical, civil engineers — inside each block’s 18–20% soft-cost line or the master-plan studies lines
@@ -376,10 +388,11 @@ Given its variables, **143 catalogue items apply** to this project. **49** are t
 - Performance and labour & material bonds — construction-management delivery
 - Interest-rate hedge — unhedged
 
-****Gaps: not modelled yet**** (8)
+****Gaps: not modelled yet**** (9)
 
 - HST on land (taxable supply; registrant self-assesses) — GST/HST timing not modelled yet (C17)
 - Insurance, security, vacant-building maintenance — site security during the 30-month pre-development hold
+- Frontage / local improvement charges — Oshawa/Durham frontage and local-improvement charges not yet loaded
 - Utility / easement relocation — easements flagged but not estimated
 - Construction Act 10% holdback (cash timing, not cost) — Construction Act holdback cash timing not modelled yet
 - HST on construction inputs; input tax credits (taxable supplies) — GST/HST timing not modelled yet (C17)

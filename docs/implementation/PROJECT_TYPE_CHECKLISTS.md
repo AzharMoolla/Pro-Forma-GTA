@@ -2,19 +2,19 @@
 
 Generated from `data/costs/catalogue.json` (v0.1.0, as of 2026-10-21) by `npm run report`. Do not edit by hand.
 
-The catalogue holds **151 project variables** and **232 cost items** across 16 stages. Each project type below lists every item that can apply. Items marked **if …** are switched on by a project variable (dirty soil, affordable units, TTC proximity, amenities and so on). Source tags: verified · source · quote · proposed (not law).
+The catalogue holds **151 project variables** and **238 cost items** across 16 stages. Each project type below lists every item that can apply. Items marked **if …** are switched on by a project variable (dirty soil, affordable units, TTC proximity, amenities and so on). Source tags: verified · source · quote · proposed (not law).
 
 | Project type | Always applies | Conditional | Example |
 |---|---|---|---|
-| Purpose-built rental, mid-rise (6–12 storeys) | 73 | 114 | Avenue mid-rise with ground-floor retail |
-| Purpose-built rental tower, transit-oriented | 73 | 115 | Mall-parcel intensification beside a subway station (Spanier: mall redevelopment around transit) |
-| High-rise condominium | 79 | 116 | Downtown condo tower with presales |
-| Mixed-use tower(s) on a retail/office podium | 86 | 121 | Galleria-style site: condo + rental towers over retail, parking moved underground |
-| Townhouses / stacked towns | 77 | 115 | Freehold or condo towns in a suburban plan |
-| Infill multiplex / garden or laneway suites (2–10 units) | 66 | 110 | Fourplex replacing a detached house |
-| Commercial: office, retail, industrial | 66 | 109 | Multi-tenant industrial or retail plaza |
-| Adaptive reuse / conversion | 74 | 112 | Office-to-residential; Canary District's post-Games conversion (kitchens added to athlete suites) |
-| Master-planned community (greenfield or brownfield) | 54 | 127 | Lakeview Village: 177-acre brownfield waterfront, 8,050→16,000 units, employment lands, parks, pier |
+| Purpose-built rental, mid-rise (6–12 storeys) | 78 | 115 | Avenue mid-rise with ground-floor retail |
+| Purpose-built rental tower, transit-oriented | 78 | 116 | Mall-parcel intensification beside a subway station (Spanier: mall redevelopment around transit) |
+| High-rise condominium | 84 | 117 | Downtown condo tower with presales |
+| Mixed-use tower(s) on a retail/office podium | 91 | 122 | Galleria-style site: condo + rental towers over retail, parking moved underground |
+| Townhouses / stacked towns | 82 | 116 | Freehold or condo towns in a suburban plan |
+| Infill multiplex / garden or laneway suites (2–10 units) | 71 | 111 | Fourplex replacing a detached house |
+| Commercial: office, retail, industrial | 71 | 110 | Multi-tenant industrial or retail plaza |
+| Adaptive reuse / conversion | 79 | 113 | Office-to-residential; Canary District's post-Games conversion (kitchens added to athlete suites) |
+| Master-planned community (greenfield or brownfield) | 57 | 128 | Lakeview Village: 177-acre brownfield waterfront, 8,050→16,000 units, employment lands, parks, pier |
 
 ## Variables (the switches)
 
@@ -80,6 +80,7 @@ The catalogue holds **151 project variables** and **232 cost items** across 16 s
 - Rail proximity: safety/vibration study, crash wall or berm design · `lumpSum` · class C · source — *if site.nearRailCorridor*
 - Pedestrian wind and sun/shadow studies · `lumpSum` · class B · quote
 - Functional servicing and stormwater management report · `lumpSum` · class B · quote
+- Grading, stormwater, drainage and erosion-control review fees · `schedule` · class exact · source
 - Energy strategy, energy model, Toronto Green Standard checklist · `lumpSum` · class B · source
 - Planning justification report, urban design brief, community consultation · `lumpSum` · class B · quote — *if planning.zba*
 - TTC technical review (work within 60 m of TTC infrastructure) · `lumpSum` · class C · verified — *if site.nearTtc60m*
@@ -99,6 +100,7 @@ The catalogue holds **151 project variables** and **232 cost items** across 16 s
 - Committee of Adjustment fee · `schedule` · class exact · source — *if planning.minorVariance*
 - Ontario Land Tribunal appeal: legal and experts · `lumpSum` · class D · quote — *if planning.appealRisk*
 - Planner, architect and legal time through approvals · `lumpSum` · class C · quote
+- Pre-consultation and review fees (planning, engineering, urban design) · `schedule` · class exact · source
 - Parkland cash-in-lieu (Planning Act s.42; caps 10% of land value <1 ha, 15% for 1–5 ha) · `percentOf` · class exact · source
 - Community Benefits Charge (up to 4% of land value) (0.04 of land value (cap)) · `percentOf` · class exact · source — *if planning.cbcApplies*
 - Inclusionary zoning: revenue forgone on affordable set-aside · `revenue` · class B · source — *if planning.inclusionaryZoning*
@@ -130,12 +132,15 @@ The catalogue holds **151 project variables** and **232 cost items** across 16 s
 - Right-of-way: street occupation, hoarding, crane swing, lane closures · `perMonth` · class B · source — *if site.tightUrbanSite*
 - Crane-swing and tie-back encroachment agreements with neighbours · `lumpSum` · class D · quote — *if site.tightUrbanSite*
 - Water and sewer service connections · `lumpSum` · class B · source
+- Frontage / local improvement charges · `perLinear` · class exact · source
+- Water meter installation fees · `perUnit` · class exact · source
 - Off-site servicing capacity upgrades (watermain, sewer) · `perLinear` · class D · quote
 - Electrical connection and capacity expansion (Toronto Hydro / Elexicon) · `lumpSum` · class C · quote
 - Electrical vault / transformer room · `lumpSum` · class C · quote — *if design.hydroVault*
 - Gas, telecom and fibre connections · `lumpSum` · class C · quote
 - District energy connection charge · `lumpSum` · class C · quote — *if design.energySystem=district-energy*
 - Vehicle entries/exits: curb cuts, ramps, lay-bys, fire route · `perUnit` · class C · quote — *if design.vehicleAccessPoints>=1*
+- Driveway / entrance access permit · `schedule` · class exact · source — *if design.vehicleAccessPoints>=1*
 - Boulevard and streetscape restoration (paving, street trees in soil cells, lighting) · `perLinear` · class C · source — *if design.streetscapeM>=1*
 - Sign permits (sign by-law) · `schedule` · class exact · source — *if design.signage*
 
@@ -247,6 +252,7 @@ The catalogue holds **151 project variables** and **232 cost items** across 16 s
 - Utilities (bulk vs submetered) · `perUnit` · class B · quote
 - Property insurance · `perUnit` · class B · quote
 - Property tax (Toronto 2026: new multi-residential 0.767311%, multi-residential 1.208792%) · `rate` · class exact · verified
+- Stormwater user fee (based on impervious area), where the municipality charges one · `perArea` · class exact · source
 - RentSafeTO registration (3+ storeys and 10+ units) · `perUnit` · class exact · source — *if site.municipality=toronto*
 - Concierge and security · `perMonth` · class B · quote — *if program.concierge*
 - Capital reserves · `perUnit` · class B · source
@@ -314,6 +320,7 @@ The catalogue holds **151 project variables** and **232 cost items** across 16 s
 - Rail proximity: safety/vibration study, crash wall or berm design · `lumpSum` · class C · source — *if site.nearRailCorridor*
 - Pedestrian wind and sun/shadow studies · `lumpSum` · class B · quote
 - Functional servicing and stormwater management report · `lumpSum` · class B · quote
+- Grading, stormwater, drainage and erosion-control review fees · `schedule` · class exact · source
 - Energy strategy, energy model, Toronto Green Standard checklist · `lumpSum` · class B · source
 - Planning justification report, urban design brief, community consultation · `lumpSum` · class B · quote — *if planning.zba*
 - TTC technical review (work within 60 m of TTC infrastructure) · `lumpSum` · class C · verified — *if site.nearTtc60m*
@@ -333,6 +340,7 @@ The catalogue holds **151 project variables** and **232 cost items** across 16 s
 - Committee of Adjustment fee · `schedule` · class exact · source — *if planning.minorVariance*
 - Ontario Land Tribunal appeal: legal and experts · `lumpSum` · class D · quote — *if planning.appealRisk*
 - Planner, architect and legal time through approvals · `lumpSum` · class C · quote
+- Pre-consultation and review fees (planning, engineering, urban design) · `schedule` · class exact · source
 - Parkland cash-in-lieu (Planning Act s.42; caps 10% of land value <1 ha, 15% for 1–5 ha) · `percentOf` · class exact · source
 - Community Benefits Charge (up to 4% of land value) (0.04 of land value (cap)) · `percentOf` · class exact · source — *if planning.cbcApplies*
 - Inclusionary zoning: revenue forgone on affordable set-aside · `revenue` · class B · source — *if planning.inclusionaryZoning*
@@ -364,12 +372,15 @@ The catalogue holds **151 project variables** and **232 cost items** across 16 s
 - Right-of-way: street occupation, hoarding, crane swing, lane closures · `perMonth` · class B · source — *if site.tightUrbanSite*
 - Crane-swing and tie-back encroachment agreements with neighbours · `lumpSum` · class D · quote — *if site.tightUrbanSite*
 - Water and sewer service connections · `lumpSum` · class B · source
+- Frontage / local improvement charges · `perLinear` · class exact · source
+- Water meter installation fees · `perUnit` · class exact · source
 - Off-site servicing capacity upgrades (watermain, sewer) · `perLinear` · class D · quote
 - Electrical connection and capacity expansion (Toronto Hydro / Elexicon) · `lumpSum` · class C · quote
 - Electrical vault / transformer room · `lumpSum` · class C · quote — *if design.hydroVault*
 - Gas, telecom and fibre connections · `lumpSum` · class C · quote
 - District energy connection charge · `lumpSum` · class C · quote — *if design.energySystem=district-energy*
 - Vehicle entries/exits: curb cuts, ramps, lay-bys, fire route · `perUnit` · class C · quote — *if design.vehicleAccessPoints>=1*
+- Driveway / entrance access permit · `schedule` · class exact · source — *if design.vehicleAccessPoints>=1*
 - Boulevard and streetscape restoration (paving, street trees in soil cells, lighting) · `perLinear` · class C · source — *if design.streetscapeM>=1*
 - Sign permits (sign by-law) · `schedule` · class exact · source — *if design.signage*
 
@@ -481,6 +492,7 @@ The catalogue holds **151 project variables** and **232 cost items** across 16 s
 - Utilities (bulk vs submetered) · `perUnit` · class B · quote
 - Property insurance · `perUnit` · class B · quote
 - Property tax (Toronto 2026: new multi-residential 0.767311%, multi-residential 1.208792%) · `rate` · class exact · verified
+- Stormwater user fee (based on impervious area), where the municipality charges one · `perArea` · class exact · source
 - RentSafeTO registration (3+ storeys and 10+ units) · `perUnit` · class exact · source — *if site.municipality=toronto*
 - Concierge and security · `perMonth` · class B · quote — *if program.concierge*
 - Capital reserves · `perUnit` · class B · source
@@ -552,6 +564,7 @@ The catalogue holds **151 project variables** and **232 cost items** across 16 s
 - Rail proximity: safety/vibration study, crash wall or berm design · `lumpSum` · class C · source — *if site.nearRailCorridor*
 - Pedestrian wind and sun/shadow studies · `lumpSum` · class B · quote
 - Functional servicing and stormwater management report · `lumpSum` · class B · quote
+- Grading, stormwater, drainage and erosion-control review fees · `schedule` · class exact · source
 - Energy strategy, energy model, Toronto Green Standard checklist · `lumpSum` · class B · source
 - Planning justification report, urban design brief, community consultation · `lumpSum` · class B · quote — *if planning.zba*
 - TTC technical review (work within 60 m of TTC infrastructure) · `lumpSum` · class C · verified — *if site.nearTtc60m*
@@ -571,6 +584,7 @@ The catalogue holds **151 project variables** and **232 cost items** across 16 s
 - Committee of Adjustment fee · `schedule` · class exact · source — *if planning.minorVariance*
 - Ontario Land Tribunal appeal: legal and experts · `lumpSum` · class D · quote — *if planning.appealRisk*
 - Planner, architect and legal time through approvals · `lumpSum` · class C · quote
+- Pre-consultation and review fees (planning, engineering, urban design) · `schedule` · class exact · source
 - Parkland cash-in-lieu (Planning Act s.42; caps 10% of land value <1 ha, 15% for 1–5 ha) · `percentOf` · class exact · source
 - Community Benefits Charge (up to 4% of land value) (0.04 of land value (cap)) · `percentOf` · class exact · source — *if planning.cbcApplies*
 - Inclusionary zoning: revenue forgone on affordable set-aside · `revenue` · class B · source — *if planning.inclusionaryZoning*
@@ -601,12 +615,15 @@ The catalogue holds **151 project variables** and **232 cost items** across 16 s
 - Right-of-way: street occupation, hoarding, crane swing, lane closures · `perMonth` · class B · source — *if site.tightUrbanSite*
 - Crane-swing and tie-back encroachment agreements with neighbours · `lumpSum` · class D · quote — *if site.tightUrbanSite*
 - Water and sewer service connections · `lumpSum` · class B · source
+- Frontage / local improvement charges · `perLinear` · class exact · source
+- Water meter installation fees · `perUnit` · class exact · source
 - Off-site servicing capacity upgrades (watermain, sewer) · `perLinear` · class D · quote
 - Electrical connection and capacity expansion (Toronto Hydro / Elexicon) · `lumpSum` · class C · quote
 - Electrical vault / transformer room · `lumpSum` · class C · quote — *if design.hydroVault*
 - Gas, telecom and fibre connections · `lumpSum` · class C · quote
 - District energy connection charge · `lumpSum` · class C · quote — *if design.energySystem=district-energy*
 - Vehicle entries/exits: curb cuts, ramps, lay-bys, fire route · `perUnit` · class C · quote — *if design.vehicleAccessPoints>=1*
+- Driveway / entrance access permit · `schedule` · class exact · source — *if design.vehicleAccessPoints>=1*
 - Boulevard and streetscape restoration (paving, street trees in soil cells, lighting) · `perLinear` · class C · source — *if design.streetscapeM>=1*
 - Sign permits (sign by-law) · `schedule` · class exact · source — *if design.signage*
 - Occupancy permit (required for non-rental residential with deferred DCs from 2025-11-03) · `schedule` · class exact · source — *if policy.dcDeferral*
@@ -731,6 +748,7 @@ The catalogue holds **151 project variables** and **232 cost items** across 16 s
 - Utilities (bulk vs submetered) · `perUnit` · class B · quote
 - Property insurance · `perUnit` · class B · quote
 - Property tax (Toronto 2026: new multi-residential 0.767311%, multi-residential 1.208792%) · `rate` · class exact · verified
+- Stormwater user fee (based on impervious area), where the municipality charges one · `perArea` · class exact · source
 - Concierge and security · `perMonth` · class B · quote — *if program.concierge*
 - Parking, storage, laundry and telecom income (revenue) · `revenue` · class B · source
 
@@ -800,6 +818,7 @@ The catalogue holds **151 project variables** and **232 cost items** across 16 s
 - Rail proximity: safety/vibration study, crash wall or berm design · `lumpSum` · class C · source — *if site.nearRailCorridor*
 - Pedestrian wind and sun/shadow studies · `lumpSum` · class B · quote
 - Functional servicing and stormwater management report · `lumpSum` · class B · quote
+- Grading, stormwater, drainage and erosion-control review fees · `schedule` · class exact · source
 - Energy strategy, energy model, Toronto Green Standard checklist · `lumpSum` · class B · source
 - Planning justification report, urban design brief, community consultation · `lumpSum` · class B · quote — *if planning.zba*
 - TTC technical review (work within 60 m of TTC infrastructure) · `lumpSum` · class C · verified — *if site.nearTtc60m*
@@ -819,6 +838,7 @@ The catalogue holds **151 project variables** and **232 cost items** across 16 s
 - Committee of Adjustment fee · `schedule` · class exact · source — *if planning.minorVariance*
 - Ontario Land Tribunal appeal: legal and experts · `lumpSum` · class D · quote — *if planning.appealRisk*
 - Planner, architect and legal time through approvals · `lumpSum` · class C · quote
+- Pre-consultation and review fees (planning, engineering, urban design) · `schedule` · class exact · source
 - Parkland cash-in-lieu (Planning Act s.42; caps 10% of land value <1 ha, 15% for 1–5 ha) · `percentOf` · class exact · source
 - Community Benefits Charge (up to 4% of land value) (0.04 of land value (cap)) · `percentOf` · class exact · source — *if planning.cbcApplies*
 - Inclusionary zoning: revenue forgone on affordable set-aside · `revenue` · class B · source — *if planning.inclusionaryZoning*
@@ -850,12 +870,15 @@ The catalogue holds **151 project variables** and **232 cost items** across 16 s
 - Right-of-way: street occupation, hoarding, crane swing, lane closures · `perMonth` · class B · source — *if site.tightUrbanSite*
 - Crane-swing and tie-back encroachment agreements with neighbours · `lumpSum` · class D · quote — *if site.tightUrbanSite*
 - Water and sewer service connections · `lumpSum` · class B · source
+- Frontage / local improvement charges · `perLinear` · class exact · source
+- Water meter installation fees · `perUnit` · class exact · source
 - Off-site servicing capacity upgrades (watermain, sewer) · `perLinear` · class D · quote
 - Electrical connection and capacity expansion (Toronto Hydro / Elexicon) · `lumpSum` · class C · quote
 - Electrical vault / transformer room · `lumpSum` · class C · quote — *if design.hydroVault*
 - Gas, telecom and fibre connections · `lumpSum` · class C · quote
 - District energy connection charge · `lumpSum` · class C · quote — *if design.energySystem=district-energy*
 - Vehicle entries/exits: curb cuts, ramps, lay-bys, fire route · `perUnit` · class C · quote — *if design.vehicleAccessPoints>=1*
+- Driveway / entrance access permit · `schedule` · class exact · source — *if design.vehicleAccessPoints>=1*
 - Boulevard and streetscape restoration (paving, street trees in soil cells, lighting) · `perLinear` · class C · source — *if design.streetscapeM>=1*
 - Sign permits (sign by-law) · `schedule` · class exact · source — *if design.signage*
 - Occupancy permit (required for non-rental residential with deferred DCs from 2025-11-03) · `schedule` · class exact · source — *if policy.dcDeferral*
@@ -988,6 +1011,7 @@ The catalogue holds **151 project variables** and **232 cost items** across 16 s
 - Utilities (bulk vs submetered) · `perUnit` · class B · quote
 - Property insurance · `perUnit` · class B · quote
 - Property tax (Toronto 2026: new multi-residential 0.767311%, multi-residential 1.208792%) · `rate` · class exact · verified
+- Stormwater user fee (based on impervious area), where the municipality charges one · `perArea` · class exact · source
 - RentSafeTO registration (3+ storeys and 10+ units) · `perUnit` · class exact · source — *if site.municipality=toronto*
 - Concierge and security · `perMonth` · class B · quote — *if program.concierge*
 - Capital reserves · `perUnit` · class B · source
@@ -1059,6 +1083,7 @@ The catalogue holds **151 project variables** and **232 cost items** across 16 s
 - Noise and vibration study · `lumpSum` · class B · quote
 - Rail proximity: safety/vibration study, crash wall or berm design · `lumpSum` · class C · source — *if site.nearRailCorridor*
 - Functional servicing and stormwater management report · `lumpSum` · class B · quote
+- Grading, stormwater, drainage and erosion-control review fees · `schedule` · class exact · source
 - Energy strategy, energy model, Toronto Green Standard checklist · `lumpSum` · class B · source
 - Planning justification report, urban design brief, community consultation · `lumpSum` · class B · quote — *if planning.zba*
 - TTC technical review (work within 60 m of TTC infrastructure) · `lumpSum` · class C · verified — *if site.nearTtc60m*
@@ -1078,6 +1103,7 @@ The catalogue holds **151 project variables** and **232 cost items** across 16 s
 - Committee of Adjustment fee · `schedule` · class exact · source — *if planning.minorVariance*
 - Ontario Land Tribunal appeal: legal and experts · `lumpSum` · class D · quote — *if planning.appealRisk*
 - Planner, architect and legal time through approvals · `lumpSum` · class C · quote
+- Pre-consultation and review fees (planning, engineering, urban design) · `schedule` · class exact · source
 - Parkland cash-in-lieu (Planning Act s.42; caps 10% of land value <1 ha, 15% for 1–5 ha) · `percentOf` · class exact · source
 - Community Benefits Charge (up to 4% of land value) (0.04 of land value (cap)) · `percentOf` · class exact · source — *if planning.cbcApplies*
 - Inclusionary zoning: revenue forgone on affordable set-aside · `revenue` · class B · source — *if planning.inclusionaryZoning*
@@ -1107,12 +1133,15 @@ The catalogue holds **151 project variables** and **232 cost items** across 16 s
 - Right-of-way: street occupation, hoarding, crane swing, lane closures · `perMonth` · class B · source — *if site.tightUrbanSite*
 - Crane-swing and tie-back encroachment agreements with neighbours · `lumpSum` · class D · quote — *if site.tightUrbanSite*
 - Water and sewer service connections · `lumpSum` · class B · source
+- Frontage / local improvement charges · `perLinear` · class exact · source
+- Water meter installation fees · `perUnit` · class exact · source
 - Off-site servicing capacity upgrades (watermain, sewer) · `perLinear` · class D · quote
 - Electrical connection and capacity expansion (Toronto Hydro / Elexicon) · `lumpSum` · class C · quote
 - Electrical vault / transformer room · `lumpSum` · class C · quote — *if design.hydroVault*
 - Gas, telecom and fibre connections · `lumpSum` · class C · quote
 - District energy connection charge · `lumpSum` · class C · quote — *if design.energySystem=district-energy*
 - Vehicle entries/exits: curb cuts, ramps, lay-bys, fire route · `perUnit` · class C · quote — *if design.vehicleAccessPoints>=1*
+- Driveway / entrance access permit · `schedule` · class exact · source — *if design.vehicleAccessPoints>=1*
 - Boulevard and streetscape restoration (paving, street trees in soil cells, lighting) · `perLinear` · class C · source — *if design.streetscapeM>=1*
 - Sign permits (sign by-law) · `schedule` · class exact · source — *if design.signage*
 - Occupancy permit (required for non-rental residential with deferred DCs from 2025-11-03) · `schedule` · class exact · source — *if policy.dcDeferral*
@@ -1235,6 +1264,7 @@ The catalogue holds **151 project variables** and **232 cost items** across 16 s
 - Utilities (bulk vs submetered) · `perUnit` · class B · quote
 - Property insurance · `perUnit` · class B · quote
 - Property tax (Toronto 2026: new multi-residential 0.767311%, multi-residential 1.208792%) · `rate` · class exact · verified
+- Stormwater user fee (based on impervious area), where the municipality charges one · `perArea` · class exact · source
 - Concierge and security · `perMonth` · class B · quote — *if program.concierge*
 - Parking, storage, laundry and telecom income (revenue) · `revenue` · class B · source
 
@@ -1302,6 +1332,7 @@ The catalogue holds **151 project variables** and **232 cost items** across 16 s
 - Natural heritage / environmental impact study, species at risk · `lumpSum` · class C · quote — *if site.regulatedArea*
 - Rail proximity: safety/vibration study, crash wall or berm design · `lumpSum` · class C · source — *if site.nearRailCorridor*
 - Functional servicing and stormwater management report · `lumpSum` · class B · quote
+- Grading, stormwater, drainage and erosion-control review fees · `schedule` · class exact · source
 - Planning justification report, urban design brief, community consultation · `lumpSum` · class B · quote — *if planning.zba*
 - TTC technical review (work within 60 m of TTC infrastructure) · `lumpSum` · class C · verified — *if site.nearTtc60m*
 - TTC-required protections, monitoring and design changes · `lumpSum` · class D · quote — *if site.nearTtc60m*
@@ -1320,6 +1351,7 @@ The catalogue holds **151 project variables** and **232 cost items** across 16 s
 - Committee of Adjustment fee · `schedule` · class exact · source — *if planning.minorVariance*
 - Ontario Land Tribunal appeal: legal and experts · `lumpSum` · class D · quote — *if planning.appealRisk*
 - Planner, architect and legal time through approvals · `lumpSum` · class C · quote
+- Pre-consultation and review fees (planning, engineering, urban design) · `schedule` · class exact · source
 - Parkland cash-in-lieu (Planning Act s.42; caps 10% of land value <1 ha, 15% for 1–5 ha) · `percentOf` · class exact · source
 - Community Benefits Charge (up to 4% of land value) (0.04 of land value (cap)) · `percentOf` · class exact · source — *if planning.cbcApplies*
 - Inclusionary zoning: revenue forgone on affordable set-aside · `revenue` · class B · source — *if planning.inclusionaryZoning*
@@ -1350,11 +1382,14 @@ The catalogue holds **151 project variables** and **232 cost items** across 16 s
 - Right-of-way: street occupation, hoarding, crane swing, lane closures · `perMonth` · class B · source — *if site.tightUrbanSite*
 - Crane-swing and tie-back encroachment agreements with neighbours · `lumpSum` · class D · quote — *if site.tightUrbanSite*
 - Water and sewer service connections · `lumpSum` · class B · source
+- Frontage / local improvement charges · `perLinear` · class exact · source
+- Water meter installation fees · `perUnit` · class exact · source
 - Electrical connection and capacity expansion (Toronto Hydro / Elexicon) · `lumpSum` · class C · quote
 - Electrical vault / transformer room · `lumpSum` · class C · quote — *if design.hydroVault*
 - Gas, telecom and fibre connections · `lumpSum` · class C · quote
 - District energy connection charge · `lumpSum` · class C · quote — *if design.energySystem=district-energy*
 - Vehicle entries/exits: curb cuts, ramps, lay-bys, fire route · `perUnit` · class C · quote — *if design.vehicleAccessPoints>=1*
+- Driveway / entrance access permit · `schedule` · class exact · source — *if design.vehicleAccessPoints>=1*
 - Boulevard and streetscape restoration (paving, street trees in soil cells, lighting) · `perLinear` · class C · source — *if design.streetscapeM>=1*
 - Sign permits (sign by-law) · `schedule` · class exact · source — *if design.signage*
 
@@ -1462,6 +1497,7 @@ The catalogue holds **151 project variables** and **232 cost items** across 16 s
 - Utilities (bulk vs submetered) · `perUnit` · class B · quote
 - Property insurance · `perUnit` · class B · quote
 - Property tax (Toronto 2026: new multi-residential 0.767311%, multi-residential 1.208792%) · `rate` · class exact · verified
+- Stormwater user fee (based on impervious area), where the municipality charges one · `perArea` · class exact · source
 - Concierge and security · `perMonth` · class B · quote — *if program.concierge*
 - Capital reserves · `perUnit` · class B · source
 - Parking, storage, laundry and telecom income (revenue) · `revenue` · class B · source
@@ -1526,6 +1562,7 @@ The catalogue holds **151 project variables** and **232 cost items** across 16 s
 - Noise and vibration study · `lumpSum` · class B · quote
 - Rail proximity: safety/vibration study, crash wall or berm design · `lumpSum` · class C · source — *if site.nearRailCorridor*
 - Functional servicing and stormwater management report · `lumpSum` · class B · quote
+- Grading, stormwater, drainage and erosion-control review fees · `schedule` · class exact · source
 - Energy strategy, energy model, Toronto Green Standard checklist · `lumpSum` · class B · source
 - Planning justification report, urban design brief, community consultation · `lumpSum` · class B · quote — *if planning.zba*
 - TTC technical review (work within 60 m of TTC infrastructure) · `lumpSum` · class C · verified — *if site.nearTtc60m*
@@ -1545,6 +1582,7 @@ The catalogue holds **151 project variables** and **232 cost items** across 16 s
 - Committee of Adjustment fee · `schedule` · class exact · source — *if planning.minorVariance*
 - Ontario Land Tribunal appeal: legal and experts · `lumpSum` · class D · quote — *if planning.appealRisk*
 - Planner, architect and legal time through approvals · `lumpSum` · class C · quote
+- Pre-consultation and review fees (planning, engineering, urban design) · `schedule` · class exact · source
 - Parkland for commercial/industrial (2% of land or cash equivalent) (0.02 of land value) · `percentOf` · class exact · source
 - Community Benefits Charge (up to 4% of land value) (0.04 of land value (cap)) · `percentOf` · class exact · source — *if planning.cbcApplies*
 - Inclusionary zoning: revenue forgone on affordable set-aside · `revenue` · class B · source — *if planning.inclusionaryZoning*
@@ -1574,12 +1612,15 @@ The catalogue holds **151 project variables** and **232 cost items** across 16 s
 - Right-of-way: street occupation, hoarding, crane swing, lane closures · `perMonth` · class B · source — *if site.tightUrbanSite*
 - Crane-swing and tie-back encroachment agreements with neighbours · `lumpSum` · class D · quote — *if site.tightUrbanSite*
 - Water and sewer service connections · `lumpSum` · class B · source
+- Frontage / local improvement charges · `perLinear` · class exact · source
+- Water meter installation fees · `perUnit` · class exact · source
 - Off-site servicing capacity upgrades (watermain, sewer) · `perLinear` · class D · quote
 - Electrical connection and capacity expansion (Toronto Hydro / Elexicon) · `lumpSum` · class C · quote
 - Electrical vault / transformer room · `lumpSum` · class C · quote — *if design.hydroVault*
 - Gas, telecom and fibre connections · `lumpSum` · class C · quote
 - District energy connection charge · `lumpSum` · class C · quote — *if design.energySystem=district-energy*
 - Vehicle entries/exits: curb cuts, ramps, lay-bys, fire route · `perUnit` · class C · quote — *if design.vehicleAccessPoints>=1*
+- Driveway / entrance access permit · `schedule` · class exact · source — *if design.vehicleAccessPoints>=1*
 - Boulevard and streetscape restoration (paving, street trees in soil cells, lighting) · `perLinear` · class C · source — *if design.streetscapeM>=1*
 - Sign permits (sign by-law) · `schedule` · class exact · source — *if design.signage*
 
@@ -1683,6 +1724,7 @@ The catalogue holds **151 project variables** and **232 cost items** across 16 s
 - Utilities (bulk vs submetered) · `perUnit` · class B · quote
 - Property insurance · `perUnit` · class B · quote
 - Property tax (Toronto 2026: new multi-residential 0.767311%, multi-residential 1.208792%) · `rate` · class exact · verified
+- Stormwater user fee (based on impervious area), where the municipality charges one · `perArea` · class exact · source
 - Concierge and security · `perMonth` · class B · quote — *if program.concierge*
 - Capital reserves · `perUnit` · class B · source
 - Parking, storage, laundry and telecom income (revenue) · `revenue` · class B · source
@@ -1749,6 +1791,7 @@ The catalogue holds **151 project variables** and **232 cost items** across 16 s
 - Noise and vibration study · `lumpSum` · class B · quote
 - Rail proximity: safety/vibration study, crash wall or berm design · `lumpSum` · class C · source — *if site.nearRailCorridor*
 - Functional servicing and stormwater management report · `lumpSum` · class B · quote
+- Grading, stormwater, drainage and erosion-control review fees · `schedule` · class exact · source
 - Energy strategy, energy model, Toronto Green Standard checklist · `lumpSum` · class B · source
 - Planning justification report, urban design brief, community consultation · `lumpSum` · class B · quote — *if planning.zba*
 - TTC technical review (work within 60 m of TTC infrastructure) · `lumpSum` · class C · verified — *if site.nearTtc60m*
@@ -1768,6 +1811,7 @@ The catalogue holds **151 project variables** and **232 cost items** across 16 s
 - Committee of Adjustment fee · `schedule` · class exact · source — *if planning.minorVariance*
 - Ontario Land Tribunal appeal: legal and experts · `lumpSum` · class D · quote — *if planning.appealRisk*
 - Planner, architect and legal time through approvals · `lumpSum` · class C · quote
+- Pre-consultation and review fees (planning, engineering, urban design) · `schedule` · class exact · source
 - Parkland cash-in-lieu (Planning Act s.42; caps 10% of land value <1 ha, 15% for 1–5 ha) · `percentOf` · class exact · source
 - Community Benefits Charge (up to 4% of land value) (0.04 of land value (cap)) · `percentOf` · class exact · source — *if planning.cbcApplies*
 - Inclusionary zoning: revenue forgone on affordable set-aside · `revenue` · class B · source — *if planning.inclusionaryZoning*
@@ -1799,12 +1843,15 @@ The catalogue holds **151 project variables** and **232 cost items** across 16 s
 - Right-of-way: street occupation, hoarding, crane swing, lane closures · `perMonth` · class B · source — *if site.tightUrbanSite*
 - Crane-swing and tie-back encroachment agreements with neighbours · `lumpSum` · class D · quote — *if site.tightUrbanSite*
 - Water and sewer service connections · `lumpSum` · class B · source
+- Frontage / local improvement charges · `perLinear` · class exact · source
+- Water meter installation fees · `perUnit` · class exact · source
 - Off-site servicing capacity upgrades (watermain, sewer) · `perLinear` · class D · quote
 - Electrical connection and capacity expansion (Toronto Hydro / Elexicon) · `lumpSum` · class C · quote
 - Electrical vault / transformer room · `lumpSum` · class C · quote — *if design.hydroVault*
 - Gas, telecom and fibre connections · `lumpSum` · class C · quote
 - District energy connection charge · `lumpSum` · class C · quote — *if design.energySystem=district-energy*
 - Vehicle entries/exits: curb cuts, ramps, lay-bys, fire route · `perUnit` · class C · quote — *if design.vehicleAccessPoints>=1*
+- Driveway / entrance access permit · `schedule` · class exact · source — *if design.vehicleAccessPoints>=1*
 - Boulevard and streetscape restoration (paving, street trees in soil cells, lighting) · `perLinear` · class C · source — *if design.streetscapeM>=1*
 - Sign permits (sign by-law) · `schedule` · class exact · source — *if design.signage*
 
@@ -1916,6 +1963,7 @@ The catalogue holds **151 project variables** and **232 cost items** across 16 s
 - Utilities (bulk vs submetered) · `perUnit` · class B · quote
 - Property insurance · `perUnit` · class B · quote
 - Property tax (Toronto 2026: new multi-residential 0.767311%, multi-residential 1.208792%) · `rate` · class exact · verified
+- Stormwater user fee (based on impervious area), where the municipality charges one · `perArea` · class exact · source
 - RentSafeTO registration (3+ storeys and 10+ units) · `perUnit` · class exact · source — *if site.municipality=toronto*
 - Concierge and security · `perMonth` · class B · quote — *if program.concierge*
 - Capital reserves · `perUnit` · class B · source
@@ -1982,6 +2030,7 @@ The catalogue holds **151 project variables** and **232 cost items** across 16 s
 - Rail proximity: safety/vibration study, crash wall or berm design · `lumpSum` · class C · source — *if site.nearRailCorridor*
 - Pedestrian wind and sun/shadow studies · `lumpSum` · class B · quote
 - Functional servicing and stormwater management report · `lumpSum` · class B · quote
+- Grading, stormwater, drainage and erosion-control review fees · `schedule` · class exact · source
 - Energy strategy, energy model, Toronto Green Standard checklist · `lumpSum` · class B · source
 - Planning justification report, urban design brief, community consultation · `lumpSum` · class B · quote — *if planning.zba*
 - TTC technical review (work within 60 m of TTC infrastructure) · `lumpSum` · class C · verified — *if site.nearTtc60m*
@@ -2001,6 +2050,7 @@ The catalogue holds **151 project variables** and **232 cost items** across 16 s
 - Committee of Adjustment fee · `schedule` · class exact · source — *if planning.minorVariance*
 - Ontario Land Tribunal appeal: legal and experts · `lumpSum` · class D · quote — *if planning.appealRisk*
 - Planner, architect and legal time through approvals · `lumpSum` · class C · quote
+- Pre-consultation and review fees (planning, engineering, urban design) · `schedule` · class exact · source
 - Parkland cash-in-lieu (Planning Act s.42; caps 10% of land value <1 ha, 15% for 1–5 ha) · `percentOf` · class exact · source
 - Community Benefits Charge (up to 4% of land value) (0.04 of land value (cap)) · `percentOf` · class exact · source — *if planning.cbcApplies*
 - Inclusionary zoning: revenue forgone on affordable set-aside · `revenue` · class B · source — *if planning.inclusionaryZoning*
@@ -2030,12 +2080,14 @@ The catalogue holds **151 project variables** and **232 cost items** across 16 s
 - Demolition permit · `schedule` · class exact · source — *if site.existingBuilding*
 - Right-of-way: street occupation, hoarding, crane swing, lane closures · `perMonth` · class B · source — *if site.tightUrbanSite*
 - Crane-swing and tie-back encroachment agreements with neighbours · `lumpSum` · class D · quote — *if site.tightUrbanSite*
+- Frontage / local improvement charges · `perLinear` · class exact · source
 - Off-site servicing capacity upgrades (watermain, sewer) · `perLinear` · class D · quote
 - Electrical connection and capacity expansion (Toronto Hydro / Elexicon) · `lumpSum` · class C · quote
 - Electrical vault / transformer room · `lumpSum` · class C · quote — *if design.hydroVault*
 - Gas, telecom and fibre connections · `lumpSum` · class C · quote
 - District energy connection charge · `lumpSum` · class C · quote — *if design.energySystem=district-energy*
 - Vehicle entries/exits: curb cuts, ramps, lay-bys, fire route · `perUnit` · class C · quote — *if design.vehicleAccessPoints>=1*
+- Driveway / entrance access permit · `schedule` · class exact · source — *if design.vehicleAccessPoints>=1*
 - Boulevard and streetscape restoration (paving, street trees in soil cells, lighting) · `perLinear` · class C · source — *if design.streetscapeM>=1*
 - Sign permits (sign by-law) · `schedule` · class exact · source — *if design.signage*
 
