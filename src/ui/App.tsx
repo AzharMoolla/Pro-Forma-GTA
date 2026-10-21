@@ -118,7 +118,8 @@ export function App() {
         </div>
       )}
 
-      <div className="mx-auto grid max-w-[1600px] gap-4 px-4 py-4 lg:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[200px_minmax(0,1fr)_340px]">
+      {/* The site map takes the full width: no inspector column, no max width */}
+      <div className={cx('mx-auto grid gap-4 px-4 py-4 lg:grid-cols-[220px_minmax(0,1fr)]', section === 'map' ? 'xl:grid-cols-[200px_minmax(0,1fr)]' : 'max-w-[1600px] xl:grid-cols-[200px_minmax(0,1fr)_340px]')}>
         <nav aria-label="Workspace sections" className="flex min-w-0 flex-col gap-4">
           <ul className="flex gap-1 overflow-x-auto lg:flex-col">
             {visible.map((s) => (
@@ -167,9 +168,11 @@ export function App() {
           )}
         </main>
 
-        <aside aria-label="Inspector" className="min-w-0 lg:col-start-2 xl:col-start-3 xl:row-start-1">
-          <Inspector />
-        </aside>
+        {section !== 'map' && (
+          <aside aria-label="Inspector" className="min-w-0 lg:col-start-2 xl:col-start-3 xl:row-start-1">
+            <Inspector />
+          </aside>
+        )}
       </div>
     </WorkspaceContext.Provider>
   )

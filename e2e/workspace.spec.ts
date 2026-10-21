@@ -1,7 +1,7 @@
 import { AxeBuilder } from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
 
-const sections = ['Overview', 'Market evidence', 'Site & program', 'Cost & budget', 'Revenue & operations', 'Finance & ledger', 'Returns & range', 'Scenarios', 'Sources & audit']
+const sections = ['Overview', 'Site map', 'Market evidence', 'Site & program', 'Cost & budget', 'Revenue & operations', 'Finance & ledger', 'Returns & range', 'Scenarios', 'Sources & audit']
 
 async function fresh(page: Page) {
   await page.goto('/')
@@ -71,7 +71,11 @@ test('master plan: plan tree, roll-up and range run in a worker', async ({ page 
 
 test('overview shows the sketch and colour-coded analysis', async ({ page }) => {
   await fresh(page)
-  await expect(page.getByRole('img', { name: /ASCII streetscape of .*38-storey tower/ })).toBeVisible()
+  await expect(page.getByRole('img', { name: /Watercolour streetscape of .*38-storey tower.*zoning height limit of about 20 storeys; 1 building is taller/ })).toBeVisible()
+  for (const style of ['Pencil sketch', 'Blueprint', 'Massing model']) {
+    await page.getByText(style, { exact: true }).click()
+    await expect(page.getByRole('img', { name: new RegExp(`^${style} streetscape`) })).toBeVisible()
+  }
   await expect(page.getByRole('heading', { name: /Analysis/ })).toBeVisible()
   await expect(page.getByText('Negative development spread')).toBeVisible()
   await expect(page.getByText(/Land-to-revenue/).first()).toBeVisible()

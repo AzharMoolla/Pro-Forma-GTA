@@ -1,0 +1,45 @@
+{
+  "reviewedAt": "2026-10-21",
+  "purpose": "Join regional responsibilities and primary policy sources to the selected location; no unreviewed fee or eligibility formula is executed.",
+  "regions": [
+    {
+      "region": "DURHAM",
+      "planningAuthorityNote": "Durham became an upper-tier municipality without planning responsibilities on January 1, 2025. Read the former Regional Official Plan with current local implementation and amendments; regional servicing, infrastructure and charge functions must be checked separately.",
+      "planningSource": "https://www.durham.ca/doing-business/planning-and-development/official-plan/",
+      "sources": [
+        {"label": "Official Plan and current responsibility notice", "url": "https://www.durham.ca/doing-business/planning-and-development/official-plan/", "kind": "planning-policy", "status": "primary-source-located; rule extraction and review pending"},
+        {"label": "Regional development charges, area-specific charges and deferral programs", "url": "https://www.durham.ca/doing-business/planning-and-development/development-charges/", "kind": "charges-and-programs", "status": "primary-source-located; project/date-specific evaluation pending"},
+        {"label": "Regional Official Plan map services", "url": "https://maps.durham.ca/arcgis/rest/services/Open_Data", "kind": "spatial-policy", "status": "selected layers downloaded; 2024 consolidation currency needs review"}
+      ]
+    },
+    {
+      "region": "YORK",
+      "planningAuthorityNote": "Separate the former Regional Official Plan from current administering planning authorities. Verify local implementation and the current responsibility notice; regional charges, roads and water/wastewater obligations remain separate questions.",
+      "planningSource": "https://www.york.ca/york-region/regional-official-plan",
+      "sources": [
+        {"label": "Regional Official Plan and responsibility context", "url": "https://www.york.ca/york-region/regional-official-plan", "kind": "planning-policy", "status": "primary-source-located; legal responsibility/version review pending"},
+        {"label": "Regional development charges by-law", "url": "https://www.york.ca/yorkregion/bylaws/development-charges-bylaw-0", "kind": "charges", "status": "primary-source-located; schedule ingestion pending"},
+        {"label": "York official open-data catalogue", "url": "https://insights-york.opendata.arcgis.com/", "kind": "spatial-catalogue", "status": "publisher portal located; detailed layers not collected"}
+      ]
+    },
+    {
+      "region": "HALTON",
+      "planningAuthorityNote": "From July 1, 2024 Halton's former Regional Official Plan became a local plan of its four local municipalities. Regional servicing allocation, infrastructure and charge obligations require their own checks.",
+      "planningSource": "https://www.halton.ca/the-region/supporting-land-use-planning",
+      "sources": [
+        {"label": "Planning responsibility and former Regional Official Plan", "url": "https://www.halton.ca/the-region/supporting-land-use-planning", "kind": "planning-policy", "status": "primary-source-located; local amendments review pending"},
+        {"label": "Regional DCs and front-ending recovery payments", "url": "https://www.halton.ca/the-region/finance-and-transparency/financing-growth/development-charges-front-ending-recovery-payment", "kind": "charges-and-servicing", "status": "primary-source-located; schedule/area ingestion pending"},
+        {"label": "Development and servicing allocation context", "url": "https://www.halton.ca/the-region/supporting-land-use-planning/planning-applications", "kind": "servicing", "status": "primary-source-located; capacity is not established by a map"}
+      ]
+    },
+    {
+      "region": "PEEL",
+      "planningAuthorityNote": "Peel became an upper-tier municipality without planning responsibilities on July 1, 2024; Brampton, Mississauga and Caledon administer local and former regional plans. Check current regional service/charge responsibilities separately rather than treating all former regional policies as newly issued regional requirements.",
+      "planningSource": "https://peelregion.ca/business/planning/official-plan/focus-areas-supporting-studies",
+      "sources": [
+        {"label": "Planning authority and Official Plan context", "url": "https://peelregion.ca/business/planning/official-plan/focus-areas-supporting-studies", "kind": "planning-policy", "status": "primary-source-located; local amendments review pending"},
+        {"label": "Peel official data portal", "url": "https://data.peelregion.ca/", "kind": "spatial-catalogue", "status": "publisher portal located; detailed layers not collected"}
+      ]
+    }
+  ]
+}

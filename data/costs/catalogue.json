@@ -169,6 +169,34 @@
       "source": "parcel lookup"
     },
     {
+      "id": "site.address",
+      "group": "site",
+      "label": "Site address (municipal address point)",
+      "type": "text",
+      "source": "planning map: official address index"
+    },
+    {
+      "id": "site.ward",
+      "group": "site",
+      "label": "Ward",
+      "type": "text",
+      "source": "planning map: ward boundaries"
+    },
+    {
+      "id": "site.neighbourhood",
+      "group": "site",
+      "label": "Neighbourhood",
+      "type": "text",
+      "source": "planning map: neighbourhood boundaries"
+    },
+    {
+      "id": "site.heritageDistrict",
+      "group": "site",
+      "label": "Heritage conservation district",
+      "type": "text",
+      "source": "planning map: heritage districts"
+    },
+    {
       "id": "site.municipalityName",
       "group": "site",
       "label": "Municipality name (from boundary map)",
@@ -1424,6 +1452,66 @@
       "label": "Sell serviced blocks/lots to builders",
       "type": "boolean",
       "source": "strategy"
+    },
+    {
+      "id": "zoning.code",
+      "group": "zoning",
+      "label": "Zone (zoning string)",
+      "type": "text",
+      "source": "planning map: zoning by-law"
+    },
+    {
+      "id": "zoning.heightLimitM",
+      "group": "zoning",
+      "label": "Zoning height limit",
+      "type": "number",
+      "unit": "m",
+      "source": "planning map: height overlay"
+    },
+    {
+      "id": "zoning.heightLimitStoreys",
+      "group": "zoning",
+      "label": "Zoning height limit",
+      "type": "number",
+      "unit": "storeys",
+      "source": "planning map: height overlay (by-law storeys, else metres ÷ 3)"
+    },
+    {
+      "id": "zoning.fsiLimit",
+      "group": "zoning",
+      "label": "Maximum FSI (as-of-right)",
+      "type": "number",
+      "unit": "×",
+      "source": "planning map: zoning by-law"
+    },
+    {
+      "id": "zoning.lotCoverageMax",
+      "group": "zoning",
+      "label": "Maximum lot coverage",
+      "type": "number",
+      "unit": "fraction",
+      "source": "planning map: lot coverage overlay"
+    },
+    {
+      "id": "zoning.holding",
+      "group": "zoning",
+      "label": "Holding (H) symbol applies",
+      "type": "boolean",
+      "source": "planning map: zoning by-law"
+    },
+    {
+      "id": "zoning.exception",
+      "group": "zoning",
+      "label": "Site-specific zoning exception",
+      "type": "text",
+      "source": "planning map: zoning by-law"
+    },
+    {
+      "id": "zoning.parkingZone",
+      "group": "zoning",
+      "label": "Parking zone",
+      "type": "text",
+      "source": "planning map: parking zone overlay"
     }
   ],
   "items": [
@@ -2078,6 +2166,20 @@
       "class": "D",
       "timing": "construction",
       "src": "Q"
+    },
+    {
+      "id": "holding-removal",
+      "stage": "s3",
+      "label": "Lifting the holding (H) symbol: application, fee and the conditions it is tied to (servicing, agreements)",
+      "types": "all",
+      "when": [
+        "zoning.holding"
+      ],
+      "driver": "lumpSum",
+      "class": "C",
+      "timing": "application",
+      "src": "S",
+      "ref": "https://www.toronto.ca/city-government/planning-development/application-forms-fees/"
     },
     {
       "id": "fee-opa",

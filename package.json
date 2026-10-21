@@ -12,7 +12,11 @@
     "build": "tsc --noEmit && vite build",
     "lint": "eslint .",
     "test:e2e": "playwright test",
-    "geo": "tsx scripts/fetch-geo.ts"
+    "geo": "tsx scripts/fetch-geo.ts",
+    "map:collect": "node scripts/collect-planning-map.mjs",
+    "map:collect:regional": "node scripts/collect-planning-map-arcgis.mjs",
+    "map:preview": "node --import tsx scripts/planning-map-preview.mjs",
+    "map:verify": "node --import tsx scripts/verify-planning-map.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",

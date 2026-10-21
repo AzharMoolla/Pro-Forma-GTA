@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Toronto planning data explorer · Local preview</title>
+  <link rel="stylesheet" href="leaflet/leaflet.css">
+  <style>
+    @font-face{font-family:'IBM Plex Sans';src:url('fonts/plex.woff2') format('woff2');font-style:normal;font-weight:400;font-display:swap}body,button,input,.leaflet-container{font-family:'IBM Plex Sans',system-ui,sans-serif}
+:root{--page:#f5f3ee;--surface:#fff;--sunken:#ece9e2;--ink:#1c2629;--ink-soft:#45535a;--ink-mute:#5b676c;--border:#ddd8ce;--border-strong:#857f74;--accent:#0b5f70;--accent-soft:#dcebee;--warn:#7f5300;--warn-soft:#f6ebd3;color-scheme:light}
+    @media (prefers-color-scheme:dark){:root{--page:#141a1c;--surface:#1b2326;--sunken:#10161a;--ink:#e8eceb;--ink-soft:#b9c3c4;--ink-mute:#9aa6a8;--border:#2e3a3e;--border-strong:#6f7d81;--accent:#6cc3d3;--accent-soft:#18343a;--warn:#e2b45a;--warn-soft:#3a2e14;color-scheme:dark}}
+        :root{color:var(--ink);background:var(--page)}*{box-sizing:border-box}body{margin:0}header{padding:16px 24px;background:var(--surface);color:var(--ink);border-bottom:1px solid var(--border)}h1{font-size:23px;margin:0 0 6px}header p{margin:0;font-size:13px;color:var(--ink-soft)}main{display:grid;grid-template-columns:minmax(280px,340px) minmax(380px,1fr) minmax(340px,440px);height:calc(100vh - 87px)}aside{overflow:auto;padding:20px;border-right:1px solid var(--border)}#dossier{border-left:1px solid var(--border);border-right:0;background:var(--surface)}h2{font-size:17px;margin:8px 0 12px}h3{font-size:14px;margin:14px 0 6px}p,summary,label,button,input{font-size:14px}p{line-height:1.45}a{color:var(--accent)}button,input{font:inherit;min-height:40px;border:1px solid var(--border-strong);border-radius:4px;background:var(--surface);color:var(--ink);padding:6px 9px}button{cursor:pointer;text-align:left}button:hover{background:var(--sunken)}input{width:100%}button:focus-visible,input:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}#search{display:grid;gap:7px}.results{display:grid;gap:5px;margin:8px 0}.results button small{display:block;color:var(--ink-mute)}.layer{display:flex;gap:8px;align-items:flex-start;margin:8px 0}.layer input{width:18px;min-height:18px;margin-top:3px}.layer small{display:block;color:var(--ink-mute)}.status{font-size:12px;color:var(--ink-mute)}.note{padding:10px;background:var(--warn-soft);color:var(--ink);border:1px solid var(--border);border-radius:6px;font-size:12px;line-height:1.5}#map{height:100%;background:var(--sunken)}details{border-bottom:1px solid var(--border);padding:8px 0}summary{cursor:pointer;font-weight:600}pre{font-size:11px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:250px;overflow:auto}.card{padding:9px 0;border-bottom:1px solid var(--border)}.card p{margin:4px 0;font-size:13px}.badge{font-size:11px;padding:3px 5px;background:var(--accent-soft);color:var(--accent);border-radius:3px}#toggle-basemap{margin-top:12px}.leaflet-popup-content pre{max-height:180px}@media(max-width:1000px){main{grid-template-columns:260px 1fr}#dossier{grid-column:1/-1;max-height:450px}main{height:auto}#map{height:65vh}}@media(max-width:650px){main{display:flex;flex-direction:column}aside{max-height:420px}#map{height:55vh;min-height:350px}}
+    .place-icon{background:none;border:0}.place-badge{display:flex;align-items:center;justify-content:center;border:2px solid #fff;border-radius:8px;box-shadow:0 1px 3px #0b5f7066;color:white;width:100%;height:100%}.place-badge svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round}.cluster-badge{border-radius:50%;font-weight:750;font-size:13px;background:#0b5f70;outline:2px solid #dccca4}.symbol-key{display:inline-flex;width:22px;height:22px;align-items:center;justify-content:center;border-radius:5px;margin-right:5px;vertical-align:middle;color:#fff}.symbol-key svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8}.leaflet-container{font:inherit}.leaflet-tooltip{max-width:270px;white-space:normal}.leaflet-control-attribution{max-width:75%;font-size:10px}
+  body.embedded header{display:none}
+    aside{background:var(--page)}#dossier h2{font-size:18px;margin:4px 0 2px}
+    .facts{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:12px 0 16px;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);font-size:13px}.facts dt{color:var(--ink-mute)}.facts dd{margin:0;font-weight:600;overflow-wrap:anywhere}
+    .topic{border:1px solid var(--border);border-radius:8px;background:var(--surface);margin:8px 0;padding:0}.topic>summary{display:flex;flex-direction:column;gap:2px;padding:10px 12px;list-style:none;min-height:44px}.topic>summary::-webkit-details-marker{display:none}.topic>summary span{font-weight:600}.topic>summary span::before{content:'▸';display:inline-block;width:1.1em;color:var(--accent)}.topic[open]>summary span::before{content:'▾'}.topic>summary small{color:var(--ink-mute);font-weight:400;font-size:12px;padding-left:1.1em}.topic-body{padding:0 12px 10px;border-top:1px solid var(--border)}
+    .row{padding:8px 0;border-bottom:1px solid var(--border)}.row:last-child{border-bottom:0}.row-title{margin:0 0 2px;font-weight:600;font-size:13px}.row-value{margin:2px 0;font-size:13px;color:var(--ink-soft)}.raw{border:0;padding:4px 0}.raw>summary{font-weight:400;font-size:12px;color:var(--accent)}.policy{font-size:12px}
+    .leaflet-container{background:var(--sunken)}.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--surface);color:var(--ink)}body.embedded main{height:100vh}
+  </style>
+</head>
+<body>
+<header><h1>Toronto planning data explorer</h1><p>Local collection preview · Official public data · Source dates and coverage travel with every layer</p></header>
+<main>
+  <aside tabindex="0" aria-label="Search and map layers">
+    <h2>Find a location</h2>
+    <form id="search"><label for="address">Toronto municipal address</label><input id="address" autocomplete="off" placeholder="100 Queen St W"><button type="submit">Search official address index</button></form>
+    <div id="search-status" class="status" role="status"></div><div id="results" class="results"></div>
+    <details><summary>Use coordinates</summary><form id="coords"><label>Latitude<input id="lat" type="number" step="any" value="43.6534" required></label><label>Longitude<input id="lng" type="number" step="any" value="-79.3841" required></label><button>Select coordinates</button></form></details>
+    <h2>Layers</h2><p class="status">Toggle visibility. Point screening checks all collected polygon layers even when hidden.</p><div id="layers"></div>
+    <label class="layer" id="toggle-basemap"><input id="basemap" type="checkbox">Load OpenStreetMap basemap tiles</label>
+    <p class="status">Optional tiles contact OpenStreetMap and disclose the viewed area/IP. Source layers and address searches stay on this local server.</p>
+    <p class="status"><a href="https://open.toronto.ca/open-data-licence/" target="_blank" rel="noopener">Contains information licensed under the Open Government Licence – Toronto.</a></p>
+  </aside>
+  <div id="map" role="region" aria-label="Interactive planning map"></div>
+  <aside id="dossier" tabindex="0" aria-label="Selected site information"><h2>Location dossier</h2><p>Search for an address or click the map. Explore zoning, policies, civic context and nearby amenities without a pro forma project.</p><p class="note">Screening preview, not a legal zoning opinion. Coordinates and layer boundaries are source data; parcel boundaries and all amendments have not been resolved. Walking distance and legal proximity tests are not implemented.</p></aside>
+</main>
+<script src="leaflet/leaflet.js"></script>
+<script>
+const $=id=>document.getElementById(id); const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const map=L.map('map',{preferCanvas:true}).setView([43.70,-79.39],11);let marker,siteGeneration=0;const active=new Map(),versions=new Map();const pointGroup=L.layerGroup().addTo(map),spiderGroup=L.layerGroup().addTo(map);
+const colours={Civic:'#427b83',Zoning:'#a65c38',Policy:'#5c679d',Amenities:'#36754b',Heritage:'#934b69',Environment:'#3c7b65',Transport:'#5d6591','Development activity':'#9a6419',Ontario:'#52746e',Durham:'#3a6988',Oshawa:'#446d5e',TRCA:'#4b7148'};
+const layerColours={'zoning-height':'#6a5984','zoning-setback':'#8b4b60','zoning-parking':'#3d697e','zoning-lot-coverage':'#6e7135','zoning-policy-area':'#426e65','neighbourhoods':'#61704b'};
+const paint=d=>layerColours[d.id]??colours[d.group]??'#32665c';
+const titles=['ZN_STRING','HT_LABEL','AREA_NAME','COUNCILLOR','BranchName','NAME','Name','name','SCHOOL_NAME','LOC_NAME','stop_name','StationNam','SECONDARY_PLAN_NAME','SASP_NO','ADDRESS','Address','APPLICATION#','APPLICATION_NAME'];
+const label=p=>{const names=titles.filter(k=>p[k]!==null&&p[k]!==undefined&&p[k]!=='').slice(0,3).map(k=>`${k}: ${p[k]}`);return names.length?names.join(' · '):Object.entries(p).filter(([k,v])=>!/^(OBJECTID|_id|FID)$/.test(k)&&v!==null).slice(0,3).map(([k,v])=>`${k}: ${v}`).join(' · ')};
+const safeUrl=u=>{try{const x=new URL(u);return ['https:','http:'].includes(x.protocol)?escape(x.href):'#'}catch{return '#'}};
+const source=s=>`<a href="${safeUrl(s.catalogueUrl)}" target="_blank" rel="noopener">Official source</a> · retrieved ${escape(s.retrievedAt?.slice(0,10))}<br>${escape(s.caveat)}<br><a href="${safeUrl(s.licence?.url)}" target="_blank" rel="noopener">${escape(s.licence?.attribution??'Source licence')}</a>`;
+const policyLinks={zoning:['Zoning by-law text and map','https://www.toronto.ca/city-government/planning-development/zoning-by-law-preliminary-zoning-reviews/zoning-by-law-569-2013-2/'],'secondary-plans':['Secondary plan policies','https://www.toronto.ca/city-government/planning-development/official-plan-guidelines/official-plan/chapter-6-secondary-plans/'],sasp:['Official Plan and site-specific policies','https://www.toronto.ca/city-government/planning-development/official-plan-guidelines/official-plan/'],mtsa:['Station-area policies and IZ timing','https://www.toronto.ca/city-government/planning-development/planning-studies-initiatives/zoning-for-major-transit-station-areas/']};
+async function json(url){const r=await fetch(url);const j=await r.json();if(!r.ok)throw new Error(j.error??r.status);return j}
+const glyphs={parks:'<path d="M12 3 5 13h4l-3 4h5v4h2v-4h5l-3-4h4Z"/>',libraries:'<path d="M12 6C8 3 4 4 3 5v14c4-2 6-1 9 1 3-2 5-3 9-1V5c-3-1-6-1-9 1Zm0 0v14"/>',schools:'<path d="m3 10 9-7 9 7M5 9v12h14V9M10 21v-7h4v7M8 10h1m6 0h1"/>',childcare:'<circle cx="12" cy="8" r="4"/><path d="M4 21v-3a8 8 0 0 1 16 0v3M8 8h0m8 0h0"/>','ttc-stops':'<rect x="5" y="3" width="14" height="16" rx="3"/><path d="M5 11h14M8 7h8M8 15h0m8 0h0M8 19v2m8-2v2"/>',heritage:'<path d="m3 8 9-5 9 5ZM5 10v9m5-9v9m4-9v9m5-9v9M3 21h18"/>',applications:'<path d="M7 21V3h13L4 10M7 6h13M17 6v8m-2 0h4M3 21h9"/>',pipeline:'<path d="M4 21V7h9v14m0-10h7v10M7 10h3m-3 4h3m-3 4h3M2 21h20"/>',health:'<path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6Z"/>',default:'<path d="M5 21V8l7-5 7 5v13M9 21v-6h6v6M8 10h0m8 0h0"/>'};
+function glyph(d){const id=d.id;if(id==='zoning-parking')return '<path d="M8 21V3h6a5 5 0 0 1 0 10H8"/>';return glyphs[id]??glyphs[id.includes('school')?'schools':id.includes('child')?'childcare':(id==='parks'||id.endsWith('-parks'))?'parks':id.includes('health')?'health':'default']}
+function icon(d,count=1){const size=count>1?36:Math.min(34,Math.max(26,22+map.getZoom()/2));return L.divIcon({className:'place-icon',iconSize:[size,size],iconAnchor:[size/2,size/2],html:`<span class="place-badge ${count>1?'cluster-badge':''}" style="background:${count>1?'#0b5f70':paint(d)}">${count>1?count:`<svg viewBox="0 0 24 24" aria-hidden="true">${glyph(d)}</svg>`}</span>`})}
+function popup(d,f){return `<strong>${escape(d.label)}</strong><p>${escape(label(f.properties))}</p><details><summary>Source attributes</summary><pre>${escape(JSON.stringify(f.properties,null,2))}</pre></details><p class="status">${source(d)}</p>`}
+let closeControl;
+function drawPoints(){
+  closeControl?.remove();closeControl=null;
+  pointGroup.clearLayers();spiderGroup.clearLayers();pointGroup.addTo(map);
+  if(marker&&!map.hasLayer(marker))marker.addTo(map);
+  const items=[];
+  for(const s of active.values())for(const f of s.features??[]){
+    if(f.geometry.type!=='Point')continue;
+    const ll=L.latLng(f.geometry.coordinates[1],f.geometry.coordinates[0]);
+    items.push({d:s.definition,f,ll,px:map.latLngToLayerPoint(ll)});
+  }
+  const groups=[];
+  const centre=g=>L.point(g.reduce((s,p)=>s+p.px.x,0)/g.length,g.reduce((s,p)=>s+p.px.y,0)/g.length);
+  for(const item of items){const nearby=groups.find(g=>centre(g).distanceTo(item.px)<55);if(nearby)nearby.push(item);else groups.push([item])}
+  // A second merge pass ensures displayed group centroids themselves cannot overlap.
+  for(let changed=true;changed;){changed=false;outer:for(let i=0;i<groups.length;i++)for(let j=i+1;j<groups.length;j++){
+    if(centre(groups[i]).distanceTo(centre(groups[j]))<55){groups[i].push(...groups[j]);groups.splice(j,1);changed=true;break outer}
+  }}
+  for(const group of groups){
+    const first=group[0];
+    if(group.length===1){
+      L.marker(first.ll,{icon:icon(first.d),title:`${first.d.label}: ${label(first.f.properties)}`,keyboard:true}).bindPopup(popup(first.d,first.f)).addTo(pointGroup);
+      continue;
+    }
+    const origin=centre(group),location=map.layerPointToLatLng(origin);
+    const categories=[...new Set(group.map(p=>p.d.label))].join(', ');
+    const cluster=L.marker(location,{icon:icon(first.d,group.length),title:`${group.length} nearby features: ${categories}. Activate to expand.`,keyboard:true}).bindTooltip(`${group.length} nearby features · ${escape(categories)}`).addTo(pointGroup);
+    cluster.on('click',()=>{
+      if(map.getZoom()<16){map.fitBounds(L.latLngBounds(group.map(p=>p.ll)),{maxZoom:16,padding:[50,50]});return}
+      pointGroup.removeFrom(map);marker?.remove();spiderGroup.clearLayers();
+      const shown=group.slice(0,12),radius=80;
+      shown.forEach((p,i)=>{
+        const angle=(i/shown.length)*Math.PI*2;
+        const expanded=map.layerPointToLatLng(origin.add(L.point(Math.cos(angle)*radius,Math.sin(angle)*radius)));
+        L.polyline([p.ll,expanded],{color:'#0b5f70',weight:1,dashArray:'3 3',interactive:false}).addTo(spiderGroup);
+        L.marker(expanded,{icon:icon(p.d),title:`${p.d.label}; displaced display marker, leader points to source location`,keyboard:true}).bindPopup(popup(p.d,p.f)).addTo(spiderGroup);
+      });
+      closeControl=L.control({position:'bottomleft'});
+      closeControl.onAdd=()=>{const button=L.DomUtil.create('button');button.type='button';button.textContent=`Close expanded group (${shown.length}/${group.length} shown)`;button.onclick=e=>{e.stopPropagation();drawPoints()};L.DomEvent.disableClickPropagation(button);return button};
+      closeControl.addTo(map);
+    });
+  }
+}
+async function renderLayer(d){const token=(versions.get(d.id)??0)+1;versions.set(d.id,token);const state=active.get(d.id);if(!state)return;const b=map.getBounds();const extent=[b.getWest(),b.getSouth(),b.getEast(),b.getNorth()].join(',');try{const fc=await json(`api/features?layer=${encodeURIComponent(d.id)}&bbox=${extent}`);if(versions.get(d.id)!==token||active.get(d.id)!==state)return;state.geo?.remove();state.features=fc.features;const pane=`group-${d.group.replace(/\W/g,'')}`;if(!map.getPane(pane)){map.createPane(pane);map.getPane(pane).style.zIndex=['Civic','Ontario','Durham','Oshawa'].includes(d.group)?'310':d.group==='Zoning'?'330':'350'}state.geo=L.geoJSON({...fc,features:fc.features.filter(f=>f.geometry.type!=='Point')},{pane,style:f=>({color:paint(d),weight:d.group==='Transport'?2:1.2,fillOpacity:['Civic','Ontario'].includes(d.group)?.015:d.group==='Zoning'?.08:.06,dashArray:d.id==='zoning-height'?'4 3':['Civic','Ontario'].includes(d.group)?'6 4':undefined}),onEachFeature:(f,l)=>l.bindPopup(popup(d,f))}).addTo(map);drawPoints();$(`status-${d.id}`).textContent=fc.truncated?`${fc.features.length} of ${fc.matchingCount} visible; zoom in`:`${fc.features.length} in view`;}catch(e){$(`status-${d.id}`).textContent=String(e)}}
+let moveTimer;map.on('moveend',()=>{clearTimeout(moveTimer);moveTimer=setTimeout(()=>active.forEach(s=>renderLayer(s.definition)),200)});
+// Dossier: key facts first, then one accordion per topic so a long result stays scannable.
+const GROUP_ORDER=['Zoning','Policy','Civic','Heritage','Environment','TRCA','Transport','Amenities','Development activity','Durham','Oshawa','Ontario'];
+const GROUP_HINT={Zoning:'zone, height, coverage, parking',Policy:'secondary plans, site policies, station areas',Civic:'ward, councillor, neighbourhood',Heritage:'districts and listings',Environment:'ravines, natural heritage',TRCA:'conservation regulation',Transport:'transit',Amenities:'parks, schools, libraries','Development activity':'applications nearby',Durham:'regional plan areas',Oshawa:'local layers',Ontario:'municipal and regional boundaries'};
+function keyFacts(s){
+  const f=id=>s.matches.find(m=>m.id===id)?.features[0]?.properties;const facts=[];
+  const z=f('zoning');if(z?.ZN_STRING)facts.push(['Zone',z.ZN_STRING]);const oz=f('oshawa-zoning');if(oz?.DESCRIPTION)facts.push(['Zone',oz.DESCRIPTION]);
+  const h=f('zoning-height');if(h?.HT_LABEL>0)facts.push(['Height limit',`${h.HT_LABEL} m`]);
+  if(z?.FSI_TOTAL>0)facts.push(['Max FSI',z.FSI_TOTAL]);
+  const w=f('wards')??f('oshawa-wards');if(w)facts.push(['Ward',w.AREA_NAME??w.NAME]);
+  const n=f('neighbourhoods')??f('oshawa-neighbourhoods');if(n)facts.push(['Neighbourhood',n.AREA_NAME??n.NAME]);
+  const sp=f('secondary-plans');if(sp)facts.push(['Secondary plan',sp.SECONDARY_PLAN_NAME]);
+  const mt=f('mtsa')??f('durham-pmtsa');if(mt)facts.push(['Station area',mt.StationNam??mt.NAME]);
+  const hd=f('heritage-districts');if(hd)facts.push(['Heritage district',hd.HCD_NAME]);
+  if(f('trca-regulated'))facts.push(['Conservation','TRCA regulated area']);
+  return facts.length?`<dl class="facts">${facts.map(([k,v])=>`<dt>${escape(k)}</dt><dd>${escape(v)}</dd>`).join('')}</dl>`:'<p class="status">No zoning or policy polygons here in the collected data.</p>';
+}
+function layerRow(m){return `<div class="row"><p class="row-title">${escape(m.label)}${m.totalHits>1?` <span class="badge">${m.totalHits}</span>`:''}</p>${m.features.map(f=>`<p class="row-value">${escape(label(f.properties))}</p>`).join('')}<details class="raw"><summary>Source attributes</summary>${m.features.map(f=>`<pre>${escape(JSON.stringify(f.properties,null,2))}</pre>`).join('')}<p class="status">${source(m.source)}</p></details>${policyLinks[m.id]?`<a class="policy" href="${policyLinks[m.id][1]}" target="_blank" rel="noopener">${policyLinks[m.id][0]}</a>`:''}</div>`}
+function dossierHtml(name,lng,lat,s){
+  const groups=new Map();for(const m of s.matches){const g=m.source.group??'Other';if(!groups.has(g))groups.set(g,[]);groups.get(g).push(m)}
+  const rank=g=>{const i=GROUP_ORDER.indexOf(g);return i<0?99:i};
+  const order=[...groups.keys()].sort((a,b)=>rank(a)-rank(b));
+  const section=(title,meta,body,open=false)=>`<details class="topic"${open?' open':''}><summary><span>${escape(title)}</span><small>${escape(meta)}</small></summary><div class="topic-body">${body}</div></details>`;
+  const nearbyCount=s.nearby.reduce((n,x)=>n+x.results.length,0);
+  return `<h2>${escape(name)}</h2><p class="status">${lat.toFixed(6)}, ${lng.toFixed(6)}</p>${keyFacts(s)}`
+    +order.map(g=>section(g,`${groups.get(g).length} layer${groups.get(g).length===1?'':'s'} · ${GROUP_HINT[g]??''}`,groups.get(g).map(layerRow).join(''),g==='Zoning')).join('')
+    +section('Nearby',`${nearbyCount} features · straight-line distance`,`<p class="note">${escape(s.measurement)}</p>`+s.nearby.map(n=>`<div class="row"><p class="row-title">${escape(n.label)}</p>${n.results.map(r=>`<p class="row-value">${r.metres} m · ${escape(label(r.properties))}</p>`).join('')||'<p class="row-value">None in the search window.</p>'}</div>`).join(''))
+    +section('Regional rules',s.regionalContext?.length?s.regionalContext.map(r=>r.region).join(', '):'single-tier or none matched',regionalBlock(s))
+    +section('Limits of this screening','read before relying on it',`<p class="note">Point-based screening. Missing matches do not establish clearance. Negative source values such as -1 are raw codes, not limits.</p><p>Citywide Official Plan land-use designation, legal parcels, complete aviation limits and regulated flood/erosion areas are not yet resolved here. Check the source viewers.</p>`);
+}
+
+function regionalBlock(s){
+  if(!s.regionalContext?.length)return '<p class="status">Regional rules: Toronto is single-tier. Outside Toronto, consult the matched regional boundary and current local administering authority. A missing regional match is not a finding that no regional obligations exist.</p>';
+  const cards=s.regionalContext.map(r=>{
+    const links=r.sources.map(p=>`<p><a href="${safeUrl(p.url)}" target="_blank" rel="noopener">${escape(p.label)}</a><br><small>${escape(p.status)}</small></p>`).join('');
+    return `<div class="card"><strong>${escape(r.region)}</strong><p>${escape(r.planningAuthorityNote)}</p>${links}</div>`;
+  }).join('');
+  return '<h3>Regional policy and service context</h3>'+cards;
+}
+async function select(lng,lat,name='Map point'){const generation=++siteGeneration;marker?.remove();marker=L.marker([lat,lng],{draggable:true}).addTo(map).bindPopup(escape(name));marker.on('dragend',()=>{const p=marker.getLatLng();select(p.lng,p.lat,'Moved point')});map.setView([lat,lng],16);$('dossier').innerHTML='<h2>Checking collected layers…</h2>';try{const s=await json(`api/site?lng=${lng}&lat=${lat}`);if(generation!==siteGeneration)return;sendToApp(name,lng,lat,s);$('dossier').innerHTML=dossierHtml(name,lng,lat,s);}catch(e){$('dossier').textContent=String(e)}}
+map.on('click',e=>select(e.latlng.lng,e.latlng.lat));
+// Embedded in the pro forma (/map/ inside the Site map section): hand the selected site and its matches to the app.
+const embedded=window.parent!==window;if(embedded)document.body.classList.add('embedded');
+function sendToApp(name,lng,lat,s){if(!embedded)return;window.parent.postMessage({type:'planning-map:site',name,point:[lng,lat],matches:s.matches.map(m=>({id:m.id,label:m.label,totalHits:m.totalHits,source:{publisher:m.source.publisher,catalogueUrl:m.source.catalogueUrl,retrievedAt:m.source.retrievedAt,metadataModified:m.source.metadataModified,licence:m.source.licence?.name},features:m.features.map(f=>f.properties)})),regionalContext:s.regionalContext},location.origin)}
+$('coords').addEventListener('submit',e=>{e.preventDefault();const lat=Number($('lat').value),lng=Number($('lng').value);if(lat>=42&&lat<=46&&lng>=-81&&lng<=-77)select(lng,lat,'Selected coordinates');else $('search-status').textContent='Enter coordinates within the Toronto/Durham region.'});
+$('search').addEventListener('submit',async e=>{e.preventDefault();$('search-status').textContent='Searching local official address index…';try{const r=await json('api/search?q='+encodeURIComponent($('address').value));$('results').replaceChildren();for(const a of r.rows){const b=document.createElement('button');b.type='button';b.textContent=a[1];const small=document.createElement('small');small.textContent=`Point ${a[0]} · class ${a[4]} · ward ${a[5]}`;b.append(small);b.onclick=()=>select(a[2],a[3],a[1]);$('results').append(b)}$('search-status').textContent=r.rows.length?`${r.rows.length} candidates; choose the correct address point.`:'No match. Try a partial street name or official abbreviation.';}catch(e){$('search-status').textContent=String(e)}});
+const tiles=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'});$('basemap').onchange=e=>e.target.checked?tiles.addTo(map):tiles.remove();
+json('api/manifest').then(man=>{const groups=[...new Set(man.layers.filter(d=>d.status==='ready'&&d.format==='GeoJSON').map(d=>d.group))];for(const g of groups){const section=document.createElement('details');section.open=['Civic','Zoning','Policy'].includes(g);const summary=document.createElement('summary');summary.textContent=g;section.append(summary);for(const d of man.layers.filter(d=>d.group===g&&d.status==='ready'&&d.format==='GeoJSON')){const lab=document.createElement('label');lab.className='layer';const box=document.createElement('input');box.type='checkbox';box.setAttribute('aria-label',d.label);const text=document.createElement('span');text.innerHTML=`<span class="symbol-key" style="background:${paint(d)}"><svg viewBox="0 0 24 24" aria-hidden="true">${glyph(d)}</svg></span>${escape(d.label)}`;const sub=document.createElement('small');sub.textContent=`${d.featureCount.toLocaleString()} mapped · ${d.excludedCount} unmapped`;const status=document.createElement('small');status.id=`status-${d.id}`;text.append(sub,status);lab.append(box,text);section.append(lab);box.onchange=()=>{if(box.checked){active.set(d.id,{definition:d});renderLayer(d)}else{versions.set(d.id,(versions.get(d.id)??0)+1);active.get(d.id)?.geo?.remove();active.delete(d.id);drawPoints();status.textContent=''}};if(d.id==='wards'||(new URLSearchParams(location.search).get('layers')??'').split(',').includes(d.id)){box.checked=true;box.onchange()}}$('layers').append(section)}}).catch(e=>$('layers').textContent=String(e));
+const initialAddress=new URLSearchParams(location.search).get('address');
+if(initialAddress){$('address').value=initialAddress;json('api/search?q='+encodeURIComponent(initialAddress)).then(r=>{const hit=r.rows.find(a=>a[1].toLowerCase()===initialAddress.toLowerCase());if(hit)select(hit[2],hit[3],hit[1])}).catch(e=>$('search-status').textContent=String(e))}
+</script>
+</body></html>
+
+
+
+

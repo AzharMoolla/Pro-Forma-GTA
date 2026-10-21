@@ -9,7 +9,8 @@ import { metricValue, money, num, pct } from './format'
 import { lineTotal } from './Inspector'
 import { Audit, Finance, Returns, Revenue, Scenarios } from './sections2'
 import { Analysis, Progress } from './sections3'
-import { AsciiStreet } from './AsciiStreet'
+import { readSources, SiteMap } from './SiteMap'
+import { Streetscape } from './Streetscape'
 import { atLeast, type SectionId } from './store'
 import { getResult } from './tree'
 import { useWorkspace } from './workspace'
@@ -17,6 +18,7 @@ import { useWorkspace } from './workspace'
 export function Sections({ section }: { section: SectionId }) {
   switch (section) {
     case 'overview': return <Overview />
+    case 'map': return <SiteMap />
     case 'progress': return <Progress />
     case 'market': return <Market />
     case 'program': return <Program />
@@ -42,8 +44,8 @@ function Overview() {
   const flows = basis === 'project' ? nodeResult.projectCashFlow : nodeResult.equityCashFlow
   return (
     <div className="flex flex-col gap-4">
-      <Card title="At a glance">
-        <AsciiStreet node={node} result={nodeResult} attributes={state.projects[state.projectId]!.attributes} seed={state.projectId} />
+      <Card title="At a glance" actions={<Button onClick={() => dispatch({ type: 'section', id: 'map' })}>{state.projects[state.projectId]!.attributes['site.lat'] ? 'Site map' : 'Locate on the site map'}</Button>}>
+        <Streetscape node={node} result={nodeResult} attributes={state.projects[state.projectId]!.attributes} />
       </Card>
       <Analysis />
       <Card title={state.path.length ? node.name : 'About this project'}>
@@ -154,6 +156,7 @@ function Market() {
 function Program() {
   const { nodeResult, demo, state, dispatch } = useWorkspace()
   const attributes = state.projects[state.projectId]!.attributes
+  const mapSources = readSources(attributes)
   const groups = new Map<string, typeof catalogue.variables>()
   for (const v of catalogue.variables) groups.set(v.group, [...(groups.get(v.group) ?? []), v])
   const ids = ['totalUnits', 'totalNsf', 'commercialNla', 'efficiency', 'fsi', 'costPerGcaSqft']
@@ -181,7 +184,12 @@ function Program() {
                   const value = attributes[v.id]
                   return (
                     <li key={v.id} className="flex items-center justify-between gap-3 text-sm">
-                      <span className="min-w-0">{v.label}{v.unit && <span className="text-ink-mute"> ({v.unit})</span>}</span>
+                      <span className="min-w-0">
+                        {v.label}{v.unit && <span className="text-ink-mute"> ({v.unit})</span>}
+                        {mapSources[v.id] && (mapSources[v.id]!.value === value
+                          ? <> <Chip tone="accent" title={`${mapSources[v.id]!.layer} · retrieved ${mapSources[v.id]!.retrievedAt}`}>from map</Chip></>
+                          : <> <Chip tone="warn" title={`Map said ${String(mapSources[v.id]!.value)} (${mapSources[v.id]!.layer})`}>changed from map</Chip></>)}
+                      </span>
                       {v.type === 'boolean' ? (
                         <input type="checkbox" aria-label={v.label} className="size-5 shrink-0 accent-[var(--accent)]" checked={value === true} onChange={(e) => dispatch({ type: 'attribute', id: v.id, value: e.target.checked })} />
                       ) : v.type === 'enum' ? (
@@ -191,6 +199,8 @@ function Program() {
                         </select>
                       ) : v.type === 'number' ? (
                         <div className="w-28 shrink-0"><NumberField compact label={v.label} value={typeof value === 'number' ? value : 0} onCommit={(n) => dispatch({ type: 'attribute', id: v.id, value: n })} /></div>
+                      ) : v.type === 'text' ? (
+                        <input aria-label={v.label} className="min-h-9 w-44 shrink-0 rounded border border-line-strong bg-surface px-2" defaultValue={typeof value === 'string' ? value : ''} key={String(value)} onBlur={(e) => { const t = e.target.value.trim(); if (t !== (value ?? '')) dispatch({ type: 'attribute', id: v.id, value: t || null }) }} />
                       ) : (
                         <span className="text-xs text-ink-mute">table</span>
                       )}

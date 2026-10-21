@@ -135,7 +135,17 @@
     "site.secondaryPlan": "Yonge-Eglinton",
     "site.siteSpecificPolicy": null,
     "site.mtsaType": "Protected Major Transit Station Area",
-    "site.nearAerodrome": true
+    "site.nearAerodrome": true,
+    "site.address": "synthetic site at Yonge St and Eglinton Ave (no specific address)",
+    "site.ward": "Toronto-St. Paul's (12)",
+    "site.neighbourhood": "North Toronto",
+    "zoning.code": "CR 5.0 (c4.0; r3.0) SS2  (x2507)",
+    "zoning.heightLimitM": 61,
+    "zoning.heightLimitStoreys": 20,
+    "zoning.fsiLimit": 5,
+    "zoning.holding": false,
+    "zoning.exception": "900.11.10(2507)",
+    "zoning.parkingZone": "A"
   },
   "coverage": {
     "substructure": "benchmark: inside the above-grade $/ft² hard cost",

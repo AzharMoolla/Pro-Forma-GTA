@@ -2,25 +2,25 @@
 
 Generated from `data/costs/catalogue.json` (v0.1.0, as of 2026-10-21) by `npm run report`. Do not edit by hand.
 
-The catalogue holds **163 project variables** and **246 cost items** across 16 stages. Each project type below lists every item that can apply. Items marked **if …** are switched on by a project variable (dirty soil, affordable units, TTC proximity, amenities and so on). Source tags: verified · source · quote · proposed (not law).
+The catalogue holds **175 project variables** and **247 cost items** across 16 stages. Each project type below lists every item that can apply. Items marked **if …** are switched on by a project variable (dirty soil, affordable units, TTC proximity, amenities and so on). Source tags: verified · source · quote · proposed (not law).
 
 | Project type | Always applies | Conditional | Example |
 |---|---|---|---|
-| Purpose-built rental, mid-rise (6–12 storeys) | 78 | 123 | Avenue mid-rise with ground-floor retail |
-| Purpose-built rental tower, transit-oriented | 78 | 124 | Mall-parcel intensification beside a subway station (Spanier: mall redevelopment around transit) |
-| High-rise condominium | 84 | 125 | Downtown condo tower with presales |
-| Mixed-use tower(s) on a retail/office podium | 91 | 130 | Galleria-style site: condo + rental towers over retail, parking moved underground |
-| Townhouses / stacked towns | 82 | 124 | Freehold or condo towns in a suburban plan |
-| Infill multiplex / garden or laneway suites (2–10 units) | 71 | 119 | Fourplex replacing a detached house |
-| Commercial: office, retail, industrial | 71 | 118 | Multi-tenant industrial or retail plaza |
-| Adaptive reuse / conversion | 79 | 121 | Office-to-residential; Canary District's post-Games conversion (kitchens added to athlete suites) |
-| Master-planned community (greenfield or brownfield) | 57 | 136 | Lakeview Village: 177-acre brownfield waterfront, 8,050→16,000 units, employment lands, parks, pier |
+| Purpose-built rental, mid-rise (6–12 storeys) | 78 | 124 | Avenue mid-rise with ground-floor retail |
+| Purpose-built rental tower, transit-oriented | 78 | 125 | Mall-parcel intensification beside a subway station (Spanier: mall redevelopment around transit) |
+| High-rise condominium | 84 | 126 | Downtown condo tower with presales |
+| Mixed-use tower(s) on a retail/office podium | 91 | 131 | Galleria-style site: condo + rental towers over retail, parking moved underground |
+| Townhouses / stacked towns | 82 | 125 | Freehold or condo towns in a suburban plan |
+| Infill multiplex / garden or laneway suites (2–10 units) | 71 | 120 | Fourplex replacing a detached house |
+| Commercial: office, retail, industrial | 71 | 119 | Multi-tenant industrial or retail plaza |
+| Adaptive reuse / conversion | 79 | 122 | Office-to-residential; Canary District's post-Games conversion (kitchens added to athlete suites) |
+| Master-planned community (greenfield or brownfield) | 57 | 137 | Lakeview Village: 177-acre brownfield waterfront, 8,050→16,000 units, employment lands, parks, pier |
 
 ## Variables (the switches)
 
 | Group | Count | Examples |
 |---|---|---|
-| site | 36 | Municipality; Municipality name (from boundary map); Upper-tier region (none for single-tier cities); Inside the Greenbelt Area; … |
+| site | 40 | Municipality; Site address (municipal address point); Ward; Neighbourhood; … |
 | deal | 5 | Land price; Land is a taxable supply (vacant / commercial); Buyer is a foreign entity (NRST); Land financed with a land loan; … |
 | planning | 25 | Official plan amendment required; Zoning by-law amendment required; Site plan approval required; Draft plan of subdivision; … |
 | program | 19 | Residential tenure; Share of 2+ bedroom units (Growing Up guidelines, DC rates); Retail NLA; Office NLA; … |
@@ -31,6 +31,7 @@ The catalogue holds **163 project variables** and **246 cost items** across 16 s
 | policy | 4 | DC deferral elected (rental instalments / Bill 17 occupancy deferral / Durham rental deferral); Toronto DC Reduction Program eligible (first permit 2026-03-30 to 2029-08); Federal GST rental rebate / Ontario ENRRP eligible; New housing rebates assigned to builder / FTHB rebate |
 | ops | 4 | Property management fee; Utilities; Property tax class; Capital reserves |
 | master-plan | 21 | Gross site area; Net developable share (after roads, parks, SWM, NHS, schools); Phases; Arterial road length; … |
+| zoning | 8 | Zone (zoning string); Zoning height limit; Zoning height limit; Maximum FSI (as-of-right); … |
 
 ## Purpose-built rental, mid-rise (6–12 storeys)
 
@@ -99,6 +100,7 @@ The catalogue holds **163 project variables** and **246 cost items** across 16 s
 
 **Planning approvals and land-value charges**
 
+- Lifting the holding (H) symbol: application, fee and the conditions it is tied to (servicing, agreements) · `lumpSum` · class C · source — *if zoning.holding*
 - Official plan amendment application fee · `schedule` · class exact · source — *if planning.opa*
 - Zoning by-law amendment application fee · `schedule` · class exact · source — *if planning.zba*
 - Site plan application fee · `schedule` · class exact · source — *if planning.sitePlan*
@@ -347,6 +349,7 @@ The catalogue holds **163 project variables** and **246 cost items** across 16 s
 
 **Planning approvals and land-value charges**
 
+- Lifting the holding (H) symbol: application, fee and the conditions it is tied to (servicing, agreements) · `lumpSum` · class C · source — *if zoning.holding*
 - Official plan amendment application fee · `schedule` · class exact · source — *if planning.opa*
 - Zoning by-law amendment application fee · `schedule` · class exact · source — *if planning.zba*
 - Site plan application fee · `schedule` · class exact · source — *if planning.sitePlan*
@@ -599,6 +602,7 @@ The catalogue holds **163 project variables** and **246 cost items** across 16 s
 
 **Planning approvals and land-value charges**
 
+- Lifting the holding (H) symbol: application, fee and the conditions it is tied to (servicing, agreements) · `lumpSum` · class C · source — *if zoning.holding*
 - Official plan amendment application fee · `schedule` · class exact · source — *if planning.opa*
 - Zoning by-law amendment application fee · `schedule` · class exact · source — *if planning.zba*
 - Site plan application fee · `schedule` · class exact · source — *if planning.sitePlan*
@@ -861,6 +865,7 @@ The catalogue holds **163 project variables** and **246 cost items** across 16 s
 
 **Planning approvals and land-value charges**
 
+- Lifting the holding (H) symbol: application, fee and the conditions it is tied to (servicing, agreements) · `lumpSum` · class C · source — *if zoning.holding*
 - Official plan amendment application fee · `schedule` · class exact · source — *if planning.opa*
 - Zoning by-law amendment application fee · `schedule` · class exact · source — *if planning.zba*
 - Site plan application fee · `schedule` · class exact · source — *if planning.sitePlan*
@@ -1134,6 +1139,7 @@ The catalogue holds **163 project variables** and **246 cost items** across 16 s
 
 **Planning approvals and land-value charges**
 
+- Lifting the holding (H) symbol: application, fee and the conditions it is tied to (servicing, agreements) · `lumpSum` · class C · source — *if zoning.holding*
 - Official plan amendment application fee · `schedule` · class exact · source — *if planning.opa*
 - Zoning by-law amendment application fee · `schedule` · class exact · source — *if planning.zba*
 - Site plan application fee · `schedule` · class exact · source — *if planning.sitePlan*
@@ -1390,6 +1396,7 @@ The catalogue holds **163 project variables** and **246 cost items** across 16 s
 
 **Planning approvals and land-value charges**
 
+- Lifting the holding (H) symbol: application, fee and the conditions it is tied to (servicing, agreements) · `lumpSum` · class C · source — *if zoning.holding*
 - Official plan amendment application fee · `schedule` · class exact · source — *if planning.opa*
 - Zoning by-law amendment application fee · `schedule` · class exact · source — *if planning.zba*
 - Site plan application fee · `schedule` · class exact · source — *if planning.sitePlan*
@@ -1629,6 +1636,7 @@ The catalogue holds **163 project variables** and **246 cost items** across 16 s
 
 **Planning approvals and land-value charges**
 
+- Lifting the holding (H) symbol: application, fee and the conditions it is tied to (servicing, agreements) · `lumpSum` · class C · source — *if zoning.holding*
 - Official plan amendment application fee · `schedule` · class exact · source — *if planning.opa*
 - Zoning by-law amendment application fee · `schedule` · class exact · source — *if planning.zba*
 - Site plan application fee · `schedule` · class exact · source — *if planning.sitePlan*
@@ -1866,6 +1874,7 @@ The catalogue holds **163 project variables** and **246 cost items** across 16 s
 
 **Planning approvals and land-value charges**
 
+- Lifting the holding (H) symbol: application, fee and the conditions it is tied to (servicing, agreements) · `lumpSum` · class C · source — *if zoning.holding*
 - Official plan amendment application fee · `schedule` · class exact · source — *if planning.opa*
 - Zoning by-law amendment application fee · `schedule` · class exact · source — *if planning.zba*
 - Site plan application fee · `schedule` · class exact · source — *if planning.sitePlan*
@@ -2113,6 +2122,7 @@ The catalogue holds **163 project variables** and **246 cost items** across 16 s
 
 **Planning approvals and land-value charges**
 
+- Lifting the holding (H) symbol: application, fee and the conditions it is tied to (servicing, agreements) · `lumpSum` · class C · source — *if zoning.holding*
 - Official plan amendment application fee · `schedule` · class exact · source — *if planning.opa*
 - Zoning by-law amendment application fee · `schedule` · class exact · source — *if planning.zba*
 - Site plan application fee · `schedule` · class exact · source — *if planning.sitePlan*
