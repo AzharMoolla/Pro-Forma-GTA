@@ -64,5 +64,5 @@ Mixed-use buildings combine several components with shared costs allocated by GF
 
 ## Open
 
-- **"TTC cost guidelines"**: confirm what the owner means. Read as the Toronto Transit Commission, the catalogue covers the TTC 60 m technical review, transit-adjacent design costs and DC credits for transit works. If it means a different cost guide, add it to the benchmark sources.
+- ~~"TTC cost guidelines"~~: confirmed as the Toronto Transit Commission (D-17).
 - Who sets default bands for revenue drivers (market-data dispersion vs. owner judgment)?
