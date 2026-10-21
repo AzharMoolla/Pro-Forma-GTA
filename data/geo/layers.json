@@ -1,0 +1,253 @@
+{
+  "generatedAt": "2026-10-21",
+  "bbox": {
+    "west": -79.66,
+    "south": 43.57,
+    "east": -78.55,
+    "north": 44.45
+  },
+  "layers": [
+    {
+      "id": "upper-tier",
+      "label": "Upper-tier municipality (region)",
+      "level": "regional",
+      "kind": "polygon",
+      "publisher": "Ontario Ministry of Municipal Affairs and Housing (Ontario GeoHub)",
+      "sourceUrl": "https://ws.lioservices.lrc.gov.on.ca/arcgis2/rest/services/LIO_OPEN_DATA/LIO_Open03/MapServer/13",
+      "licence": "Open Government Licence – Ontario",
+      "dataDate": "2026-03-13",
+      "nameProperty": "MUNICIPAL_NAME_SHORTFORM",
+      "sets": [
+        {
+          "variable": "site.region",
+          "fromProperty": "MUNICIPAL_NAME_SHORTFORM"
+        }
+      ],
+      "caveat": "Single-tier cities (e.g. Toronto) have no upper tier; regional rules then do not apply.",
+      "retrievedAt": "2026-10-21",
+      "featureCount": 11
+    },
+    {
+      "id": "lower-tier",
+      "label": "Lower or single-tier municipality",
+      "level": "municipal",
+      "kind": "polygon",
+      "publisher": "Ontario Ministry of Municipal Affairs and Housing (Ontario GeoHub)",
+      "sourceUrl": "https://ws.lioservices.lrc.gov.on.ca/arcgis2/rest/services/LIO_OPEN_DATA/LIO_Open03/MapServer/14",
+      "licence": "Open Government Licence – Ontario",
+      "dataDate": "2026-03-13",
+      "nameProperty": "MUNICIPAL_NAME_SHORTFORM",
+      "sets": [
+        {
+          "variable": "site.municipality",
+          "fromProperty": "MUNICIPAL_NAME_SHORTFORM",
+          "map": {
+            "TORONTO": "toronto",
+            "OSHAWA": "oshawa"
+          },
+          "otherwise": "other"
+        },
+        {
+          "variable": "site.municipalityName",
+          "fromProperty": "MUNICIPAL_NAME_SHORTFORM"
+        }
+      ],
+      "caveat": "Municipal boundaries decide which DC, fee and zoning by-laws apply.",
+      "retrievedAt": "2026-10-21",
+      "featureCount": 40
+    },
+    {
+      "id": "greenbelt",
+      "label": "Greenbelt Area",
+      "level": "provincial",
+      "kind": "polygon",
+      "publisher": "Ontario Ministry of Municipal Affairs and Housing (Ontario GeoHub)",
+      "sourceUrl": "https://ws.lioservices.lrc.gov.on.ca/arcgis2/rest/services/LIO_OPEN_DATA/LIO_Open06/MapServer/17",
+      "licence": "Open Government Licence – Ontario",
+      "dataDate": "2025-11-27",
+      "sets": [
+        {
+          "variable": "site.greenbelt",
+          "value": true
+        }
+      ],
+      "caveat": "Outer boundary only: Protected Countryside, Oak Ridges Moraine and Niagara Escarpment designations inside it differ.",
+      "retrievedAt": "2026-10-21",
+      "featureCount": 1
+    },
+    {
+      "id": "conservation-authority",
+      "label": "Conservation authority jurisdiction",
+      "level": "provincial",
+      "kind": "polygon",
+      "publisher": "Ontario Ministry of the Environment, Conservation and Parks (Ontario GeoHub)",
+      "sourceUrl": "https://ws.lioservices.lrc.gov.on.ca/arcgis2/rest/services/LIO_OPEN_DATA/LIO_Open03/MapServer/11",
+      "licence": "Open Government Licence – Ontario",
+      "dataDate": "2026-10-21",
+      "nameProperty": "COMMON_NAME",
+      "sets": [
+        {
+          "variable": "site.conservationAuthority",
+          "fromProperty": "COMMON_NAME"
+        }
+      ],
+      "caveat": "Jurisdiction only. Whether the site is inside the regulated area (valleys, floodplains, shorelines) needs the authority's own regulation mapping.",
+      "retrievedAt": "2026-10-21",
+      "featureCount": 8
+    },
+    {
+      "id": "toronto-mtsa",
+      "label": "Major transit station area (Minister-approved)",
+      "level": "area",
+      "kind": "polygon",
+      "publisher": "City of Toronto Open Data",
+      "coversMunicipality": "TORONTO",
+      "sourceUrl": "https://ckan0.cf.opendata.inter.prod-toronto.ca/dataset/minister-approved-major-transit-station-areas",
+      "licence": "Open Government Licence – Toronto",
+      "dataDate": "2026-01",
+      "nameProperty": "StationNam",
+      "sets": [
+        {
+          "variable": "site.majorTransitStationArea",
+          "value": true
+        },
+        {
+          "variable": "site.mtsaType",
+          "fromProperty": "MTSA_Type"
+        }
+      ],
+      "caveat": "Toronto only. Inclusionary zoning also needs the IZ market area (not published as open data) and is paused until 2027-07-01.",
+      "retrievedAt": "2026-10-21",
+      "featureCount": 120
+    },
+    {
+      "id": "toronto-secondary-plans",
+      "label": "Secondary plan",
+      "level": "area",
+      "kind": "polygon",
+      "publisher": "City of Toronto Open Data",
+      "coversMunicipality": "TORONTO",
+      "sourceUrl": "https://ckan0.cf.opendata.inter.prod-toronto.ca/dataset/secondary-plans",
+      "licence": "Open Government Licence – Toronto",
+      "dataDate": "2026-03-16",
+      "nameProperty": "SECONDARY_PLAN_NAME",
+      "sets": [
+        {
+          "variable": "site.secondaryPlan",
+          "fromProperty": "SECONDARY_PLAN_NAME"
+        }
+      ],
+      "caveat": "Toronto only. Secondary plan policies override parent Official Plan designations for height, density and uses.",
+      "retrievedAt": "2026-10-21",
+      "featureCount": 55
+    },
+    {
+      "id": "toronto-sasp",
+      "label": "Site and Area Specific Policy (Official Plan)",
+      "level": "area",
+      "kind": "polygon",
+      "publisher": "City of Toronto Open Data",
+      "coversMunicipality": "TORONTO",
+      "sourceUrl": "https://ckan0.cf.opendata.inter.prod-toronto.ca/dataset/site-and-area-specific-policies",
+      "licence": "Open Government Licence – Toronto",
+      "dataDate": "2026-03-16",
+      "nameProperty": "SASP_NO",
+      "sets": [
+        {
+          "variable": "site.siteSpecificPolicy",
+          "fromProperty": "SASP_NO"
+        }
+      ],
+      "caveat": "Toronto only. Read the policy text: SASPs can add or remove permissions.",
+      "retrievedAt": "2026-10-21",
+      "featureCount": 868
+    },
+    {
+      "id": "ttc-subway",
+      "label": "TTC subway: within 60 m (technical review)",
+      "level": "area",
+      "kind": "buffer",
+      "bufferMetres": 60,
+      "publisher": "City of Toronto Open Data (TTC)",
+      "coversMunicipality": "TORONTO",
+      "sourceUrl": "https://ckan0.cf.opendata.inter.prod-toronto.ca/dataset/ttc-subway-shapefiles",
+      "licence": "Open Government Licence – Toronto",
+      "dataDate": "2019-07-23",
+      "nameProperty": "ROUTE_NAME",
+      "sets": [
+        {
+          "variable": "site.nearTtc60m",
+          "value": true
+        }
+      ],
+      "caveat": "Subway centrelines from 2019: Lines 5 and 6 and the Ontario Line are missing, and 60 m is measured from the line, not from structures or entrances.",
+      "retrievedAt": "2026-10-21",
+      "featureCount": 4
+    },
+    {
+      "id": "aerodromes",
+      "label": "Aerodrome within 6 NM (aeronautical review screen)",
+      "level": "federal",
+      "kind": "buffer",
+      "bufferMetres": 11112,
+      "publisher": "Aerodrome reference points (approximate)",
+      "sourceUrl": "https://tc.canada.ca/en/aviation/operating-airports-aerodromes/airport-zoning-regulations",
+      "licence": "Public facts",
+      "dataDate": "2026-10-21",
+      "retrievedAt": "2026-10-21",
+      "featureCount": 3,
+      "nameProperty": "NAME",
+      "sets": [
+        {
+          "variable": "site.nearAerodrome",
+          "value": true
+        }
+      ],
+      "caveat": "A screen, not the Airport Zoning Regulations: AZR height surfaces are registered regulations without open GIS. Within 6 NM, or taller than about 100 ft near an airport, expect NAV CANADA and Transport Canada filings for the building and cranes."
+    }
+  ],
+  "unavailable": [
+    {
+      "label": "Inclusionary zoning market areas (Toronto)",
+      "level": "area",
+      "why": "Published as a map on toronto.ca, not as open data. IZ is paused until 2027-07-01.",
+      "check": "https://www.toronto.ca/city-government/planning-development/planning-studies-initiatives/zoning-for-major-transit-station-areas/"
+    },
+    {
+      "label": "Conservation authority regulated areas (TRCA, CLOCA)",
+      "level": "provincial",
+      "why": "Regulation limits are kept by each authority.",
+      "check": "https://trca.ca/planning-permits/"
+    },
+    {
+      "label": "Airport Zoning Regulation surfaces (Pearson, Billy Bishop, Oshawa)",
+      "level": "federal",
+      "why": "Registered regulations with plan drawings; no open GIS.",
+      "check": "https://tc.canada.ca/en/aviation/operating-airports-aerodromes/airport-zoning-regulations"
+    },
+    {
+      "label": "Zoning by-law (Toronto 569-2013, Oshawa 60-94)",
+      "level": "area",
+      "why": "Toronto publishes zoning GIS but it is large and must be read with the by-law text; Oshawa zoning is not published as open data.",
+      "check": "https://open.toronto.ca/dataset/zoning-by-law/"
+    },
+    {
+      "label": "Durham Region and Oshawa secondary plans and Official Plan designations",
+      "level": "regional",
+      "why": "Durham ROP layers exist on maps.durham.ca with mixed licensing; Oshawa layers not found as open data.",
+      "check": "https://maps.durham.ca/arcgis/rest/services/Open_Data"
+    },
+    {
+      "label": "Heritage districts and listed properties",
+      "level": "area",
+      "why": "Not loaded yet.",
+      "check": "https://www.toronto.ca/city-government/planning-development/heritage-preservation/"
+    },
+    {
+      "label": "Area-specific development charges and community improvement plans",
+      "level": "municipal",
+      "why": "Defined in by-law schedules, not open GIS.",
+      "check": "https://www.toronto.ca/city-government/budget-finances/city-finance/development-charges/"
+    }
+  ]
+}

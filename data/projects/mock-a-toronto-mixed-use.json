@@ -125,7 +125,17 @@
     "site.airportZoning": false,
     "site.nearMajorFacility": false,
     "site.transitInfrastructureBelow": true,
-    "site.publicUniversityLand": false
+    "site.publicUniversityLand": false,
+    "site.lat": 43.7075,
+    "site.lng": -79.3985,
+    "site.municipalityName": "TORONTO",
+    "site.region": null,
+    "site.greenbelt": false,
+    "site.conservationAuthority": "Toronto and Region Conservation Authority",
+    "site.secondaryPlan": "Yonge-Eglinton",
+    "site.siteSpecificPolicy": null,
+    "site.mtsaType": "Protected Major Transit Station Area",
+    "site.nearAerodrome": true
   },
   "coverage": {
     "substructure": "benchmark: inside the above-grade $/ft² hard cost",
@@ -183,7 +193,9 @@
     "water-meter": "line: inside water and sewer connections",
     "driveway-permit": "line: inside vehicle access line",
     "stormwater-fee": "excluded: Toronto recovers stormwater through water rates in rental opex",
-    "transit-structure-review": "line: inside TTC-required protections and monitoring"
+    "transit-structure-review": "line: inside TTC-required protections and monitoring",
+    "secondary-plan-review": "allowance: inside planning-consultants and planning-justification",
+    "navcanada-land-use": "allowance: inside specialist-consultants (crane and building filing)"
   },
   "input": {
     "id": "mock-a",

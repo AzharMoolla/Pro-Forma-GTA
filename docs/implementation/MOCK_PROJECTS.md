@@ -98,7 +98,7 @@ Shape follows Spanier Group's mall-site intensification thesis: build on a strip
 
 ### Checklist coverage
 
-Given its variables, **156 catalogue items apply** to this project. **100** are their own cost lines; the rest are accounted for below. A test fails if any applicable item is left unaccounted.
+Given its variables, **158 catalogue items apply** to this project. **100** are their own cost lines; the rest are accounted for below. A test fails if any applicable item is left unaccounted.
 
 **Inside another cost line** (9)
 
@@ -127,9 +127,11 @@ Given its variables, **156 catalogue items apply** to this project. **100** are 
 - Winter heat and protection — inside the above-grade $/ft² hard cost
 - Construction manager / GC fee — inside the above-grade $/ft² hard cost
 
-**Inside a soft-cost or studies allowance** (2)
+**Inside a soft-cost or studies allowance** (4)
 
 - Grading, stormwater, drainage and erosion-control review fees — inside the site plan fee allowance
+- NAV CANADA land use proposal (building and cranes; 8–12 week review, valid up to 18 months) — inside specialist-consultants (crane and building filing)
+- Secondary plan and SASP policy review (height, density, use and community benefit requirements) — inside planning-consultants and planning-justification
 - Pre-consultation and review fees (planning, engineering, urban design) — inside planning, architecture and legal through approvals
 
 **Handled by a revenue/operating component** (14)
@@ -280,7 +282,7 @@ Shape follows Lakeview Village (Spanier Group reference project): 177-acre forme
 
 ### Checklist coverage
 
-Given its variables, **148 catalogue items apply** to this project. **49** are their own cost lines; the rest are accounted for below. A test fails if any applicable item is left unaccounted.
+Given its variables, **150 catalogue items apply** to this project. **49** are their own cost lines; the rest are accounted for below. A test fails if any applicable item is left unaccounted.
 
 **Inside another cost line** (12)
 
@@ -327,7 +329,7 @@ Given its variables, **148 catalogue items apply** to this project. **49** are t
 - Winter heat and protection — inside each block’s $/ft² hard cost
 - Amenity furniture, fixtures and equipment — inside each block’s $/ft² hard cost
 
-**Inside a soft-cost or studies allowance** (36)
+**Inside a soft-cost or studies allowance** (38)
 
 - Market study, appraisal, broker opinion of value — inside each block’s 18–20% soft-cost line or the master-plan studies lines
 - Concept massing / test-fit — inside each block’s 18–20% soft-cost line or the master-plan studies lines
@@ -346,7 +348,9 @@ Given its variables, **148 catalogue items apply** to this project. **49** are t
 - Grading, stormwater, drainage and erosion-control review fees — inside the master-plan studies lines
 - Energy strategy, energy model, Toronto Green Standard checklist — inside each block’s 18–20% soft-cost line or the master-plan studies lines
 - Planning justification report, urban design brief, community consultation — inside each block’s 18–20% soft-cost line or the master-plan studies lines
+- NAV CANADA land use proposal (building and cranes; 8–12 week review, valid up to 18 months) — inside each block’s 18–20% soft-cost line or the master-plan studies lines
 - Land-use compatibility study near major facilities (air quality, odour, risk; PPS 2024, D-6) — inside the master-plan studies lines (former industrial neighbours)
+- Secondary plan and SASP policy review (height, density, use and community benefit requirements) — inside each block’s 18–20% soft-cost line or the master-plan studies lines
 - Site plan application fee — inside each block’s 18–20% soft-cost line or the master-plan studies lines
 - Draft plan of condominium fee — inside each block’s 18–20% soft-cost line or the master-plan studies lines
 - Pre-consultation and review fees (planning, engineering, urban design) — inside the master-plan studies lines

@@ -13,7 +13,7 @@ export default defineConfig([
   },
   {
     // ADR-001: the engine is pure. No UI, network, or AI SDKs.
-    files: ['src/engine/**/*.ts'],
+    files: ['src/engine/**/*.ts', 'src/location/**/*.ts'],
     rules: {
       'no-restricted-imports': ['error', { patterns: ['react', 'react-dom', '../ui/*', '../scenario/*', 'node:*', '@supabase/*', '@anthropic-ai/*', 'openai'] }],
       'no-restricted-globals': ['error', 'fetch', 'Date', 'localStorage', 'window', 'document'],
@@ -22,7 +22,7 @@ export default defineConfig([
   },
   {
     // BEDMAS made explicit: any expression mixing arithmetic operators of different precedence must use brackets.
-    files: ['src/engine/**/*.ts', 'src/tracker/**/*.ts', 'src/scenario/**/*.ts'],
+    files: ['src/engine/**/*.ts', 'src/tracker/**/*.ts', 'src/scenario/**/*.ts', 'src/location/**/*.ts'],
     rules: { 'no-mixed-operators': ['error', { groups: [['+', '-', '*', '/', '%', '**']], allowSamePrecedence: true }] },
   },
 ])

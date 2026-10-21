@@ -169,6 +169,56 @@
       "source": "parcel lookup"
     },
     {
+      "id": "site.municipalityName",
+      "group": "site",
+      "label": "Municipality name (from boundary map)",
+      "type": "text",
+      "source": "Ontario municipal boundaries (map)"
+    },
+    {
+      "id": "site.region",
+      "group": "site",
+      "label": "Upper-tier region (none for single-tier cities)",
+      "type": "text",
+      "source": "Ontario upper-tier boundaries (map)"
+    },
+    {
+      "id": "site.greenbelt",
+      "group": "site",
+      "label": "Inside the Greenbelt Area",
+      "type": "boolean",
+      "source": "Greenbelt boundary (map)",
+      "ref": "https://www.ontario.ca/document/greenbelt-plan-2017"
+    },
+    {
+      "id": "site.conservationAuthority",
+      "group": "site",
+      "label": "Conservation authority with jurisdiction",
+      "type": "text",
+      "source": "Conservation authority areas (map)"
+    },
+    {
+      "id": "site.secondaryPlan",
+      "group": "site",
+      "label": "Secondary plan",
+      "type": "text",
+      "source": "Toronto secondary plans (map)"
+    },
+    {
+      "id": "site.siteSpecificPolicy",
+      "group": "site",
+      "label": "Site and Area Specific Policy number",
+      "type": "text",
+      "source": "Toronto Official Plan SASPs (map)"
+    },
+    {
+      "id": "site.mtsaType",
+      "group": "site",
+      "label": "Transit station area type (MTSA or protected MTSA)",
+      "type": "text",
+      "source": "Toronto MTSA delineations (map)"
+    },
+    {
       "id": "site.areaHa",
       "group": "site",
       "label": "Site area",
@@ -340,6 +390,14 @@
       "label": "Waterfront (shoreline works)",
       "type": "boolean",
       "source": "mapping"
+    },
+    {
+      "id": "site.nearAerodrome",
+      "group": "site",
+      "label": "Within 6 NM (11.1 km) of an aerodrome (aeronautical review screen)",
+      "type": "boolean",
+      "source": "aerodrome reference points (map)",
+      "ref": "https://www.navcanada.ca/en/aeronautical-information/land-use-program.aspx"
     },
     {
       "id": "site.airportZoning",
@@ -1921,7 +1979,7 @@
       "label": "NAV CANADA land use proposal (building and cranes; 8–12 week review, valid up to 18 months)",
       "types": "all",
       "when": [
-        "site.airportZoning"
+        "site.nearAerodrome"
       ],
       "driver": "lumpSum",
       "class": "B",
@@ -1967,6 +2025,33 @@
       "class": "D",
       "timing": "design → construction",
       "src": "S"
+    },
+    {
+      "id": "secondary-plan-review",
+      "stage": "s2",
+      "label": "Secondary plan and SASP policy review (height, density, use and community benefit requirements)",
+      "types": "all",
+      "when": [
+        "site.secondaryPlan"
+      ],
+      "driver": "lumpSum",
+      "class": "B",
+      "timing": "feasibility",
+      "src": "S"
+    },
+    {
+      "id": "greenbelt-conformity",
+      "stage": "s2",
+      "label": "Greenbelt Plan conformity: planning justification, natural heritage evaluation and agency review",
+      "types": "all",
+      "when": [
+        "site.greenbelt"
+      ],
+      "driver": "lumpSum",
+      "class": "C",
+      "timing": "application",
+      "src": "S",
+      "ref": "https://www.ontario.ca/document/greenbelt-plan-2017"
     },
     {
       "id": "conservation-authority",
