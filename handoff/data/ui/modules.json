@@ -1,0 +1,122 @@
+{
+  "version": "0.1.0",
+  "modes": {
+    "quick": {
+      "visible_by_default": [
+        "site",
+        "income",
+        "cost",
+        "cashflow",
+        "audit"
+      ],
+      "description": "Early screening using explicit proxy assumptions"
+    },
+    "professional": {
+      "visible_by_default": [
+        "site",
+        "income",
+        "cost",
+        "cashflow",
+        "debt",
+        "policy",
+        "cmhc",
+        "tax",
+        "scenario",
+        "audit"
+      ],
+      "description": "Full development appraisal inputs"
+    },
+    "institutional": {
+      "visible_by_default": [
+        "site",
+        "income",
+        "cost",
+        "cashflow",
+        "debt",
+        "policy",
+        "cmhc",
+        "tax",
+        "scenario",
+        "multi_phase",
+        "waterfall",
+        "audit"
+      ],
+      "description": "Full phased and investor structure analysis"
+    }
+  },
+  "modules": [
+    {
+      "id": "site",
+      "label": "Site, planning and geometry",
+      "minimum_depth": "core",
+      "description": "site/unit area and zoning area definitions"
+    },
+    {
+      "id": "income",
+      "label": "Revenue and absorption",
+      "minimum_depth": "core",
+      "description": "rental/condo revenue and operating schedules"
+    },
+    {
+      "id": "cost",
+      "label": "Construction and soft costs",
+      "minimum_depth": "core",
+      "description": "indexed benchmarks, quoted detailed construction inputs"
+    },
+    {
+      "id": "cashflow",
+      "label": "Cash flow and phasing",
+      "minimum_depth": "core",
+      "description": "monthly sources/uses and period logic"
+    },
+    {
+      "id": "debt",
+      "label": "Financing and interest",
+      "minimum_depth": "professional",
+      "description": "draws, loan constraints and rate shocks"
+    },
+    {
+      "id": "policy",
+      "label": "Policies, charges and incentives",
+      "minimum_depth": "professional",
+      "description": "effective-dated municipal and government rule matching"
+    },
+    {
+      "id": "cmhc",
+      "label": "CMHC preliminary financing screens",
+      "minimum_depth": "professional",
+      "description": "separate program candidates, no guaranteed approval"
+    },
+    {
+      "id": "tax",
+      "label": "Taxes, rebates and HST",
+      "minimum_depth": "professional",
+      "description": "conditional expert-reviewed tax scenario cashflows"
+    },
+    {
+      "id": "scenario",
+      "label": "Scenarios and sensitivity",
+      "minimum_depth": "professional",
+      "description": "sensitivity, scenario branches, cause of KPI shifts"
+    },
+    {
+      "id": "multi_phase",
+      "label": "Multi-phase mixed use",
+      "minimum_depth": "institutional",
+      "description": "per phase budget, debt, exit and mixed-use"
+    },
+    {
+      "id": "waterfall",
+      "label": "Investor and JV waterfalls",
+      "minimum_depth": "institutional",
+      "description": "preferred return, promote and payout priorities"
+    },
+    {
+      "id": "audit",
+      "label": "Lineage, validation and approvals",
+      "minimum_depth": "core",
+      "description": "always enabled; source and trace information"
+    }
+  ],
+  "invariant": "Toggle visibility/analysis depth only; never remove essential calculation/cost categories from totals."
+}

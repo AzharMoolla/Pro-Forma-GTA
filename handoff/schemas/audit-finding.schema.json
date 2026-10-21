@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Legacy Workbook Finding",
+  "type": "object",
+  "required": [
+    "id",
+    "workbook",
+    "classification",
+    "priority",
+    "finding",
+    "proposed_remediation",
+    "regression_test"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "workbook": {
+      "type": "string"
+    },
+    "sheet": {
+      "type": "string"
+    },
+    "cells": {
+      "type": "string"
+    },
+    "classification": {
+      "type": "string"
+    },
+    "priority": {
+      "type": "string"
+    },
+    "finding": {
+      "type": "string"
+    },
+    "evidence": {
+      "type": "string"
+    },
+    "proposed_remediation": {
+      "type": "string"
+    },
+    "regression_test": {
+      "type": "string"
+    },
+    "confidence_note": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,50 @@
+{
+  "as_of": "2026-10-21",
+  "roadmap": [
+    {
+      "priority": "P0",
+      "task": "Existing-repo audit and conventions",
+      "definition_of_done": "ADR, reuse scorecard, model dictionary"
+    },
+    {
+      "priority": "P0",
+      "task": "Pure typed calculation core",
+      "definition_of_done": "independent validated unit/integration/property tests"
+    },
+    {
+      "priority": "P0",
+      "task": "Scenario snapshots and trace IDs",
+      "definition_of_done": "immutability and dependency trace"
+    },
+    {
+      "priority": "P1",
+      "task": "Project UI vertical slice",
+      "definition_of_done": "rental demo, dynamic inputs, KPI inspector"
+    },
+    {
+      "priority": "P1",
+      "task": "Official rate adapter",
+      "definition_of_done": "BoC source observation, stale handling, no auto override"
+    },
+    {
+      "priority": "P1",
+      "task": "One GTA municipal rule module",
+      "definition_of_done": "expert-reviewed Oshawa/Durham test coverage"
+    },
+    {
+      "priority": "P2",
+      "task": "CMHC / Ontario thresholds",
+      "definition_of_done": "eligibility and vintages with caveats"
+    },
+    {
+      "priority": "P2",
+      "task": "Toronto and further GTA coverage",
+      "definition_of_done": "separately reviewed local rule systems"
+    },
+    {
+      "priority": "P3",
+      "task": "Institutional modeling",
+      "definition_of_done": "multi-phase, waterfalls and lender deliverables"
+    }
+  ]
+}

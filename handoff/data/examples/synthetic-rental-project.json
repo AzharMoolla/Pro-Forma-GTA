@@ -1,0 +1,90 @@
+{
+  "id": "demo-gta-rental-001",
+  "demo_only": true,
+  "name": "Synthetic Ontario 120-Unit Rental Project",
+  "jurisdiction": {
+    "country": "CA",
+    "province": "ON",
+    "regional_municipality": "Durham",
+    "local_municipality": "Oshawa",
+    "address": null,
+    "geography_confirmed": false
+  },
+  "scenario": {
+    "id": "base-001",
+    "label": "Concept base case",
+    "status": "draft",
+    "valuation_as_of": "2026-10-21",
+    "cashflow_start": "2027-01-01",
+    "period_granularity": "month",
+    "rate_basis": "nominal_annual",
+    "model_currency": "CAD",
+    "policy_snapshot_ids": [],
+    "lock_state": "unlocked"
+  },
+  "development": {
+    "tenure": "purpose_built_rental",
+    "unit_mix": [
+      {
+        "type": "studio",
+        "count": 15,
+        "net_sqft_per_unit": 450,
+        "starting_monthly_rent_cad": 1700,
+        "vacancy_fraction": 0.04
+      },
+      {
+        "type": "one_bed",
+        "count": 65,
+        "net_sqft_per_unit": 600,
+        "starting_monthly_rent_cad": 2050,
+        "vacancy_fraction": 0.035
+      },
+      {
+        "type": "two_bed",
+        "count": 30,
+        "net_sqft_per_unit": 820,
+        "starting_monthly_rent_cad": 2550,
+        "vacancy_fraction": 0.03
+      },
+      {
+        "type": "three_plus_bed",
+        "count": 10,
+        "net_sqft_per_unit": 1050,
+        "starting_monthly_rent_cad": 3100,
+        "vacancy_fraction": 0.03
+      }
+    ],
+    "total_units": 120,
+    "above_grade_gca_sqft": 120000,
+    "below_grade_gca_sqft": 25000,
+    "planning_counted_gfa_sqft": null,
+    "parking_stalls": 80,
+    "parking_stalls_across_levels": true
+  },
+  "budget": {
+    "land_purchase_cad": 6000000,
+    "conceptual_hard_cost_rate_cad_per_gca_sqft": 300,
+    "soft_cost_contingency_are_user_proxies": true,
+    "conceptual_hard_cost_data_source": "user_placeholder",
+    "local_levies_cad": null,
+    "local_levies_status": "UNKNOWN_REQUIRES_BYLAW_REVIEW"
+  },
+  "financing": {
+    "benchmark_source": "CAN-BOC-PRIME",
+    "benchmark_date": "2026-10-14",
+    "historical_example_benchmark_rate_fraction": 0.0445,
+    "negotiated_lender_spread_fraction": 0.02,
+    "construction_term_months": 30,
+    "scheduled_draws": [],
+    "ltc_limit_fraction": 0.7,
+    "ltv_limit_fraction": 0.65,
+    "dscr_target": 1.25,
+    "assumptions_status": "hypothetical_not_loan_offer"
+  },
+  "model_status": "INPUT_EXAMPLE_NO_CALCULATED_RETURNS",
+  "notices": [
+    "All values invented for software testing; not project/property market evidence.",
+    "No actual parcel or legal zoning, current permit costs, municipal charges, quote or eligibility verified.",
+    "Do not display IRR or capital requirements until complete costs, disbursement dates and program assumptions supplied."
+  ]
+}

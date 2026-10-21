@@ -1,0 +1,13 @@
+{
+  "observation_id": "boc-prime-V80691311-2026-10-14",
+  "series_id": "V80691311",
+  "source_id": "CAN-BOC-PRIME",
+  "date": "2026-10-14",
+  "value": 4.45,
+  "unit": "percent_per_year",
+  "is_live": false,
+  "is_user_loan_quote": false,
+  "source_url": "https://www.bankofcanada.ca/rates/banking-and-financial-statistics/posted-interest-rates-offered-by-chartered-banks/",
+  "observed_from_official_page_on": "2026-10-21",
+  "notes": "Dated historical fixture only; live adapter must look up newest valid publication."
+}

@@ -1,0 +1,6 @@
+node_modules/
+dist/
+.env*
+!.env.example
+# Third-party/student workbooks: keep locally, never commit or redistribute
+handoff/reference-workbooks/

@@ -1,0 +1,105 @@
+{
+  "status": "normative_conceptual_methods_not_executable",
+  "conventions": "Periods, financing day-count, denominator and sign conventions must be fixed in the implementation ADR.",
+  "formulas": [
+    {
+      "id": "qualifying_noi",
+      "result_units": "currency/yr",
+      "expression": "effective_gross_income - qualified_operating_expenses",
+      "caveat": "period and lender NOI convention specified",
+      "inputs": [
+        "rent",
+        "other_income",
+        "vacancy",
+        "expenses"
+      ]
+    },
+    {
+      "id": "allowable_debt_service",
+      "result_units": "currency/yr",
+      "expression": "max(0, qualifying_noi / target_dscr)",
+      "caveat": "DSCR > 0; cannot use negative NOI for positive debt",
+      "inputs": [
+        "qualifying_noi",
+        "target_dscr"
+      ]
+    },
+    {
+      "id": "max_lender_loan",
+      "result_units": "currency",
+      "expression": "min(applicable_dscr_capacity, ltv_capacity, ltc_capacity, program_caps)",
+      "caveat": "All constraints applied when present; missing term blocks confirmed loan",
+      "inputs": [
+        "allowable_debt_service",
+        "ltv",
+        "ltc",
+        "appraisal",
+        "eligible_costs"
+      ]
+    },
+    {
+      "id": "construction_interest",
+      "result_units": "currency/period",
+      "expression": "interest_on_outstanding_drawn_balance_using_contractual_accrual_convention",
+      "caveat": "Rates fixed/variable and caps modeled by period",
+      "inputs": [
+        "debt_ledger",
+        "rate_observations",
+        "spread",
+        "day_count"
+      ]
+    },
+    {
+      "id": "debt_ledger_close",
+      "result_units": "currency",
+      "expression": "open_debt + draws + capitalized_interest - repayments",
+      "caveat": "No hidden funding or duplicate repayments",
+      "inputs": [
+        "opening_debt",
+        "draws",
+        "interest",
+        "repayments"
+      ]
+    },
+    {
+      "id": "terminal_value",
+      "result_units": "currency",
+      "expression": "normalized_forward_noi / cap_rate",
+      "caveat": "cap_rate positive; NOI forward valuation date aligned",
+      "inputs": [
+        "forward_noi",
+        "exit_cap_rate"
+      ]
+    },
+    {
+      "id": "project_fsi",
+      "result_units": "ratio",
+      "expression": "bylaw_counted_gfa / bylaw_site_area",
+      "caveat": "Bylaw-specific numerator/exclusions and denominator",
+      "inputs": [
+        "counted_gfa",
+        "lot_area",
+        "jurisdiction_rule"
+      ]
+    },
+    {
+      "id": "unlevered_irr",
+      "result_units": "annualized percent",
+      "expression": "dated_solver(project_cashflows_without_finance)",
+      "caveat": "Irregular flows require XIRR; roots may not exist",
+      "inputs": [
+        "unlevered_cashflows"
+      ]
+    },
+    {
+      "id": "levered_irr",
+      "result_units": "annualized percent",
+      "expression": "dated_solver(equity_cashflows_after_debt)",
+      "caveat": "Use actual equity contributions, not loan amount",
+      "inputs": [
+        "equity_contributions",
+        "equity_distributions"
+      ]
+    }
+  ]
+}

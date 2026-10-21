@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Dated Market Observation",
+  "type": "object",
+  "required": [
+    "observation_id",
+    "series_id",
+    "source_id",
+    "date",
+    "value",
+    "unit",
+    "is_live"
+  ],
+  "properties": {
+    "observation_id": {
+      "type": "string"
+    },
+    "series_id": {
+      "type": "string"
+    },
+    "source_id": {
+      "type": "string"
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "value": {
+      "type": "number"
+    },
+    "unit": {
+      "type": "string"
+    },
+    "is_live": {
+      "type": "boolean"
+    },
+    "is_user_loan_quote": {
+      "type": "boolean"
+    },
+    "source_url": {
+      "type": "string"
+    },
+    "observed_from_official_page_on": {
+      "type": "string",
+      "format": "date"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

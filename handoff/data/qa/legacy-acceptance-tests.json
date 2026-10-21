@@ -1,0 +1,117 @@
+{
+  "as_of": "2026-10-21",
+  "tests": [
+    {
+      "id": "T-001",
+      "domain": "Area and planning",
+      "name": "Sum of components",
+      "acceptance": "sum by use = total relevant GFA with clearly defined exclusions",
+      "response_on_failure": "Blocks model save on mismatch above tolerance."
+    },
+    {
+      "id": "T-002",
+      "domain": "Parking",
+      "name": "Parking capacity",
+      "acceptance": "total physically available parking GFA >= modeled required area across all levels",
+      "response_on_failure": "High-impact warning if modeled constructed area short."
+    },
+    {
+      "id": "T-003",
+      "domain": "Units",
+      "name": "Unit mix share",
+      "acceptance": "Unit fractions sum 100%; counts integer; unit categories correct",
+      "response_on_failure": "Warnings for rounding residuals."
+    },
+    {
+      "id": "T-004",
+      "domain": "Costs",
+      "name": "Sources/uses",
+      "acceptance": "Total funding sources + equity = uses incl. financing interest",
+      "response_on_failure": "No unbalanced project budgets."
+    },
+    {
+      "id": "T-005",
+      "domain": "Debt",
+      "name": "Cash ledger identity",
+      "acceptance": "Debt close = open + draw + capitalized interest - repayments",
+      "response_on_failure": "Catch unaccounted interest or draws."
+    },
+    {
+      "id": "T-006",
+      "domain": "Debt",
+      "name": "Borrowing constraints",
+      "acceptance": "Loan <= minimum applicable LTC, LTV, DSCR and program caps",
+      "response_on_failure": "Checks multiple constraints not just one."
+    },
+    {
+      "id": "T-007",
+      "domain": "Returns",
+      "name": "IRR and NPV",
+      "acceptance": "Known cash-flow fixtures, negative flows, uneven dates for XIRR",
+      "response_on_failure": "Cross-check independent numerical implementation."
+    },
+    {
+      "id": "T-008",
+      "domain": "Returns",
+      "name": "DCF vs ROI",
+      "acceptance": "Levered cash flows subtract only debt service; unlevered excludes financing",
+      "response_on_failure": "Prevent double-counting finance costs."
+    },
+    {
+      "id": "T-009",
+      "domain": "Time",
+      "name": "Rate refresh",
+      "acceptance": "Approved scenario remains pinned to observed historic rate; new rate raises diff event",
+      "response_on_failure": "No silent scenario drift."
+    },
+    {
+      "id": "T-010",
+      "domain": "Policy",
+      "name": "Validity windows",
+      "acceptance": "Rule applies only within dates/geographic boundaries; superseded rules retired",
+      "response_on_failure": "AHF closed program not available to new project."
+    },
+    {
+      "id": "T-011",
+      "domain": "Tax",
+      "name": "GST/HST & rebates",
+      "acceptance": "Eligible vs ineligible tax cash flows, self-supply and rebate dates",
+      "response_on_failure": "Separate liability vs receipt timing."
+    },
+    {
+      "id": "T-012",
+      "domain": "Scenario",
+      "name": "Assumption propagation",
+      "acceptance": "A 10% rent change affects matching revenue, NOI, debt tests and IRR",
+      "response_on_failure": "Eliminate hardcoded disconnected submodels."
+    },
+    {
+      "id": "T-013",
+      "domain": "Scenario",
+      "name": "Rate change sensitivity",
+      "acceptance": "Raising benchmark rate increases variable debt interest, ceteris paribus",
+      "response_on_failure": "Test floor/cap/fixed-rate exceptions."
+    },
+    {
+      "id": "T-014",
+      "domain": "Data",
+      "name": "Source provenance",
+      "acceptance": "Each non-user fact links to source, retrieved-on, effective date and reviewer",
+      "response_on_failure": "Unverified facts get warning."
+    },
+    {
+      "id": "T-015",
+      "domain": "Model",
+      "name": "Units",
+      "acceptance": "ft²/m² conversions, percent vs decimal and annual vs monthly rates",
+      "response_on_failure": "Prevent unit dimensional errors."
+    },
+    {
+      "id": "T-016",
+      "domain": "Model",
+      "name": "Period consistency",
+      "acceptance": "Timing and sign for deposits, construction, pre-sales, exit and loan payoff",
+      "response_on_failure": "XIRR and annual IRR differ appropriately for irregular timing."
+    }
+  ]
+}

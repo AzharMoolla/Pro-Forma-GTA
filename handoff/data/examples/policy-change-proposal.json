@@ -1,0 +1,19 @@
+{
+  "event_id": "synthetic-policy-update-001",
+  "synthetic": true,
+  "project_scenario_id": "base-001",
+  "source_id": "ON-DURHAM-DC",
+  "event_type": "SOURCE_CHANGED",
+  "old_rule_version": "example-v1",
+  "new_rule_version": "example-v2-unapproved",
+  "review_state": "pending_expert_review",
+  "affected_dimensions": [
+    "cash_outflow_dates",
+    "construction_finance_interest",
+    "peak_equity"
+  ],
+  "old_scenario_locked": true,
+  "new_scenario_created": false,
+  "recommended_action": "compare projected rule versions; do not apply unapproved policy update",
+  "financial_change_values": null
+}

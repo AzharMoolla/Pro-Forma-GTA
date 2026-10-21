@@ -1,0 +1,126 @@
+{
+  "as_of": "2026-10-21",
+  "warning": "Candidates and examples only; not production applicable rules without human verification.",
+  "rules": [
+    {
+      "rule_id": "CMHC-AHF-NEW-APPLICANTS-CLOSED",
+      "authority": "CMHC",
+      "jurisdiction": "Canada",
+      "rule_type": "intake_status",
+      "title": "Affordable Housing Fund new-application portal closed",
+      "program_status": "closed",
+      "valid_from": "2025-12-19",
+      "valid_to": null,
+      "published_at": null,
+      "source_ids": [
+        "CAN-CMHC-AHF"
+      ],
+      "eligibility": {
+        "new_application": false
+      },
+      "effect": {
+        "grant_is_confirmed": false,
+        "reject_new_project_auto_funding": true
+      },
+      "review_status": "research_verified_candidate",
+      "automated_calculation_enabled": false,
+      "notes": "Historic/committed projects need separate treatment; not a general conclusion about legacy loans."
+    },
+    {
+      "rule_id": "ON-AFFORD-2026-VINTAGE",
+      "authority": "Ontario MAH",
+      "jurisdiction": "Ontario",
+      "rule_type": "threshold_data_vintage",
+      "title": "Ontario affordable housing bulletin vintage",
+      "program_status": "applicable_subject_to_conditions",
+      "valid_from": "2026-07-01",
+      "valid_to": null,
+      "published_at": "2026-06-15",
+      "source_ids": [
+        "ON-AFFORD-CSV",
+        "ON-DC-POLICY"
+      ],
+      "eligibility": {
+        "thresholds_required": "load_municipality_bedroom_tenure",
+        "duration_requirement_years": 25
+      },
+      "effect": {
+        "do_not_infer_exemption": true
+      },
+      "review_status": "research_verified_candidate",
+      "automated_calculation_enabled": false,
+      "notes": "No actual threshold tables included; preload prior vintages with supersession logic."
+    },
+    {
+      "rule_id": "DURHAM-RENTAL-DC-DEFERRAL-2026",
+      "authority": "Region of Durham",
+      "jurisdiction": "Durham Region",
+      "rule_type": "deferral_screening",
+      "title": "Optional extended rental DC deferral program",
+      "program_status": "listed_as_available_at_review",
+      "valid_from": null,
+      "valid_to": null,
+      "published_at": "2026-05-27",
+      "source_ids": [
+        "ON-DURHAM-DC"
+      ],
+      "eligibility": {
+        "status": "needs_review"
+      },
+      "effect": {
+        "shift_payment_date_if_approved": true,
+        "does_not_equal_waiver": true
+      },
+      "review_status": "requires_specialist_rule_review",
+      "automated_calculation_enabled": false,
+      "notes": "Do not model automatic approval or specific number of deferred years without governing agreement."
+    },
+    {
+      "rule_id": "ON-ENRRP-2026-WINDOW",
+      "authority": "CRA",
+      "jurisdiction": "Ontario",
+      "rule_type": "tax_rebate_screening",
+      "title": "Ontario enhanced new residential rental property rebate",
+      "program_status": "conditional",
+      "valid_from": "2026-04-01",
+      "valid_to": "2027-03-31",
+      "published_at": "2026-09-01",
+      "source_ids": [
+        "ON-CRA-ENRRP"
+      ],
+      "eligibility": {
+        "construction_start_qualifying_window": "generally",
+        "exceptions_exist": true
+      },
+      "effect": {
+        "tax_cashflow_requires_review": true
+      },
+      "review_status": "tax_expert_review",
+      "automated_calculation_enabled": false,
+      "notes": "Other qualifying purchases, detailed conditions and temporary policy interplay require review."
+    },
+    {
+      "rule_id": "BOC-PRIME-HISTORIC-OBSERVATION",
+      "authority": "Bank of Canada",
+      "jurisdiction": "Canada",
+      "rule_type": "market_observation",
+      "title": "Major-bank posted prime example observation",
+      "program_status": "n/a",
+      "valid_from": "2026-10-14",
+      "valid_to": null,
+      "published_at": "2026-10-14",
+      "source_ids": [
+        "CAN-BOC-PRIME"
+      ],
+      "eligibility": {},
+      "effect": {
+        "rate_percent": 4.45,
+        "value_type": "historical_fixture_not_live",
+        "series_id": "V80691311"
+      },
+      "review_status": "verified_historical_observation",
+      "automated_calculation_enabled": false,
+      "notes": "Do not use for new bank quotes or assume no later changes."
+    }
+  ]
+}

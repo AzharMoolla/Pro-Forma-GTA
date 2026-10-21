@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Example Project Inputs (draft contract)",
+  "type": "object",
+  "required": [
+    "id",
+    "name",
+    "jurisdiction",
+    "scenario",
+    "development",
+    "budget",
+    "financing"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "demo_only": {
+      "type": "boolean"
+    },
+    "name": {
+      "type": "string"
+    },
+    "jurisdiction": {
+      "type": "object"
+    },
+    "scenario": {
+      "type": "object"
+    },
+    "development": {
+      "type": "object"
+    },
+    "budget": {
+      "type": "object"
+    },
+    "financing": {
+      "type": "object"
+    },
+    "model_status": {
+      "type": "string"
+    },
+    "notices": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}

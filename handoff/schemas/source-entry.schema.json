@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Source Registry Entry",
+  "type": "object",
+  "required": [
+    "source_id",
+    "authority",
+    "category",
+    "url",
+    "implementation_state"
+  ],
+  "properties": {
+    "source_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "geography": {
+      "type": "string"
+    },
+    "authority": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string"
+    },
+    "url": {
+      "type": "string"
+    },
+    "source_version_or_series": {
+      "type": "string"
+    },
+    "implementation_state": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "reviewed_on": {
+      "type": "string",
+      "format": "date"
+    },
+    "automated_fetch_live": {
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": false
+}

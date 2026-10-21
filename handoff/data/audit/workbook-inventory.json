@@ -1,0 +1,40 @@
+{
+  "as_of": "2026-10-21",
+  "items": [
+    {
+      "workbook": "2024_Pro Forma Construction Costs.xlsx",
+      "tabs": "4",
+      "topics": "Hard-cost estimates, GFA/site statistics, unit mix, median-market-rent assumptions.",
+      "analytical_structure": "Cost assumptions; static tables; tax treatment; sqft/sqm; jurisdiction.",
+      "suggested_reuse": "Costing and spatial reconciliation"
+    },
+    {
+      "workbook": "CMHC Template.xlsx",
+      "tabs": "7",
+      "topics": "Official-style AHF scoring, pro formas, affordability tests, project budget and drawdowns.",
+      "analytical_structure": "Scoring/eligibility, sources and uses, NOI, DSCR, program financing.",
+      "suggested_reuse": "Historical policy reference only for new applicants"
+    },
+    {
+      "workbook": "Workbook C - Condo Pro Forma.xlsx",
+      "tabs": "4",
+      "topics": "Condo appraisal, building geometry, parking, phase schedule, loan interest.",
+      "analytical_structure": "Condo sell-out, retail cap value, rates, DCs, acquisition and construction draws.",
+      "suggested_reuse": "Condo base template; correct errors"
+    },
+    {
+      "workbook": "FINAL Copy of proforma_30+years_lowerdebt.xlsx",
+      "tabs": "8",
+      "topics": "Annual long-hold scenario analysis, unit mix, costs, rental lease-up and terminal valuation.",
+      "analytical_structure": "Scenario engine, 30+ year operations, IRR, NPV, LTC/DSCR and sale assumptions.",
+      "suggested_reuse": "Rental development scenario system; rebuild core formulas"
+    },
+    {
+      "workbook": "Workbook E - IRR Partitioning.xlsx",
+      "tabs": "3",
+      "topics": "Rental pro forma, mortgage sizing, long-run leveraged/unleveraged IRR and return partitioning.",
+      "analytical_structure": "Debt tests, stabilized NOI, mortgage amortization, sale analysis, IRR/NPV.",
+      "suggested_reuse": "Investor return engine; audit loan/equity relations"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+# Decision log
+
+Format: `id | date | decision | alternatives | rationale | evidence | owner | reviewer | re-evaluate trigger`
+**Status key:** DECIDED (owner said so) · DEFAULT (agent default, owner may override) · OPEN (needs owner or expert)
+
+| id | status | decision | alternatives | rationale / trigger |
+|---|---|---|---|---|
+| D-01 | DECIDED 2026-10-21 | Pilot is **rental only** | rental + condo | Owner instruction. Condo schema slots stay in the types |
+| D-02 | DECIDED 2026-10-21 | Jurisdictions: **Toronto + Durham/Oshawa** | wider GTA | Owner instruction. Build order Oshawa → Toronto because the synthetic project is in Oshawa (re-evaluate if Toronto schedules are easier to verify) |
+| D-03 | DECIDED 2026-10-21 | **Connected product**: Supabase backend with auth, plus ingestion jobs for live and published data | local-first | Owner: the most information and the most detailed results; no offline constraint |
+| D-04 | DECIDED 2026-10-21 | **Outside tools and AI welcome** for research, extraction, parsing and explanation. Posted financial figures come from the tested engine | AI computes numbers | Owner instruction. The engine rule exists for correctness and reproducibility. Each provider is listed in THIRD_PARTIES.md |
+| D-05 | DECIDED 2026-10-21 | **Use the Altus Canadian Cost Guide** as the construction-cost benchmark (convention C18) | user entry only | Owner instruction. Before public launch, check whether Altus's terms allow showing its tables in a paid or public product. A licence or permission request may be needed (D-14) |
+| D-06 | DEFAULT | HST/GST is modelled in a later milestone, shown as "not yet modelled" until then | placeholder % | Audit PF-013 |
+| D-07 | DEFAULT | Model conventions **C1–C17** in ADR-001 | others | Trigger: expert reviewer feedback. Each change bumps `modelConventionVersion` |
+| D-08 | DEFAULT | A stale source **warns** and shows its date; it does not block | block export | Trigger: lender-facing reports |
+| D-09 | DEFAULT | Full exports: **XLSX** (ledger, assumptions, sources tabs), PDF report, CSV, JSON | CSV only | Most detailed output for users |
+| D-10 | OPEN | Who verifies Oshawa/Durham and Toronto charge schedules before status = verified? | owner / planner colleague / consultant | Needed before Milestone E |
+| D-11 | OPEN | Report standard for the first export (internal screening vs investor brief vs lender) | — | Needed before Milestone F |
+| D-12 | DEFAULT | Hosting on Cloudflare (front end plus ingestion Workers) with Supabase, the same setup as Silbo | other hosts | Ask before the first deploy or any new paid service (playbook §1.4) |
+| D-13 | DEFAULT | BoC data fetched server-side by an ingestion Worker, so browser CORS doesn't matter | browser fetch | Simpler and cacheable |
+| D-14 | OPEN | Altus licence or permission for showing guide figures to public users | link to the guide only | Needed before public launch, not before building |
+| D-15 | DEFAULT | Add **CMHC Rental Market Survey** data (rent and vacancy by bedroom type and zone) to feed the Market evidence card | user-entered rents | Matches the work-sample housing-needs snapshot |

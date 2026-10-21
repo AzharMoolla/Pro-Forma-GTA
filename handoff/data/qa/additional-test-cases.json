@@ -1,0 +1,124 @@
+{
+  "status": "design_fixtures_not_executed",
+  "cases": [
+    {
+      "id": "CORE-001",
+      "inputs": {
+        "noi": 1000000,
+        "target_dscr": 1.25
+      },
+      "expected": {
+        "max_annual_debt_service": 800000
+      },
+      "rationale": "NOI / DSCR, not NOI minus ratio"
+    },
+    {
+      "id": "CORE-002",
+      "inputs": {
+        "noi": 1000000,
+        "target_dscr": 1.5
+      },
+      "expected": {
+        "max_annual_debt_service": 666666.6666666666
+      },
+      "rationale": "Tighter target reduces allowable service; round at output boundary"
+    },
+    {
+      "id": "CORE-003",
+      "inputs": {
+        "ltc_capacity": 7000000,
+        "ltv_capacity": 6000000,
+        "dscr_capacity": 6500000
+      },
+      "expected": {
+        "max_loan": 6000000
+      },
+      "rationale": "All applicable constraints respected"
+    },
+    {
+      "id": "CORE-004",
+      "inputs": {
+        "period_open_debt": 1000000,
+        "new_draws": 250000,
+        "capitalized_interest": 8000,
+        "repayments": 50000
+      },
+      "expected": {
+        "period_closing_debt": 1208000
+      },
+      "rationale": "Debt ledger identity"
+    },
+    {
+      "id": "CORE-005",
+      "inputs": {
+        "studio_units": 10,
+        "studio_monthly_rent": 2000,
+        "studio_vacancy": 0.03,
+        "onebed_vacancy": 0.07
+      },
+      "expected": {
+        "studio_annual_collected_rent": 232800
+      },
+      "rationale": "Use studio vacancy not other unit type vacancy"
+    },
+    {
+      "id": "CORE-006",
+      "inputs": {
+        "unit_counts": [
+          10,
+          20,
+          30
+        ]
+      },
+      "expected": {
+        "total_units": 60
+      },
+      "rationale": "Unit mix reconciliation"
+    },
+    {
+      "id": "POLICY-001",
+      "inputs": {
+        "program": "Affordable Housing Fund",
+        "new_application_date": "2026-10-21"
+      },
+      "expected": {
+        "eligible_to_apply_new": false
+      },
+      "rationale": "Historical AHF closure"
+    },
+    {
+      "id": "POLICY-002",
+      "inputs": {
+        "scenario_locked": true,
+        "new_prime_observation": true
+      },
+      "expected": {
+        "scenario_financials_change_automatically": false,
+        "candidate_update_generated": true
+      },
+      "rationale": "Immutable financial snapshots"
+    },
+    {
+      "id": "POLICY-003",
+      "inputs": {
+        "dc_nominal_amount": 300000,
+        "deferral_years": 5
+      },
+      "expected": {
+        "original_liability_eliminated": false
+      },
+      "rationale": "Deferral is not waiver; finance/carry effects separate"
+    },
+    {
+      "id": "AREA-001",
+      "inputs": {
+        "underground_area": 25000,
+        "planning_gfa_excludes_below_grade": true
+      },
+      "expected": {
+        "zoning_fsi_changes_if_underground_changes_only": false
+      },
+      "rationale": "Planning-defined GFA with jurisdictional exclusions"
+    }
+  ]
+}

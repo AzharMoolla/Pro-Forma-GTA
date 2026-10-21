@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Policy Rule Candidate",
+  "type": "object",
+  "required": [
+    "rule_id",
+    "jurisdiction",
+    "rule_type",
+    "source_ids",
+    "review_status",
+    "automated_calculation_enabled"
+  ],
+  "properties": {
+    "rule_id": {
+      "type": "string"
+    },
+    "authority": {
+      "type": "string"
+    },
+    "jurisdiction": {
+      "type": "string"
+    },
+    "rule_type": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "program_status": {
+      "type": "string"
+    },
+    "valid_from": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date"
+    },
+    "valid_to": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date"
+    },
+    "published_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date"
+    },
+    "source_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "eligibility": {
+      "type": "object"
+    },
+    "effect": {
+      "type": "object"
+    },
+    "review_status": {
+      "type": "string"
+    },
+    "automated_calculation_enabled": {
+      "type": "boolean"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

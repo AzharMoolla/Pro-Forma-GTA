@@ -1,0 +1,221 @@
+{
+  "as_of": "2026-10-21",
+  "fields": [
+    {
+      "module": "Site",
+      "field": "Property address & parcel",
+      "data_class": "Verified external fact",
+      "authority": "Municipal parcel/address/geocoder",
+      "metadata": "As-of/site provenance",
+      "notes": "Municipal address resolution"
+    },
+    {
+      "module": "Site",
+      "field": "Jurisdiction and taxing authority",
+      "data_class": "Verified external fact",
+      "authority": "Municipal and regional boundaries",
+      "metadata": "Policy version & overlay",
+      "notes": "GTA regional/municipal hierarchy"
+    },
+    {
+      "module": "Planning",
+      "field": "Zoning, height, density, permissions",
+      "data_class": "Regulated rule / verified fact",
+      "authority": "Municipal bylaws/GIS; site-specific decisions",
+      "metadata": "Effective date, exceptions, appeals",
+      "notes": "Confirmed zoning is not same as conceptual envelope"
+    },
+    {
+      "module": "Planning",
+      "field": "Lot area & survey geometry",
+      "data_class": "Verified / user input",
+      "authority": "Survey, land registry, GIS",
+      "metadata": "Survey date/quality",
+      "notes": "GIS approximation flagged"
+    },
+    {
+      "module": "Planning",
+      "field": "GFA, GCA, NSA, NLA, FSI",
+      "data_class": "Derived calculation",
+      "authority": "Survey, massing, applicable bylaw definitions",
+      "metadata": "Area standard and exclusions",
+      "notes": "Avoid identical sqft labels for different denominators"
+    },
+    {
+      "module": "Program",
+      "field": "Project tenure, affordability, accessibility",
+      "data_class": "User decision + verified criteria",
+      "authority": "Sponsor plan and program terms",
+      "metadata": "Program-specific period",
+      "notes": "May alter multiple financing/tax rules"
+    },
+    {
+      "module": "Program",
+      "field": "Affordable rents vs MMR",
+      "data_class": "Market research + rule",
+      "authority": "CMHC HMI + program rules",
+      "metadata": "Year, survey geography, bedroom type",
+      "notes": "Market rents cannot be used as program thresholds blindly"
+    },
+    {
+      "module": "Program",
+      "field": "Eligibility, funding cap and program availability",
+      "data_class": "Regulated rule",
+      "authority": "CMHC, governments, municipal CIPs",
+      "metadata": "Publication and intake status",
+      "notes": "Four states: screened, conditional, approved, paid"
+    },
+    {
+      "module": "Costing",
+      "field": "Conceptual hard cost $/GCA ft²",
+      "data_class": "Market benchmark / assumption",
+      "authority": "Altus licensed guide, quotes",
+      "metadata": "Region, type, date",
+      "notes": "Need rights to reproduce Altus tables"
+    },
+    {
+      "module": "Costing",
+      "field": "Detailed hard-cost line items",
+      "data_class": "Quote / estimate",
+      "authority": "QS estimate, contractor tender",
+      "metadata": "Estimate class, date",
+      "notes": "Do not double count shell vs fit-out"
+    },
+    {
+      "module": "Costing",
+      "field": "Parking cost, count and area",
+      "data_class": "User assumption + derived",
+      "authority": "Architect/parking layout",
+      "metadata": "Levels and dimensions",
+      "notes": "Physical parking reconciliation"
+    },
+    {
+      "module": "Costing",
+      "field": "Soft costs, permit fees and contingency",
+      "data_class": "User estimate + policy fact",
+      "authority": "Professional proposals, fee schedule",
+      "metadata": "Calculation basis / date",
+      "notes": "Component-based model overrides generic percent"
+    },
+    {
+      "module": "Costing",
+      "field": "Escalation, schedule and procurement",
+      "data_class": "Market forecast / assumption",
+      "authority": "Bid dates and project schedule",
+      "metadata": "Projection vintage",
+      "notes": "Forecast distinct from facts"
+    },
+    {
+      "module": "Financing",
+      "field": "Prime benchmark / overnight rate",
+      "data_class": "Live published reference",
+      "authority": "Bank of Canada Valet",
+      "metadata": "Observation and retrieval dates",
+      "notes": "Does not equal project loan rate"
+    },
+    {
+      "module": "Financing",
+      "field": "Spread, lender fees, term, commitment",
+      "data_class": "User quote / negotiated term",
+      "authority": "Term sheet or user assumptions",
+      "metadata": "Expiry; effective dates",
+      "notes": "Separate from benchmark index"
+    },
+    {
+      "module": "Financing",
+      "field": "Construction draw schedule",
+      "data_class": "Derived + user assumption",
+      "authority": "Cash cost schedules, lender terms",
+      "metadata": "Monthly actual/model period",
+      "notes": "Interest on balances not full loan"
+    },
+    {
+      "module": "Financing",
+      "field": "LTC/LTV/DSCR limits",
+      "data_class": "Lender policy / scenario inputs",
+      "authority": "CMHC, lender term sheet",
+      "metadata": "Program and policy vintage",
+      "notes": "Take binding applicable limits"
+    },
+    {
+      "module": "Financing",
+      "field": "Refinancing and amortization",
+      "data_class": "Derived + assumption",
+      "authority": "Loan terms, amortization formula",
+      "metadata": "Reset/renewal dates",
+      "notes": "Reconcile opening to closing principal"
+    },
+    {
+      "module": "Tax",
+      "field": "HST, self-supply, input tax credits and rebates",
+      "data_class": "Regulated rules + facts",
+      "authority": "CRA and Ontario programs",
+      "metadata": "Construction/start/occupancy dates",
+      "notes": "Model cash and reimbursement separately"
+    },
+    {
+      "module": "Fees",
+      "field": "Development and education charges",
+      "data_class": "Regulated rate",
+      "authority": "Municipal/regional/school bylaws",
+      "metadata": "Permit/occupancy/payment rules",
+      "notes": "Location, unit type, exemptions and discounts"
+    },
+    {
+      "module": "Fees",
+      "field": "Parkland and community benefits",
+      "data_class": "Regulated rate / site rule",
+      "authority": "Municipal bylaws and provincial statute",
+      "metadata": "Applicable municipal date",
+      "notes": "Test eligibility; avoid all-project blanket rates"
+    },
+    {
+      "module": "Revenue",
+      "field": "Condo presales, net realizable sales",
+      "data_class": "Market research + assumption",
+      "authority": "Comparables / brokerage report",
+      "metadata": "Sale periods and absorption",
+      "notes": "Not just aggregate $/sellable ft²"
+    },
+    {
+      "module": "Revenue",
+      "field": "Rental rent roll, turnover and vacancy",
+      "data_class": "Market research + assumption",
+      "authority": "CMHC, leases, comparables",
+      "metadata": "Building vintage / unit type",
+      "notes": "Unit-type dependence required"
+    },
+    {
+      "module": "Operations",
+      "field": "Opex, management, taxes and reserves",
+      "data_class": "Quote/benchmark + assumption",
+      "authority": "Operating budgets and comparables",
+      "metadata": "Nominal/real year",
+      "notes": "NOI includes recurring operating costs, excludes debt"
+    },
+    {
+      "module": "Valuation",
+      "field": "Exit cap rate and sale transaction cost",
+      "data_class": "Market assumption",
+      "authority": "Appraisal/comparables",
+      "metadata": "Exit date",
+      "notes": "Use appropriate forward NOI"
+    },
+    {
+      "module": "Returns",
+      "field": "Cash flows, IRR, NPV, multiple, ROC",
+      "data_class": "Deterministic calculation",
+      "authority": "Validated calculation engine",
+      "metadata": "Period basis",
+      "notes": "Levered and unlevered cash flows distinct"
+    },
+    {
+      "module": "Governance",
+      "field": "Source, vintage, manual override and approval",
+      "data_class": "Metadata",
+      "authority": "Every input and policy rule",
+      "metadata": "Timestamp and checksum",
+      "notes": "Reproducible model snapshot"
+    }
+  ]
+}

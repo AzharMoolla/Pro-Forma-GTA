@@ -1,0 +1,255 @@
+{
+  "name": "GTA Development Feasibility / Codex Handoff",
+  "version": "0.1.0",
+  "as_of": "2026-10-21",
+  "not_an_application": true,
+  "audit_findings": 19,
+  "original_workbooks_count": 5,
+  "files": [
+    {
+      "path": "AGENTS.md",
+      "size_bytes": 3862,
+      "sha256": "0b38d173bfe7e7ea5e45f7a44a955e8fbdc3bbf087461dd94e620a37f4b477ae"
+    },
+    {
+      "path": "HANDOFF_PROMPT.md",
+      "size_bytes": 2098,
+      "sha256": "9739e1770fef0cb70c1807c37e7c2aab6618d97c8031f51fe57434a9d36bfd4c"
+    },
+    {
+      "path": "README.md",
+      "size_bytes": 3710,
+      "sha256": "b209dd6b1b8aa66c996b35e6ac96a19a7b657806a5b0881394ab4722ff74b052"
+    },
+    {
+      "path": "contracts/architecture-map.md",
+      "size_bytes": 794,
+      "sha256": "57ddddc736f44a4f7d346da3a3195ab550a92ec1258de16abbc3986e95c96c5e"
+    },
+    {
+      "path": "contracts/model-domain.ts",
+      "size_bytes": 1851,
+      "sha256": "92769a8db1c6374e3364967f4224b8da3bf9c6fd904a7e87ed0f2b4636049be0"
+    },
+    {
+      "path": "data/audit/findings.json",
+      "size_bytes": 15909,
+      "sha256": "9ff30d1d976d19f759327321160f2a679cea6224eda23c364dc415bbc9223721"
+    },
+    {
+      "path": "data/audit/workbook-inventory.json",
+      "size_bytes": 1968,
+      "sha256": "b10418e0a14913e1242503212c503bacf9ed7c2e3f1e6a2c9c8495a8646067bd"
+    },
+    {
+      "path": "data/examples/dated-rate-observation.json",
+      "size_bytes": 535,
+      "sha256": "f89493d950331e887d41e7bc691dea7ff9a4b70b239f86e4cceb54efd7655764"
+    },
+    {
+      "path": "data/examples/policy-change-proposal.json",
+      "size_bytes": 626,
+      "sha256": "cecbd14a6d30f121a282080f5a33286fb39bbfda88632abca161fcb574dce4a6"
+    },
+    {
+      "path": "data/examples/synthetic-rental-project.json",
+      "size_bytes": 2846,
+      "sha256": "f40be14b64bb307b61ff8dcced7a3c2796935a7f91f6200ee8e043ab72484bfc"
+    },
+    {
+      "path": "data/fields/field-taxonomy.json",
+      "size_bytes": 8232,
+      "sha256": "4f7acd9de7a02972e9a48f5c9966744568416448c4d59925a54942dbf0bb1926"
+    },
+    {
+      "path": "data/implementation/roadmap.json",
+      "size_bytes": 1506,
+      "sha256": "ef8f81c394364ce1546d8af82ae57a64f71f051d1fdc1c7eeb211f6bbd10308c"
+    },
+    {
+      "path": "data/model/formula-catalog.json",
+      "size_bytes": 3192,
+      "sha256": "8ef10d0409a47c432f4cdc260cd1f44c47273489fb54e749aa4eada2573cd17a"
+    },
+    {
+      "path": "data/policy/seed-policy-candidates.json",
+      "size_bytes": 4374,
+      "sha256": "395d7456a118af4b24b437c6172e4a4642ba57e0971fd776bd44313535d5cce6"
+    },
+    {
+      "path": "data/policy/source-registry.json",
+      "size_bytes": 11230,
+      "sha256": "07271cd1a8ffd8773647ecdb93803de9ef021c901060bb0884b143c3d0e9c15c"
+    },
+    {
+      "path": "data/qa/additional-test-cases.json",
+      "size_bytes": 3059,
+      "sha256": "f69397853bf9d591928e7da3050e72ef5baf60c8624ef1ca12db5630f71227c4"
+    },
+    {
+      "path": "data/qa/legacy-acceptance-tests.json",
+      "size_bytes": 4315,
+      "sha256": "0c8dcc61f841f36031fc2c2a3677fee7692eedeb36bcc28b99f3c79d84d65625"
+    },
+    {
+      "path": "data/ui/modules.json",
+      "size_bytes": 3404,
+      "sha256": "6a81ab7d2ba0e2c3501f2c14e1459f4344d67ed6147c7df1fab11de4f383178d"
+    },
+    {
+      "path": "docs/00_EXECUTIVE_BRIEF.md",
+      "size_bytes": 2572,
+      "sha256": "c1df2ad8eecca9e63640e514073d5d78cfbfca6d462901d7071f329d143f7bb7"
+    },
+    {
+      "path": "docs/01_PRODUCT_REQUIREMENTS.md",
+      "size_bytes": 3339,
+      "sha256": "fc6f0af37f7c1e0177cde6c2c3c75a78d84a362c54386de91ac5fe43758ba327"
+    },
+    {
+      "path": "docs/02_SCOPE_AND_ROADMAP.md",
+      "size_bytes": 2355,
+      "sha256": "b059b6533be4dd21032dec868571dc1fd2e58dc3286e557aa4f8f9457d0435a0"
+    },
+    {
+      "path": "docs/03_UX_DESIGN_SYSTEM.md",
+      "size_bytes": 3017,
+      "sha256": "fb5aa4156474415518426481de40f2b3724965f24467e05278ea4e829f960f2c"
+    },
+    {
+      "path": "docs/04_FINANCIAL_ENGINE.md",
+      "size_bytes": 6672,
+      "sha256": "4282d3f5a7a8e8ca469d155173772f2296b7a44a10142d0e81a0d0a19b407a2e"
+    },
+    {
+      "path": "docs/05_POLICY_AND_RATES.md",
+      "size_bytes": 6691,
+      "sha256": "7215096a0a8761bf55ea79ec27fd5f4c673f8e2e349290a7751a7bfaa299ed10"
+    },
+    {
+      "path": "docs/06_DATA_GOVERNANCE.md",
+      "size_bytes": 3484,
+      "sha256": "b03bc007001a82e248831fce5ef52256a1877ddc6e65be17c223a929c3bfb97d"
+    },
+    {
+      "path": "docs/07_MODEL_AUDIT.md",
+      "size_bytes": 3512,
+      "sha256": "3e9566f2557bf495fc3ac73e58cf130bfc7d3b31c92f36d589d8e7fea9dfe4f2"
+    },
+    {
+      "path": "docs/08_QA_AND_VALIDATION.md",
+      "size_bytes": 2861,
+      "sha256": "70765843b860cd2b792f14b90365b5955d6ce326235f2161f9ca965a3e5d526e"
+    },
+    {
+      "path": "docs/09_MARKET_AND_COMPETITORS.md",
+      "size_bytes": 2011,
+      "sha256": "038a224bbadec272a8d89bf4b7a454e74ebfe573f5095d763b8d4fcd96bc621a"
+    },
+    {
+      "path": "docs/10_TECHNICAL_ARCHITECTURE.md",
+      "size_bytes": 3000,
+      "sha256": "5f939a8d55727cba14148bbcc23fde120b65d5eae4ee4efdd04adb73b22b6f8c"
+    },
+    {
+      "path": "docs/11_SECURITY_LEGAL_AND_ACCESSIBILITY.md",
+      "size_bytes": 1910,
+      "sha256": "81769c4e8b3701ccd5a0def72cff2cef93b26024d34373ea9031201cde76d5b2"
+    },
+    {
+      "path": "docs/12_OPEN_DECISIONS.md",
+      "size_bytes": 2065,
+      "sha256": "8b6532ed31f978e02d0b6d308b851a63c1c4fa9cc2f3cb6acf437f50e1d4f18c"
+    },
+    {
+      "path": "docs/13_REUSE_PLAYBOOK.md",
+      "size_bytes": 1447,
+      "sha256": "6bdef7ee3464ee1e3ba103f0258e2fefe21eea8897164d595d97adab2c1db85a"
+    },
+    {
+      "path": "docs/14_USER_JOURNEYS.md",
+      "size_bytes": 2196,
+      "sha256": "0dfb39843b8106d3cac94e529127c4cf425590f260ab515cfd10d75eb960beaf"
+    },
+    {
+      "path": "docs/15_RESEARCH_AND_SOURCE_CATALOG.md",
+      "size_bytes": 2703,
+      "sha256": "2a9d959eeb77582c6e2592e74cd6167d6a1184f616ddb5f1d9c3d2858b408246"
+    },
+    {
+      "path": "docs/16_DETAILED_IMPLEMENTATION_BACKLOG.md",
+      "size_bytes": 1958,
+      "sha256": "f15e5a7607705eb7a90df8d87a731817bf582cce41d998094aa8e4a86a255561"
+    },
+    {
+      "path": "docs/17_CHANGELOG_AND_KNOWN_LIMITATIONS.md",
+      "size_bytes": 1348,
+      "sha256": "3bb32fc6bad50fcd574379837fa64c7dd50039df76eb074fecb32808a417a55a"
+    },
+    {
+      "path": "reference-workbooks/README.md",
+      "size_bytes": 1217,
+      "sha256": "5d67b9224d146032763b06a18787daa6505b030f8c8d22e6d0e4e852fd101f59"
+    },
+    {
+      "path": "reference-workbooks/audit/GTA_Proforma_Model_Audit_Register.xlsx",
+      "size_bytes": 22854,
+      "sha256": "5e6c2031c6ffd850249a7307600a771609d4c43939b679165919d378ad2ec868"
+    },
+    {
+      "path": "reference-workbooks/original/2024_Pro Forma Construction Costs.xlsx",
+      "size_bytes": 27790,
+      "sha256": "205ef3a641282700ce27f5db3717ed91f66e1941aa7679841b0a9e5395708efd"
+    },
+    {
+      "path": "reference-workbooks/original/CMHC Template.xlsx",
+      "size_bytes": 388809,
+      "sha256": "da63948ae119573869d6766e18a683172520a8456d505f1484d0ce265d92516e"
+    },
+    {
+      "path": "reference-workbooks/original/Workbook C - Condo Pro Forma.xlsx",
+      "size_bytes": 79851,
+      "sha256": "8c54546d5d5392a2781889d64dd993972d20d4bf9222e37637a354e2049c1d2d"
+    },
+    {
+      "path": "reference-workbooks/original/FINAL Copy of proforma_30+years_lowerdebt.xlsx",
+      "size_bytes": 486940,
+      "sha256": "83c21f511a0f8bc884b992ce9d10c62809ed058918a2c65b1c4820511a668375"
+    },
+    {
+      "path": "reference-workbooks/original/Workbook E - IRR Partitioning.xlsx",
+      "size_bytes": 102139,
+      "sha256": "9ccc3fa3b8945045bf5687a4e90f79763b117b1d0bdd29277581161b11410af2"
+    },
+    {
+      "path": "schemas/audit-finding.schema.json",
+      "size_bytes": 924,
+      "sha256": "b992f1903cf2b90fe73db02f2d69f4a5eab95aee2655ef84d83af0c107365866"
+    },
+    {
+      "path": "schemas/observation.schema.json",
+      "size_bytes": 963,
+      "sha256": "8eb8ca4c4b2c8c391182c536f3cd141ac33b0c305fe0ff1014e161ebba66275f"
+    },
+    {
+      "path": "schemas/policy-rule.schema.json",
+      "size_bytes": 1406,
+      "sha256": "cbc710f3080ff1c362a464543d17e84f31fd59e05c1d10d2143ff2c1ada893c7"
+    },
+    {
+      "path": "schemas/project-input.schema.json",
+      "size_bytes": 902,
+      "sha256": "6dfcc640cfe573023be11abfcadc17c6d51d1198541d0d143a0cdfaa3966f0a9"
+    },
+    {
+      "path": "schemas/source-entry.schema.json",
+      "size_bytes": 896,
+      "sha256": "e863d652657606c6570a893b75a508d8b91d3a69f187fca9ff9a371d6ff47dd1"
+    },
+    {
+      "path": "scripts/verify_handoff.py",
+      "size_bytes": 927,
+      "sha256": "40d9315d8649ba4930a52a84fed2bf4c2ee23ee96d48c8f279af35bc4ca62076"
+    }
+  ]
+}
