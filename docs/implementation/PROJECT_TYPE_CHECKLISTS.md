@@ -2,25 +2,25 @@
 
 Generated from `data/costs/catalogue.json` (v0.1.0, as of 2026-10-21) by `npm run report`. Do not edit by hand.
 
-The catalogue holds **151 project variables** and **238 cost items** across 16 stages. Each project type below lists every item that can apply. Items marked **if …** are switched on by a project variable (dirty soil, affordable units, TTC proximity, amenities and so on). Source tags: verified · source · quote · proposed (not law).
+The catalogue holds **155 project variables** and **244 cost items** across 16 stages. Each project type below lists every item that can apply. Items marked **if …** are switched on by a project variable (dirty soil, affordable units, TTC proximity, amenities and so on). Source tags: verified · source · quote · proposed (not law).
 
 | Project type | Always applies | Conditional | Example |
 |---|---|---|---|
-| Purpose-built rental, mid-rise (6–12 storeys) | 78 | 115 | Avenue mid-rise with ground-floor retail |
-| Purpose-built rental tower, transit-oriented | 78 | 116 | Mall-parcel intensification beside a subway station (Spanier: mall redevelopment around transit) |
-| High-rise condominium | 84 | 117 | Downtown condo tower with presales |
-| Mixed-use tower(s) on a retail/office podium | 91 | 122 | Galleria-style site: condo + rental towers over retail, parking moved underground |
-| Townhouses / stacked towns | 82 | 116 | Freehold or condo towns in a suburban plan |
-| Infill multiplex / garden or laneway suites (2–10 units) | 71 | 111 | Fourplex replacing a detached house |
-| Commercial: office, retail, industrial | 71 | 110 | Multi-tenant industrial or retail plaza |
-| Adaptive reuse / conversion | 79 | 113 | Office-to-residential; Canary District's post-Games conversion (kitchens added to athlete suites) |
-| Master-planned community (greenfield or brownfield) | 57 | 128 | Lakeview Village: 177-acre brownfield waterfront, 8,050→16,000 units, employment lands, parks, pier |
+| Purpose-built rental, mid-rise (6–12 storeys) | 78 | 121 | Avenue mid-rise with ground-floor retail |
+| Purpose-built rental tower, transit-oriented | 78 | 122 | Mall-parcel intensification beside a subway station (Spanier: mall redevelopment around transit) |
+| High-rise condominium | 84 | 123 | Downtown condo tower with presales |
+| Mixed-use tower(s) on a retail/office podium | 91 | 128 | Galleria-style site: condo + rental towers over retail, parking moved underground |
+| Townhouses / stacked towns | 82 | 122 | Freehold or condo towns in a suburban plan |
+| Infill multiplex / garden or laneway suites (2–10 units) | 71 | 117 | Fourplex replacing a detached house |
+| Commercial: office, retail, industrial | 71 | 116 | Multi-tenant industrial or retail plaza |
+| Adaptive reuse / conversion | 79 | 119 | Office-to-residential; Canary District's post-Games conversion (kitchens added to athlete suites) |
+| Master-planned community (greenfield or brownfield) | 57 | 134 | Lakeview Village: 177-acre brownfield waterfront, 8,050→16,000 units, employment lands, parks, pier |
 
 ## Variables (the switches)
 
 | Group | Count | Examples |
 |---|---|---|
-| site | 24 | Municipality; Site area; Frontage; Existing building on site; … |
+| site | 28 | Municipality; Site area; Frontage; Existing building on site; … |
 | deal | 5 | Land price; Land is a taxable supply (vacant / commercial); Buyer is a foreign entity (NRST); Land financed with a land loan; … |
 | planning | 25 | Official plan amendment required; Zoning by-law amendment required; Site plan approval required; Draft plan of subdivision; … |
 | program | 19 | Residential tenure; Share of 2+ bedroom units (Growing Up guidelines, DC rates); Retail NLA; Office NLA; … |
@@ -87,6 +87,11 @@ The catalogue holds **151 project variables** and **238 cost items** across 16 s
 - TTC-required protections, monitoring and design changes · `lumpSum` · class D · quote — *if site.nearTtc60m*
 - Metrolinx review / rail corridor agreements · `lumpSum` · class C · source — *if site.nearRailCorridor*
 - MTO corridor permits · `lumpSum` · class B · source — *if site.nearHighway*
+- Airport zoning: legal survey showing the building clears the AZR surface · `lumpSum` · class B · source — *if site.airportZoning*
+- NAV CANADA land use proposal (building and cranes; 8–12 week review, valid up to 18 months) · `lumpSum` · class B · source — *if site.airportZoning*
+- Transport Canada Aeronautical Assessment Form (obstacle marking and lighting; ~90-day review) · `lumpSum` · class B · source — *if site.airportZoning*
+- Land-use compatibility study near major facilities (air quality, odour, risk; PPS 2024, D-6) · `lumpSum` · class C · source — *if site.nearMajorFacility*
+- Structural/vibration review and protection for transit infrastructure below the site · `lumpSum` · class D · source — *if site.transitInfrastructureBelow*
 - Conservation authority permit and review fees (TRCA / CLOCA) · `schedule` · class exact · source — *if site.regulatedArea*
 - Floodproofing design and works · `lumpSum` · class D · quote — *if site.floodplain*
 
@@ -98,6 +103,7 @@ The catalogue holds **151 project variables** and **238 cost items** across 16 s
 - Draft plan of subdivision fee · `schedule` · class exact · source — *if planning.subdivision*
 - Draft plan of condominium fee · `schedule` · class exact · source — *if planning.condoPlan*
 - Committee of Adjustment fee · `schedule` · class exact · source — *if planning.minorVariance*
+- Publicly-assisted university land: Planning Act approvals may not apply (Bill 185) — confirm scope with counsel · `schedule` · class exact · source — *if site.publicUniversityLand*
 - Ontario Land Tribunal appeal: legal and experts · `lumpSum` · class D · quote — *if planning.appealRisk*
 - Planner, architect and legal time through approvals · `lumpSum` · class C · quote
 - Pre-consultation and review fees (planning, engineering, urban design) · `schedule` · class exact · source
@@ -327,6 +333,11 @@ The catalogue holds **151 project variables** and **238 cost items** across 16 s
 - TTC-required protections, monitoring and design changes · `lumpSum` · class D · quote — *if site.nearTtc60m*
 - Metrolinx review / rail corridor agreements · `lumpSum` · class C · source — *if site.nearRailCorridor*
 - MTO corridor permits · `lumpSum` · class B · source — *if site.nearHighway*
+- Airport zoning: legal survey showing the building clears the AZR surface · `lumpSum` · class B · source — *if site.airportZoning*
+- NAV CANADA land use proposal (building and cranes; 8–12 week review, valid up to 18 months) · `lumpSum` · class B · source — *if site.airportZoning*
+- Transport Canada Aeronautical Assessment Form (obstacle marking and lighting; ~90-day review) · `lumpSum` · class B · source — *if site.airportZoning*
+- Land-use compatibility study near major facilities (air quality, odour, risk; PPS 2024, D-6) · `lumpSum` · class C · source — *if site.nearMajorFacility*
+- Structural/vibration review and protection for transit infrastructure below the site · `lumpSum` · class D · source — *if site.transitInfrastructureBelow*
 - Conservation authority permit and review fees (TRCA / CLOCA) · `schedule` · class exact · source — *if site.regulatedArea*
 - Floodproofing design and works · `lumpSum` · class D · quote — *if site.floodplain*
 
@@ -338,6 +349,7 @@ The catalogue holds **151 project variables** and **238 cost items** across 16 s
 - Draft plan of subdivision fee · `schedule` · class exact · source — *if planning.subdivision*
 - Draft plan of condominium fee · `schedule` · class exact · source — *if planning.condoPlan*
 - Committee of Adjustment fee · `schedule` · class exact · source — *if planning.minorVariance*
+- Publicly-assisted university land: Planning Act approvals may not apply (Bill 185) — confirm scope with counsel · `schedule` · class exact · source — *if site.publicUniversityLand*
 - Ontario Land Tribunal appeal: legal and experts · `lumpSum` · class D · quote — *if planning.appealRisk*
 - Planner, architect and legal time through approvals · `lumpSum` · class C · quote
 - Pre-consultation and review fees (planning, engineering, urban design) · `schedule` · class exact · source
@@ -571,6 +583,11 @@ The catalogue holds **151 project variables** and **238 cost items** across 16 s
 - TTC-required protections, monitoring and design changes · `lumpSum` · class D · quote — *if site.nearTtc60m*
 - Metrolinx review / rail corridor agreements · `lumpSum` · class C · source — *if site.nearRailCorridor*
 - MTO corridor permits · `lumpSum` · class B · source — *if site.nearHighway*
+- Airport zoning: legal survey showing the building clears the AZR surface · `lumpSum` · class B · source — *if site.airportZoning*
+- NAV CANADA land use proposal (building and cranes; 8–12 week review, valid up to 18 months) · `lumpSum` · class B · source — *if site.airportZoning*
+- Transport Canada Aeronautical Assessment Form (obstacle marking and lighting; ~90-day review) · `lumpSum` · class B · source — *if site.airportZoning*
+- Land-use compatibility study near major facilities (air quality, odour, risk; PPS 2024, D-6) · `lumpSum` · class C · source — *if site.nearMajorFacility*
+- Structural/vibration review and protection for transit infrastructure below the site · `lumpSum` · class D · source — *if site.transitInfrastructureBelow*
 - Conservation authority permit and review fees (TRCA / CLOCA) · `schedule` · class exact · source — *if site.regulatedArea*
 - Floodproofing design and works · `lumpSum` · class D · quote — *if site.floodplain*
 
@@ -582,6 +599,7 @@ The catalogue holds **151 project variables** and **238 cost items** across 16 s
 - Draft plan of subdivision fee · `schedule` · class exact · source — *if planning.subdivision*
 - Draft plan of condominium fee · `schedule` · class exact · source — *if planning.condoPlan*
 - Committee of Adjustment fee · `schedule` · class exact · source — *if planning.minorVariance*
+- Publicly-assisted university land: Planning Act approvals may not apply (Bill 185) — confirm scope with counsel · `schedule` · class exact · source — *if site.publicUniversityLand*
 - Ontario Land Tribunal appeal: legal and experts · `lumpSum` · class D · quote — *if planning.appealRisk*
 - Planner, architect and legal time through approvals · `lumpSum` · class C · quote
 - Pre-consultation and review fees (planning, engineering, urban design) · `schedule` · class exact · source
@@ -825,6 +843,11 @@ The catalogue holds **151 project variables** and **238 cost items** across 16 s
 - TTC-required protections, monitoring and design changes · `lumpSum` · class D · quote — *if site.nearTtc60m*
 - Metrolinx review / rail corridor agreements · `lumpSum` · class C · source — *if site.nearRailCorridor*
 - MTO corridor permits · `lumpSum` · class B · source — *if site.nearHighway*
+- Airport zoning: legal survey showing the building clears the AZR surface · `lumpSum` · class B · source — *if site.airportZoning*
+- NAV CANADA land use proposal (building and cranes; 8–12 week review, valid up to 18 months) · `lumpSum` · class B · source — *if site.airportZoning*
+- Transport Canada Aeronautical Assessment Form (obstacle marking and lighting; ~90-day review) · `lumpSum` · class B · source — *if site.airportZoning*
+- Land-use compatibility study near major facilities (air quality, odour, risk; PPS 2024, D-6) · `lumpSum` · class C · source — *if site.nearMajorFacility*
+- Structural/vibration review and protection for transit infrastructure below the site · `lumpSum` · class D · source — *if site.transitInfrastructureBelow*
 - Conservation authority permit and review fees (TRCA / CLOCA) · `schedule` · class exact · source — *if site.regulatedArea*
 - Floodproofing design and works · `lumpSum` · class D · quote — *if site.floodplain*
 
@@ -836,6 +859,7 @@ The catalogue holds **151 project variables** and **238 cost items** across 16 s
 - Draft plan of subdivision fee · `schedule` · class exact · source — *if planning.subdivision*
 - Draft plan of condominium fee · `schedule` · class exact · source — *if planning.condoPlan*
 - Committee of Adjustment fee · `schedule` · class exact · source — *if planning.minorVariance*
+- Publicly-assisted university land: Planning Act approvals may not apply (Bill 185) — confirm scope with counsel · `schedule` · class exact · source — *if site.publicUniversityLand*
 - Ontario Land Tribunal appeal: legal and experts · `lumpSum` · class D · quote — *if planning.appealRisk*
 - Planner, architect and legal time through approvals · `lumpSum` · class C · quote
 - Pre-consultation and review fees (planning, engineering, urban design) · `schedule` · class exact · source
@@ -1090,6 +1114,11 @@ The catalogue holds **151 project variables** and **238 cost items** across 16 s
 - TTC-required protections, monitoring and design changes · `lumpSum` · class D · quote — *if site.nearTtc60m*
 - Metrolinx review / rail corridor agreements · `lumpSum` · class C · source — *if site.nearRailCorridor*
 - MTO corridor permits · `lumpSum` · class B · source — *if site.nearHighway*
+- Airport zoning: legal survey showing the building clears the AZR surface · `lumpSum` · class B · source — *if site.airportZoning*
+- NAV CANADA land use proposal (building and cranes; 8–12 week review, valid up to 18 months) · `lumpSum` · class B · source — *if site.airportZoning*
+- Transport Canada Aeronautical Assessment Form (obstacle marking and lighting; ~90-day review) · `lumpSum` · class B · source — *if site.airportZoning*
+- Land-use compatibility study near major facilities (air quality, odour, risk; PPS 2024, D-6) · `lumpSum` · class C · source — *if site.nearMajorFacility*
+- Structural/vibration review and protection for transit infrastructure below the site · `lumpSum` · class D · source — *if site.transitInfrastructureBelow*
 - Conservation authority permit and review fees (TRCA / CLOCA) · `schedule` · class exact · source — *if site.regulatedArea*
 - Floodproofing design and works · `lumpSum` · class D · quote — *if site.floodplain*
 
@@ -1101,6 +1130,7 @@ The catalogue holds **151 project variables** and **238 cost items** across 16 s
 - Draft plan of subdivision fee · `schedule` · class exact · source — *if planning.subdivision*
 - Draft plan of condominium fee · `schedule` · class exact · source — *if planning.condoPlan*
 - Committee of Adjustment fee · `schedule` · class exact · source — *if planning.minorVariance*
+- Publicly-assisted university land: Planning Act approvals may not apply (Bill 185) — confirm scope with counsel · `schedule` · class exact · source — *if site.publicUniversityLand*
 - Ontario Land Tribunal appeal: legal and experts · `lumpSum` · class D · quote — *if planning.appealRisk*
 - Planner, architect and legal time through approvals · `lumpSum` · class C · quote
 - Pre-consultation and review fees (planning, engineering, urban design) · `schedule` · class exact · source
@@ -1338,6 +1368,11 @@ The catalogue holds **151 project variables** and **238 cost items** across 16 s
 - TTC-required protections, monitoring and design changes · `lumpSum` · class D · quote — *if site.nearTtc60m*
 - Metrolinx review / rail corridor agreements · `lumpSum` · class C · source — *if site.nearRailCorridor*
 - MTO corridor permits · `lumpSum` · class B · source — *if site.nearHighway*
+- Airport zoning: legal survey showing the building clears the AZR surface · `lumpSum` · class B · source — *if site.airportZoning*
+- NAV CANADA land use proposal (building and cranes; 8–12 week review, valid up to 18 months) · `lumpSum` · class B · source — *if site.airportZoning*
+- Transport Canada Aeronautical Assessment Form (obstacle marking and lighting; ~90-day review) · `lumpSum` · class B · source — *if site.airportZoning*
+- Land-use compatibility study near major facilities (air quality, odour, risk; PPS 2024, D-6) · `lumpSum` · class C · source — *if site.nearMajorFacility*
+- Structural/vibration review and protection for transit infrastructure below the site · `lumpSum` · class D · source — *if site.transitInfrastructureBelow*
 - Conservation authority permit and review fees (TRCA / CLOCA) · `schedule` · class exact · source — *if site.regulatedArea*
 - Floodproofing design and works · `lumpSum` · class D · quote — *if site.floodplain*
 
@@ -1349,6 +1384,7 @@ The catalogue holds **151 project variables** and **238 cost items** across 16 s
 - Draft plan of subdivision fee · `schedule` · class exact · source — *if planning.subdivision*
 - Draft plan of condominium fee · `schedule` · class exact · source — *if planning.condoPlan*
 - Committee of Adjustment fee · `schedule` · class exact · source — *if planning.minorVariance*
+- Publicly-assisted university land: Planning Act approvals may not apply (Bill 185) — confirm scope with counsel · `schedule` · class exact · source — *if site.publicUniversityLand*
 - Ontario Land Tribunal appeal: legal and experts · `lumpSum` · class D · quote — *if planning.appealRisk*
 - Planner, architect and legal time through approvals · `lumpSum` · class C · quote
 - Pre-consultation and review fees (planning, engineering, urban design) · `schedule` · class exact · source
@@ -1569,6 +1605,11 @@ The catalogue holds **151 project variables** and **238 cost items** across 16 s
 - TTC-required protections, monitoring and design changes · `lumpSum` · class D · quote — *if site.nearTtc60m*
 - Metrolinx review / rail corridor agreements · `lumpSum` · class C · source — *if site.nearRailCorridor*
 - MTO corridor permits · `lumpSum` · class B · source — *if site.nearHighway*
+- Airport zoning: legal survey showing the building clears the AZR surface · `lumpSum` · class B · source — *if site.airportZoning*
+- NAV CANADA land use proposal (building and cranes; 8–12 week review, valid up to 18 months) · `lumpSum` · class B · source — *if site.airportZoning*
+- Transport Canada Aeronautical Assessment Form (obstacle marking and lighting; ~90-day review) · `lumpSum` · class B · source — *if site.airportZoning*
+- Land-use compatibility study near major facilities (air quality, odour, risk; PPS 2024, D-6) · `lumpSum` · class C · source — *if site.nearMajorFacility*
+- Structural/vibration review and protection for transit infrastructure below the site · `lumpSum` · class D · source — *if site.transitInfrastructureBelow*
 - Conservation authority permit and review fees (TRCA / CLOCA) · `schedule` · class exact · source — *if site.regulatedArea*
 - Floodproofing design and works · `lumpSum` · class D · quote — *if site.floodplain*
 
@@ -1580,6 +1621,7 @@ The catalogue holds **151 project variables** and **238 cost items** across 16 s
 - Draft plan of subdivision fee · `schedule` · class exact · source — *if planning.subdivision*
 - Draft plan of condominium fee · `schedule` · class exact · source — *if planning.condoPlan*
 - Committee of Adjustment fee · `schedule` · class exact · source — *if planning.minorVariance*
+- Publicly-assisted university land: Planning Act approvals may not apply (Bill 185) — confirm scope with counsel · `schedule` · class exact · source — *if site.publicUniversityLand*
 - Ontario Land Tribunal appeal: legal and experts · `lumpSum` · class D · quote — *if planning.appealRisk*
 - Planner, architect and legal time through approvals · `lumpSum` · class C · quote
 - Pre-consultation and review fees (planning, engineering, urban design) · `schedule` · class exact · source
@@ -1798,6 +1840,11 @@ The catalogue holds **151 project variables** and **238 cost items** across 16 s
 - TTC-required protections, monitoring and design changes · `lumpSum` · class D · quote — *if site.nearTtc60m*
 - Metrolinx review / rail corridor agreements · `lumpSum` · class C · source — *if site.nearRailCorridor*
 - MTO corridor permits · `lumpSum` · class B · source — *if site.nearHighway*
+- Airport zoning: legal survey showing the building clears the AZR surface · `lumpSum` · class B · source — *if site.airportZoning*
+- NAV CANADA land use proposal (building and cranes; 8–12 week review, valid up to 18 months) · `lumpSum` · class B · source — *if site.airportZoning*
+- Transport Canada Aeronautical Assessment Form (obstacle marking and lighting; ~90-day review) · `lumpSum` · class B · source — *if site.airportZoning*
+- Land-use compatibility study near major facilities (air quality, odour, risk; PPS 2024, D-6) · `lumpSum` · class C · source — *if site.nearMajorFacility*
+- Structural/vibration review and protection for transit infrastructure below the site · `lumpSum` · class D · source — *if site.transitInfrastructureBelow*
 - Conservation authority permit and review fees (TRCA / CLOCA) · `schedule` · class exact · source — *if site.regulatedArea*
 - Floodproofing design and works · `lumpSum` · class D · quote — *if site.floodplain*
 
@@ -1809,6 +1856,7 @@ The catalogue holds **151 project variables** and **238 cost items** across 16 s
 - Draft plan of subdivision fee · `schedule` · class exact · source — *if planning.subdivision*
 - Draft plan of condominium fee · `schedule` · class exact · source — *if planning.condoPlan*
 - Committee of Adjustment fee · `schedule` · class exact · source — *if planning.minorVariance*
+- Publicly-assisted university land: Planning Act approvals may not apply (Bill 185) — confirm scope with counsel · `schedule` · class exact · source — *if site.publicUniversityLand*
 - Ontario Land Tribunal appeal: legal and experts · `lumpSum` · class D · quote — *if planning.appealRisk*
 - Planner, architect and legal time through approvals · `lumpSum` · class C · quote
 - Pre-consultation and review fees (planning, engineering, urban design) · `schedule` · class exact · source
@@ -2037,6 +2085,11 @@ The catalogue holds **151 project variables** and **238 cost items** across 16 s
 - TTC-required protections, monitoring and design changes · `lumpSum` · class D · quote — *if site.nearTtc60m*
 - Metrolinx review / rail corridor agreements · `lumpSum` · class C · source — *if site.nearRailCorridor*
 - MTO corridor permits · `lumpSum` · class B · source — *if site.nearHighway*
+- Airport zoning: legal survey showing the building clears the AZR surface · `lumpSum` · class B · source — *if site.airportZoning*
+- NAV CANADA land use proposal (building and cranes; 8–12 week review, valid up to 18 months) · `lumpSum` · class B · source — *if site.airportZoning*
+- Transport Canada Aeronautical Assessment Form (obstacle marking and lighting; ~90-day review) · `lumpSum` · class B · source — *if site.airportZoning*
+- Land-use compatibility study near major facilities (air quality, odour, risk; PPS 2024, D-6) · `lumpSum` · class C · source — *if site.nearMajorFacility*
+- Structural/vibration review and protection for transit infrastructure below the site · `lumpSum` · class D · source — *if site.transitInfrastructureBelow*
 - Conservation authority permit and review fees (TRCA / CLOCA) · `schedule` · class exact · source — *if site.regulatedArea*
 - Floodproofing design and works · `lumpSum` · class D · quote — *if site.floodplain*
 
@@ -2048,6 +2101,7 @@ The catalogue holds **151 project variables** and **238 cost items** across 16 s
 - Draft plan of subdivision fee · `schedule` · class exact · source — *if planning.subdivision*
 - Draft plan of condominium fee · `schedule` · class exact · source — *if planning.condoPlan*
 - Committee of Adjustment fee · `schedule` · class exact · source — *if planning.minorVariance*
+- Publicly-assisted university land: Planning Act approvals may not apply (Bill 185) — confirm scope with counsel · `schedule` · class exact · source — *if site.publicUniversityLand*
 - Ontario Land Tribunal appeal: legal and experts · `lumpSum` · class D · quote — *if planning.appealRisk*
 - Planner, architect and legal time through approvals · `lumpSum` · class C · quote
 - Pre-consultation and review fees (planning, engineering, urban design) · `schedule` · class exact · source

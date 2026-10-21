@@ -121,7 +121,11 @@
     "policy.torontoDcReduction": true,
     "policy.rentalHstRebate": true,
     "policy.newHomeRebates": false,
-    "mp.transitIntegration": false
+    "mp.transitIntegration": false,
+    "site.airportZoning": false,
+    "site.nearMajorFacility": false,
+    "site.transitInfrastructureBelow": true,
+    "site.publicUniversityLand": false
   },
   "coverage": {
     "substructure": "benchmark: inside the above-grade $/ft² hard cost",
@@ -178,7 +182,8 @@
     "frontage-charge": "gap: Toronto local-improvement charges not checked for this frontage",
     "water-meter": "line: inside water and sewer connections",
     "driveway-permit": "line: inside vehicle access line",
-    "stormwater-fee": "excluded: Toronto recovers stormwater through water rates in rental opex"
+    "stormwater-fee": "excluded: Toronto recovers stormwater through water rates in rental opex",
+    "transit-structure-review": "line: inside TTC-required protections and monitoring"
   },
   "input": {
     "id": "mock-a",

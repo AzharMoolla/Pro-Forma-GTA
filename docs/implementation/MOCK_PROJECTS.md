@@ -98,11 +98,12 @@ Shape follows Spanier Group's mall-site intensification thesis: build on a strip
 
 ### Checklist coverage
 
-Given its variables, **155 catalogue items apply** to this project. **100** are their own cost lines; the rest are accounted for below. A test fails if any applicable item is left unaccounted.
+Given its variables, **156 catalogue items apply** to this project. **100** are their own cost lines; the rest are accounted for below. A test fails if any applicable item is left unaccounted.
 
-**Inside another cost line** (8)
+**Inside another cost line** (9)
 
 - Construction cost benchmark (Altus Canadian Cost Guide 2026, released 2026-04-23) — hard-benchmark
+- Structural/vibration review and protection for transit infrastructure below the site — inside TTC-required protections and monitoring
 - Site plan / landscaping securities (letter of credit) — letters-of-credit
 - Toronto DC Reduction Program credit (−40% studio/1-bed, −60% 2+ bed; draft at review) — dc-city-toronto amount is net of the reduction
 - Statutory purpose-built rental DC discount by bedroom count (DCA s.26.2) — dc-city-toronto uses rental rates
@@ -279,7 +280,7 @@ Shape follows Lakeview Village (Spanier Group reference project): 177-acre forme
 
 ### Checklist coverage
 
-Given its variables, **147 catalogue items apply** to this project. **49** are their own cost lines; the rest are accounted for below. A test fails if any applicable item is left unaccounted.
+Given its variables, **148 catalogue items apply** to this project. **49** are their own cost lines; the rest are accounted for below. A test fails if any applicable item is left unaccounted.
 
 **Inside another cost line** (12)
 
@@ -326,7 +327,7 @@ Given its variables, **147 catalogue items apply** to this project. **49** are t
 - Winter heat and protection — inside each block’s $/ft² hard cost
 - Amenity furniture, fixtures and equipment — inside each block’s $/ft² hard cost
 
-**Inside a soft-cost or studies allowance** (35)
+**Inside a soft-cost or studies allowance** (36)
 
 - Market study, appraisal, broker opinion of value — inside each block’s 18–20% soft-cost line or the master-plan studies lines
 - Concept massing / test-fit — inside each block’s 18–20% soft-cost line or the master-plan studies lines
@@ -345,6 +346,7 @@ Given its variables, **147 catalogue items apply** to this project. **49** are t
 - Grading, stormwater, drainage and erosion-control review fees — inside the master-plan studies lines
 - Energy strategy, energy model, Toronto Green Standard checklist — inside each block’s 18–20% soft-cost line or the master-plan studies lines
 - Planning justification report, urban design brief, community consultation — inside each block’s 18–20% soft-cost line or the master-plan studies lines
+- Land-use compatibility study near major facilities (air quality, odour, risk; PPS 2024, D-6) — inside the master-plan studies lines (former industrial neighbours)
 - Site plan application fee — inside each block’s 18–20% soft-cost line or the master-plan studies lines
 - Draft plan of condominium fee — inside each block’s 18–20% soft-cost line or the master-plan studies lines
 - Pre-consultation and review fees (planning, engineering, urban design) — inside the master-plan studies lines

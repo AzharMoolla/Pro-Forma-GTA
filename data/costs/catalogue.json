@@ -342,6 +342,34 @@
       "source": "mapping"
     },
     {
+      "id": "site.airportZoning",
+      "group": "site",
+      "label": "Inside airport zoning / flight-path height limits (Transport Canada AZR, NAV CANADA land use)",
+      "type": "boolean",
+      "source": "Transport Canada AZR maps, airport authority"
+    },
+    {
+      "id": "site.nearMajorFacility",
+      "group": "site",
+      "label": "Near a major facility (tank farm, heavy industry, rail yard) needing land-use compatibility",
+      "type": "boolean",
+      "source": "PPS 2024 land-use compatibility; MECP D-6 guideline"
+    },
+    {
+      "id": "site.transitInfrastructureBelow",
+      "group": "site",
+      "label": "Subway or transit infrastructure beneath or beside the site",
+      "type": "boolean",
+      "source": "TTC / Metrolinx"
+    },
+    {
+      "id": "site.publicUniversityLand",
+      "group": "site",
+      "label": "Publicly-assisted university land (Bill 185 Planning Act exemption)",
+      "type": "boolean",
+      "source": "Bill 185 (2024)"
+    },
+    {
       "id": "deal.landPrice",
       "group": "deal",
       "label": "Land price",
@@ -1875,6 +1903,72 @@
       "src": "S"
     },
     {
+      "id": "airport-zoning-survey",
+      "stage": "s2",
+      "label": "Airport zoning: legal survey showing the building clears the AZR surface",
+      "types": "all",
+      "when": [
+        "site.airportZoning"
+      ],
+      "driver": "lumpSum",
+      "class": "B",
+      "timing": "design",
+      "src": "S"
+    },
+    {
+      "id": "navcanada-land-use",
+      "stage": "s2",
+      "label": "NAV CANADA land use proposal (building and cranes; 8–12 week review, valid up to 18 months)",
+      "types": "all",
+      "when": [
+        "site.airportZoning"
+      ],
+      "driver": "lumpSum",
+      "class": "B",
+      "timing": "before construction",
+      "src": "S",
+      "ref": "https://navcanada.ca/en/f-ldu-111-land-use-proposal-submission-form---cranes.docx"
+    },
+    {
+      "id": "tc-aeronautical-assessment",
+      "stage": "s2",
+      "label": "Transport Canada Aeronautical Assessment Form (obstacle marking and lighting; ~90-day review)",
+      "types": "all",
+      "when": [
+        "site.airportZoning"
+      ],
+      "driver": "lumpSum",
+      "class": "B",
+      "timing": "before construction",
+      "src": "S"
+    },
+    {
+      "id": "compatibility-study",
+      "stage": "s2",
+      "label": "Land-use compatibility study near major facilities (air quality, odour, risk; PPS 2024, D-6)",
+      "types": "all",
+      "when": [
+        "site.nearMajorFacility"
+      ],
+      "driver": "lumpSum",
+      "class": "C",
+      "timing": "application",
+      "src": "S"
+    },
+    {
+      "id": "transit-structure-review",
+      "stage": "s2",
+      "label": "Structural/vibration review and protection for transit infrastructure below the site",
+      "types": "all",
+      "when": [
+        "site.transitInfrastructureBelow"
+      ],
+      "driver": "lumpSum",
+      "class": "D",
+      "timing": "design → construction",
+      "src": "S"
+    },
+    {
       "id": "conservation-authority",
       "stage": "s2",
       "label": "Conservation authority permit and review fees (TRCA / CLOCA)",
@@ -1978,6 +2072,19 @@
       "driver": "schedule",
       "class": "exact",
       "timing": "application",
+      "src": "S"
+    },
+    {
+      "id": "university-exemption",
+      "stage": "s3",
+      "label": "Publicly-assisted university land: Planning Act approvals may not apply (Bill 185) — confirm scope with counsel",
+      "types": "all",
+      "when": [
+        "site.publicUniversityLand"
+      ],
+      "driver": "schedule",
+      "class": "exact",
+      "timing": "approvals",
       "src": "S"
     },
     {
