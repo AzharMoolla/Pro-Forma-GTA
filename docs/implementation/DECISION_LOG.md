@@ -5,7 +5,9 @@ Format: `id | date | decision | alternatives | rationale | evidence | owner | re
 
 | id | status | decision | alternatives | rationale / trigger |
 |---|---|---|---|---|
-| D-01 | DECIDED 2026-10-21 | Pilot is **rental only** | rental + condo | Owner instruction. Condo schema slots stay in the types |
+| D-01 | ~~DECIDED 2026-10-21: rental only~~ **SUPERSEDED 2026-10-21** | Scope is **rental, condo, commercial and master plans**, macro to micro (ADR-002). Rental stays the first verified component | rental only | Owner instruction |
+| D-16 | DECIDED 2026-10-21 | Every cost line carries an estimate class (D/C/B/A) with default bands; outputs show P10/P50/P90 | single-point estimates | Owner: error margin built in, rougher at macro scale (ADR-002) |
+| D-17 | OPEN | Meaning of "TTC cost guidelines" | Toronto Transit Commission vs another guide | Ask the owner |
 | D-02 | DECIDED 2026-10-21 | Jurisdictions: **Toronto + Durham/Oshawa** | wider GTA | Owner instruction. Build order Oshawa → Toronto because the synthetic project is in Oshawa (re-evaluate if Toronto schedules are easier to verify) |
 | D-03 | DECIDED 2026-10-21 | **Connected product**: Supabase backend with auth, plus ingestion jobs for live and published data | local-first | Owner: the most information and the most detailed results; no offline constraint |
 | D-04 | DECIDED 2026-10-21 | **Outside tools and AI welcome** for research, extraction, parsing and explanation. Posted financial figures come from the tested engine | AI computes numbers | Owner instruction. The engine rule exists for correctness and reproducibility. Each provider is listed in THIRD_PARTIES.md |
