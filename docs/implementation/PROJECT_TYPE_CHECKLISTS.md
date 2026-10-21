@@ -2,7 +2,7 @@
 
 Generated from `data/costs/catalogue.json` (v0.1.0, as of 2026-10-21) by `npm run report`. Do not edit by hand.
 
-The catalogue holds **175 project variables** and **247 cost items** across 16 stages. Each project type below lists every item that can apply. Items marked **if …** are switched on by a project variable (dirty soil, affordable units, TTC proximity, amenities and so on). Source tags: verified · source · quote · proposed (not law).
+The catalogue holds **182 project variables** and **247 cost items** across 16 stages. Each project type below lists every item that can apply. Items marked **if …** are switched on by a project variable (dirty soil, affordable units, TTC proximity, amenities and so on). Source tags: verified · source · quote · proposed (not law).
 
 | Project type | Always applies | Conditional | Example |
 |---|---|---|---|
@@ -32,6 +32,7 @@ The catalogue holds **175 project variables** and **247 cost items** across 16 s
 | ops | 4 | Property management fee; Utilities; Property tax class; Capital reserves |
 | master-plan | 21 | Gross site area; Net developable share (after roads, parks, SWM, NHS, schools); Phases; Arterial road length; … |
 | zoning | 8 | Zone (zoning string); Zoning height limit; Zoning height limit; Maximum FSI (as-of-right); … |
+| street | 7 | Frontage street class; Planned right-of-way width (Official Plan Map 3); Sidewalks on the frontage street; Nearest signalled or marked crossing; … |
 
 ## Purpose-built rental, mid-rise (6–12 storeys)
 

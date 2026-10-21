@@ -11,6 +11,14 @@ export interface SiteMatch {
   features: Array<Record<string, unknown>>
 }
 
+/** Frontage street and nearby transit, as the planning map returns them (pedestrian network, TTC stops). */
+export interface StreetContext {
+  street?: { segments: Array<{ metres: number; properties: Record<string, unknown> }>; crossing: { metres: number; properties: Record<string, unknown> } | null; source: { catalogueUrl?: string; retrievedAt?: string } } | null
+  nearby?: Array<{ id: string; label: string; results: Array<{ metres: number; name: string | null }> }>
+}
+
+const CROSSING: Record<string, string> = { ts: 'traffic signal', px: 'pedestrian crossover', pxo: 'pedestrian crossover' }
+
 export interface Consideration {
   variable: string
   value: string | number | boolean
@@ -29,7 +37,7 @@ export const FLOOR_TO_FLOOR_M = 3.0
 const positive = (v: unknown): number | null => (typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : null)
 const text = (v: unknown): string | null => (typeof v === 'string' && v.trim() ? v.trim() : typeof v === 'number' ? String(v) : null)
 
-export function considerationsFrom(matches: SiteMatch[]): Consideration[] {
+export function considerationsFrom(matches: SiteMatch[], context: StreetContext = {}): Consideration[] {
   const out: Consideration[] = []
   const add = (m: SiteMatch, variable: string, value: string | number | boolean | null, label: string, note?: string) => {
     if (value === null) return
@@ -80,6 +88,27 @@ export function considerationsFrom(matches: SiteMatch[]): Consideration[] {
   if (ward) add(ward, 'site.ward', text(ward.features[0]!.AREA_DESC) ?? text(ward.features[0]!.AREA_NAME) ?? text(ward.features[0]!.NAME), 'Ward')
   const hood = first('neighbourhoods') ?? first('oshawa-neighbourhoods')
   if (hood) add(hood, 'site.neighbourhood', text(hood.features[0]!.AREA_NAME) ?? text(hood.features[0]!.NAME), 'Neighbourhood')
+  // Frontage: the nearest road segment that is a road (not a walkway), from the pedestrian network
+  const st = context.street
+  if (st) {
+    const m: SiteMatch = { id: 'walking', label: 'Pedestrian network', source: st.source, features: [] }
+    const road = st.segments.find((x) => !/walkway|trail|lane/i.test(String(x.properties.ROAD_TYPE ?? '')))
+    if (road) {
+      add(m, 'site.frontageRoadClass', text(road.properties.ROAD_TYPE), `${text(road.properties.ROAD_TYPE)} ${road.metres} m from the point`)
+      add(m, 'site.sidewalks', text(road.properties.SIDEWALK_DESCRIPTION), 'Sidewalks on the frontage street')
+    }
+    if (st.crossing) {
+      const kind = CROSSING[String(st.crossing.properties.PX_TYPE ?? '').trim().toLowerCase()] ?? 'marked crossing'
+      add(m, 'site.nearestCrossingM', st.crossing.metres, `Nearest ${kind}, ${st.crossing.metres} m (straight line)`)
+      add(m, 'site.crossingType', kind, 'Nearest crossing')
+    }
+  }
+  const stop = context.nearby?.find((n) => n.id === 'ttc-stops')?.results[0]
+  if (stop) {
+    const m: SiteMatch = { id: 'ttc-stops', label: 'TTC scheduled stops', source: { catalogueUrl: 'https://open.toronto.ca/dataset/ttc-routes-and-schedules/', retrievedAt: st?.source.retrievedAt }, features: [] }
+    add(m, 'site.nearestTransitStopM', stop.metres, `${stop.name ?? 'TTC stop'}, ${stop.metres} m (straight line)`)
+    add(m, 'site.nearestTransitStop', stop.name, 'Nearest TTC stop')
+  }
   return out
 }
 

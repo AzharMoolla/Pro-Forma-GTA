@@ -100,9 +100,18 @@ export function planningMapHandler({ root = 'data/planning-map', prefix = '' } =
             nearby.push({ id: def.id, label: def.label, source: def, results: close })
           }
         }
+        // Frontage street: the nearest pedestrian-network segments (road class, sidewalks) and the nearest crossing.
+        let street = null
+        if (definitions.has('walking')) {
+          const near = (await data('walking')).filter((f) => overlap(f.bbox, [point[0] - .004, point[1] - .003, point[0] + .004, point[1] + .003]))
+            .map((f) => ({ metres: Math.round(distanceMetres(f.geometry, point)), properties: f.properties }))
+            .sort((a, b) => a.metres - b.metres)
+          const crossing = near.find((s) => (s.properties.PX ?? '').trim() || (s.properties.CROSSWALK_TYPE ?? '').trim())
+          street = { segments: near.slice(0, 3), crossing: crossing ?? null, source: definitions.get('walking') }
+        }
         const regionNames = new Set(matches.filter((m) => m.id === 'gta-regions').flatMap((m) => m.features.map((f) => f.properties.MUNICIPAL_NAME_SHORTFORM)))
         const regionalContext = regionalPolicies.filter((r) => regionNames.has(r.region))
-        return send(res, { point, matches, nearby, regionalContext, measurement: 'Approximate straight-line distance to source geometry, not a walking route or a policy eligibility decision.',
+        return send(res, { point, matches, nearby, street, regionalContext, measurement: 'Approximate straight-line distance to source geometry, not a walking route or a policy eligibility decision.',
           limitations: ['Point screening only; no parcel selection or boundary-tolerance classification yet.', 'Not found is not legal clearance; missing/legacy policy and unknown coverage remain possible.'] })
       }
       return send(res, { error: 'Not found' }, 404)

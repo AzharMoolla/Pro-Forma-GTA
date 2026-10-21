@@ -1512,6 +1512,59 @@
       "label": "Parking zone",
       "type": "text",
       "source": "planning map: parking zone overlay"
+    },
+    {
+      "id": "site.frontageRoadClass",
+      "group": "street",
+      "label": "Frontage street class",
+      "type": "text",
+      "source": "planning map: pedestrian network road type"
+    },
+    {
+      "id": "site.rowWidthM",
+      "group": "street",
+      "label": "Planned right-of-way width (Official Plan Map 3)",
+      "type": "number",
+      "unit": "m",
+      "source": "Toronto Official Plan Map 3 (not yet in the collected map data)",
+      "ref": "https://www.toronto.ca/city-government/planning-development/official-plan-guidelines/official-plan/official-plan-maps-copy/"
+    },
+    {
+      "id": "site.sidewalks",
+      "group": "street",
+      "label": "Sidewalks on the frontage street",
+      "type": "text",
+      "source": "planning map: pedestrian network"
+    },
+    {
+      "id": "site.nearestCrossingM",
+      "group": "street",
+      "label": "Nearest signalled or marked crossing",
+      "type": "number",
+      "unit": "m",
+      "source": "planning map: pedestrian network (straight line)"
+    },
+    {
+      "id": "site.crossingType",
+      "group": "street",
+      "label": "Nearest crossing type",
+      "type": "text",
+      "source": "planning map: pedestrian network"
+    },
+    {
+      "id": "site.nearestTransitStopM",
+      "group": "street",
+      "label": "Nearest TTC stop",
+      "type": "number",
+      "unit": "m",
+      "source": "planning map: TTC stops (straight line)"
+    },
+    {
+      "id": "site.nearestTransitStop",
+      "group": "street",
+      "label": "Nearest TTC stop name",
+      "type": "text",
+      "source": "planning map: TTC stops"
     }
   ],
   "items": [

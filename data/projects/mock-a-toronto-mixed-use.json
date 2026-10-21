@@ -145,7 +145,13 @@
     "zoning.fsiLimit": 5,
     "zoning.holding": false,
     "zoning.exception": "900.11.10(2507)",
-    "zoning.parkingZone": "A"
+    "zoning.parkingZone": "A",
+    "site.frontageRoadClass": "Major Arterial",
+    "site.sidewalks": "Sidewalk on both sides",
+    "site.nearestCrossingM": 48,
+    "site.crossingType": "traffic signal",
+    "site.nearestTransitStopM": 38,
+    "site.nearestTransitStop": "Yonge St at Eglinton Ave West - Eglinton Station"
   },
   "coverage": {
     "substructure": "benchmark: inside the above-grade $/ft² hard cost",

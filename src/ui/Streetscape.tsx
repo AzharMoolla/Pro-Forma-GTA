@@ -1,4 +1,4 @@
-import { useId, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react'
 import type { Attributes } from '../engine/catalogue'
 import type { Node, NodeResult } from '../engine/portfolio'
 import type { ProjectInput } from '../engine/project'
@@ -83,6 +83,52 @@ export function zoningOf(a: Attributes): Zoning | null {
   return storeys || notes.length ? { storeys, metres, notes } : null
 }
 
+interface Street { roadClass: string | null; lanes: number; sidewalkNear: boolean; sidewalkFar: boolean; rowM: number | null; crossingM: number | null; stopM: number | null; accesses: number }
+
+/** Lanes drawn per road class: an illustration of the class, not a count of the actual street. */
+const LANES: Record<string, number> = { local: 2, collector: 2, 'minor arterial': 4, 'major arterial': 4, expressway: 6 }
+
+function streetOf(a: Attributes): Street {
+  const roadClass = typeof a['site.frontageRoadClass'] === 'string' ? a['site.frontageRoadClass'] : null
+  const sidewalks = typeof a['site.sidewalks'] === 'string' ? a['site.sidewalks'].toLowerCase() : 'both'
+  return {
+    roadClass,
+    lanes: LANES[(roadClass ?? '').toLowerCase()] ?? 2,
+    sidewalkNear: !/no sidewalk/.test(sidewalks),
+    sidewalkFar: /both/.test(sidewalks),
+    rowM: n(a, 'site.rowWidthM') || null,
+    crossingM: n(a, 'site.nearestCrossingM') || null,
+    stopM: n(a, 'site.nearestTransitStopM') || null,
+    accesses: Math.min(3, n(a, 'design.vehicleAccessPoints')),
+  }
+}
+
+interface Tag { title: string; text: string; anchor: 'road' | 'sidewalk' | 'crossing' | 'stop' | 'building' | 'curb' | 'ground' }
+
+/** Street, traffic, servicing and parking requirements worth seeing on the picture, from the project's variables. */
+function tagsOf(a: Attributes, s: Street): Tag[] {
+  const str = (id: string) => (typeof a[id] === 'string' ? (a[id] as string) : null)
+  const tags: Array<Tag | null> = [
+    s.roadClass || s.rowM ? { title: 'Street', text: `${s.roadClass ?? 'class unknown'} · ROW ${s.rowM ? `${s.rowM} m` : 'to check (OP Map 3)'}`, anchor: 'road' } : null,
+    str('site.sidewalks') ? { title: 'Sidewalks', text: str('site.sidewalks')!, anchor: 'sidewalk' } : null,
+    s.crossingM ? { title: 'Crossing', text: `${str('site.crossingType') ?? 'crossing'} · ${s.crossingM} m`, anchor: 'crossing' } : null,
+    s.stopM ? { title: 'Transit', text: `${str('site.nearestTransitStop') ?? 'TTC stop'} · ${s.stopM} m`, anchor: 'stop' } : null,
+    n(a, 'planning.carParkingStalls') || str('zoning.parkingZone') ? {
+      title: 'Parking',
+      text: [n(a, 'planning.carParkingStalls') && `${n(a, 'planning.carParkingStalls')} stalls`, n(a, 'planning.parkingLevelsBelowGrade') && `${n(a, 'planning.parkingLevelsBelowGrade')} levels below`, str('zoning.parkingZone') && `zone ${str('zoning.parkingZone')}`, a['site.municipality'] === 'toronto' && 'no res. minimum'].filter(Boolean).join(' · '),
+      anchor: 'building',
+    } : null,
+    n(a, 'planning.bikeParking') ? { title: 'Bicycle parking', text: `${n(a, 'planning.bikeParking')} spaces`, anchor: 'building' } : null,
+    n(a, 'planning.loadingSpaces') || s.accesses ? { title: 'Loading and access', text: [n(a, 'planning.loadingSpaces') && `${n(a, 'planning.loadingSpaces')} loading`, s.accesses && `${s.accesses} driveway${s.accesses === 1 ? '' : 's'}`].filter(Boolean).join(' · '), anchor: 'curb' } : null,
+    (() => {
+      const flags = [a['design.stormwaterTank'] === true && 'stormwater tank', a['site.highWaterTable'] === true && 'dewatering', a['site.utilityRelocation'] === true && 'utility relocation', a['design.hydroVault'] === true && 'hydro vault'].filter(Boolean)
+      return flags.length ? { title: 'Servicing', text: flags.join(' · '), anchor: 'ground' as const } : null
+    })(),
+    n(a, 'site.frontageM') ? { title: 'Frontage', text: `${n(a, 'site.frontageM')} m`, anchor: 'sidewalk' } : null,
+  ]
+  return tags.filter((t): t is Tag => t !== null)
+}
+
 const readStyle = (): ArtStyle => {
   try { const s = localStorage.getItem('gta-proforma:art'); return ART_STYLES.some((x) => x.id === s) ? (s as ArtStyle) : 'watercolour' } catch { return 'watercolour' }
 }
@@ -90,6 +136,10 @@ const readStyle = (): ArtStyle => {
 export function Streetscape({ node, result, attributes }: { node: Node; result: NodeResult; attributes: Attributes }) {
   const uid = useId().replace(/:/g, '')
   const svgRef = useRef<SVGSVGElement>(null)
+  const boxRef = useRef<HTMLDivElement>(null)
+  const drag = useRef<{ cx: number; cy: number; x: number; y: number } | null>(null)
+  const [dragging, setDragging] = useState(false)
+  const [view, setView] = useState({ x: 0, y: 0, k: 1 })
   const [style, setStyle] = useState<ArtStyle>(readStyle)
   const choose = (s: ArtStyle) => { setStyle(s); try { localStorage.setItem('gta-proforma:art', s) } catch { /* per-viewer convenience only */ } }
 
@@ -118,10 +168,19 @@ export function Streetscape({ node, result, attributes }: { node: Node; result: 
   if (features.school) parts.push({ kind: 'school', w: 100 })
   if (features.community) parts.push({ kind: 'community', w: 120 })
   const gap = 14
-  const W = Math.max(820, parts.reduce((s, p) => s + p.w + gap, 40))
+  const W = Math.max(980, parts.reduce((s, p) => s + p.w + gap, 60))
+  const street = streetOf(attributes)
+  const tags = tagsOf(attributes, street)
+  const perRow = Math.max(1, Math.floor((W - 40) / 230))
+  const tagRows = Math.ceil(tags.length / perRow)
   const notesH = zoning?.notes.length ? 22 : 0
-  const H = 430 + notesH
-  const groundY = H - 46 - notesH
+  const groundY = 384
+  const roadTop = groundY + 12 // near sidewalk, then curb
+  const laneH = Math.min(9, 40 / street.lanes)
+  const roadBottom = roadTop + (laneH * street.lanes)
+  const streetBottom = roadBottom + 10 // far sidewalk
+  const tagsTop = streetBottom + 40
+  const H = tagsTop + (tagRows * 60) + notesH + 16
   const maxStoreys = Math.max(4, zoning?.storeys ?? 0, ...buildings.map((b) => b.storeys + 1.5))
   const scale = Math.min(4, (groundY - 90) / (maxStoreys * FLOOR_H))
   const floorH = FLOOR_H * scale
@@ -133,7 +192,7 @@ export function Streetscape({ node, result, attributes }: { node: Node; result: 
   const over = zoning?.storeys ? buildings.filter((b) => b.kind !== 'lots' && b.storeys > zoning.storeys!).length : 0
   const m = result.metrics
   const stats: Array<[string, string]> = [['Homes', num(m.totalUnits?.value)], ['Total cost', metricValue(m.totalDevelopmentCost)], ['Profit', metricValue(m.profit)], ['Profit on cost', metricValue(m.profitOnCost)]]
-  const summary = `${ART_STYLES.find((s) => s.id === style)!.label} streetscape of ${node.name}: ${buildings.map((b) => (b.kind === 'lots' ? 'a row of lots' : `${b.storeys}-storey ${b.kind}`)).join(', ')}.${zoning?.storeys ? ` Dashed line: zoning height limit of about ${zoning.storeys} storeys; ${over ? `${over} building${over === 1 ? ' is' : 's are'} taller, so a rezoning is likely` : 'every building fits under it'}.` : ''} ${stats.map(([k, v]) => `${k} ${v}`).join(', ')}.`
+  const summary = `${ART_STYLES.find((s) => s.id === style)!.label} streetscape of ${node.name}: ${buildings.map((b) => (b.kind === 'lots' ? 'a row of lots' : `${b.storeys}-storey ${b.kind}`)).join(', ')}.${zoning?.storeys ? ` Dashed line: zoning height limit of about ${zoning.storeys} storeys; ${over ? `${over} building${over === 1 ? ' is' : 's are'} taller, so a rezoning is likely` : 'every building fits under it'}.` : ''} ${stats.map(([k, v]) => `${k} ${v}`).join(', ')}.${tags.length ? ` ${tags.map((t) => `${t.title}: ${t.text}`).join('. ')}.` : ''}`
 
   const wall = (i: number) => look.walls[i % look.walls.length]!
   const shape = (d: ReactNode) => <g filter={filter}>{d}</g>
@@ -214,9 +273,75 @@ export function Streetscape({ node, result, attributes }: { node: Node; result: 
     </g>
   )
 
+  // Zoom and pan: the view is a window (x, y, zoom k ≥ 1) onto the whole W × H drawing
+  const clampView = (v: { x: number; y: number; k: number }) => {
+    const k = Math.min(8, Math.max(1, v.k))
+    return { k, x: Math.min(W - (W / k), Math.max(0, v.x)), y: Math.min(H - (H / k), Math.max(0, v.y)) }
+  }
+  const zoomAround = (factor: number, px: number, py: number) =>
+    setView((v) => { const k = Math.min(8, Math.max(1, v.k * factor)); return clampView({ k, x: px - ((px - v.x) * (v.k / k)), y: py - ((py - v.y) * (v.k / k)) }) })
+  const zoomBy = (factor: number) => zoomAround(factor, view.x + (W / view.k / 2), view.y + (H / view.k / 2))
+  /** Drawing units per screen pixel at the current zoom (the SVG is letterboxed to fit). */
+  const unitsPerPx = () => {
+    const r = boxRef.current?.getBoundingClientRect()
+    return r ? Math.max((W / view.k) / r.width, (H / view.k) / r.height) : 1
+  }
+  const toDrawing = (clientX: number, clientY: number): [number, number] => {
+    const ctm = svgRef.current?.getScreenCTM()
+    if (!ctm) return [view.x, view.y]
+    const p = new DOMPoint(clientX, clientY).matrixTransform(ctm.inverse())
+    return [p.x, p.y]
+  }
+  const onPointerDown = (e: React.PointerEvent) => {
+    if (e.button !== 0) return
+    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+    drag.current = { cx: e.clientX, cy: e.clientY, x: view.x, y: view.y }
+    setDragging(true)
+  }
+  const onPointerMove = (e: React.PointerEvent) => {
+    const d = drag.current
+    if (!d) return
+    const u = unitsPerPx()
+    setView((v) => clampView({ ...v, x: d.x - ((e.clientX - d.cx) * u), y: d.y - ((e.clientY - d.cy) * u) }))
+  }
+  const onKey = (e: React.KeyboardEvent) => {
+    const step = 60 / view.k
+    const moves: Record<string, () => void> = {
+      '+': () => zoomBy(1.4), '=': () => zoomBy(1.4), '-': () => zoomBy(1 / 1.4), '0': () => setView({ x: 0, y: 0, k: 1 }),
+      ArrowLeft: () => setView((v) => clampView({ ...v, x: v.x - step })), ArrowRight: () => setView((v) => clampView({ ...v, x: v.x + step })),
+      ArrowUp: () => setView((v) => clampView({ ...v, y: v.y - step })), ArrowDown: () => setView((v) => clampView({ ...v, y: v.y + step })),
+    }
+    if (moves[e.key]) { e.preventDefault(); moves[e.key]!() }
+  }
+  // Wheel zoom needs a non-passive listener to stop the page scrolling
+  useEffect(() => {
+    const box = boxRef.current
+    if (!box) return
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault()
+      const [px, py] = toDrawing(e.clientX, e.clientY)
+      zoomAround(e.deltaY < 0 ? 1.15 : 1 / 1.15, px, py)
+    }
+    box.addEventListener('wheel', onWheel, { passive: false })
+    return () => box.removeEventListener('wheel', onWheel)
+  })
+
+  // Anchors for the callouts: where on the picture each requirement belongs
+  const firstBuilding = placed.find((p) => p.kind === 'building')
+  const buildingX = firstBuilding ? firstBuilding.x + (firstBuilding.w / 2) : W / 3
+  const stopX = placed.find((p) => p.kind === 'transit')?.x ?? Math.max(30, (firstBuilding?.x ?? 60) - 30)
+  const crossingX = W - 120
+  const anchorOf = (a: Tag['anchor']): [number, number] => ({
+    road: [W * 0.55, (roadTop + roadBottom) / 2], sidewalk: [buildingX + 40, groundY + 6], crossing: [crossingX + 20, roadBottom],
+    stop: [stopX + 6, groundY + 4], building: [buildingX, groundY - 8], curb: [buildingX - 30, roadTop], ground: [buildingX + 60, groundY + 2],
+  } as Record<Tag['anchor'], [number, number]>)[a]
+
   const download = () => {
-    const svg = svgRef.current
+    const svg = svgRef.current?.cloneNode(true) as SVGSVGElement | undefined
     if (!svg) return
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`)
+    svg.setAttribute('width', String(W))
+    svg.setAttribute('height', String(H))
     const url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)], { type: 'image/svg+xml' }))
     Object.assign(document.createElement('a'), { href: url, download: `${node.id}-${style}.svg` }).click()
     URL.revokeObjectURL(url)
@@ -233,8 +358,25 @@ export function Streetscape({ node, result, attributes }: { node: Node; result: 
           </label>
         ))}
       </fieldset>
-      <div className="overflow-x-auto rounded-lg border border-line" tabIndex={0} role="region" aria-label="Streetscape (scrolls sideways)">
-        <svg ref={svgRef} xmlns="http://www.w3.org/2000/svg" viewBox={`0 0 ${W} ${H}`} width={W} height={H} role="img" aria-label={summary} className="block max-w-none" style={{ fontFamily: 'IBM Plex Sans, system-ui, sans-serif' }}>
+      <div
+        ref={boxRef}
+        className={cx('relative h-[min(70vh,560px)] touch-none overflow-hidden rounded-lg border border-line select-none focus-visible:outline-2 focus-visible:outline-accent', dragging ? 'cursor-grabbing' : 'cursor-grab')}
+        style={{ background: look.bg }}
+        tabIndex={0}
+        role="group"
+        aria-label="Streetscape. Zoom with + and −, move with the arrow keys, 0 to reset"
+        onKeyDown={onKey}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={() => { drag.current = null; setDragging(false) }}
+        onPointerCancel={() => { drag.current = null; setDragging(false) }}
+      >
+        <div className="absolute right-2 bottom-2 z-10 flex gap-1" onPointerDown={(e) => e.stopPropagation()}>
+          <Button aria-label="Zoom in" onClick={() => zoomBy(1.4)}>+</Button>
+          <Button aria-label="Zoom out" onClick={() => zoomBy(1 / 1.4)}>−</Button>
+          <Button onClick={() => setView({ x: 0, y: 0, k: 1 })}>Reset</Button>
+        </div>
+        <svg ref={svgRef} xmlns="http://www.w3.org/2000/svg" viewBox={`${view.x} ${view.y} ${W / view.k} ${H / view.k}`} width="100%" height="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label={summary} className="block" style={{ fontFamily: 'IBM Plex Sans, system-ui, sans-serif' }}>
           <defs>
             <filter id={`${uid}-wash`} x="-5%" y="-5%" width="110%" height="110%">
               <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves={3} seed={7} result="noise" />
@@ -282,10 +424,32 @@ export function Streetscape({ node, result, attributes }: { node: Node; result: 
             ))}
           </g>
 
-          {/* ground and street */}
-          {shape(<rect x={0} y={groundY} width={W} height={8} fill={look.ground} fillOpacity={style === 'blueprint' ? 0.25 : 0.8} />)}
+          {/* street section in front: near sidewalk, curb (with driveway cuts), lanes, far sidewalk */}
+          {shape(<rect x={0} y={groundY} width={W} height={12} fill={street.sidewalkNear ? look.ground : look.bg} fillOpacity={style === 'blueprint' ? 0.25 : 0.55} />)}
+          {shape(<rect x={0} y={roadTop} width={W} height={roadBottom - roadTop} fill={style === 'blueprint' ? '#0d3456' : style === 'sketch' ? '#ebe9e3' : '#6f7378'} fillOpacity={style === 'watercolour' ? 0.45 : style === 'model' ? 0.35 : 1} />)}
+          {shape(<rect x={0} y={roadBottom} width={W} height={10} fill={street.sidewalkFar ? look.ground : look.bg} fillOpacity={style === 'blueprint' ? 0.25 : 0.55} />)}
           <line x1={0} x2={W} y1={groundY} y2={groundY} stroke={look.line} strokeWidth={look.lineW} />
-          <line x1={0} x2={W} y1={groundY + 22} y2={groundY + 22} stroke={look.soft} strokeWidth={1.2} strokeDasharray="18 14" opacity={0.6} />
+          <line x1={0} x2={W} y1={roadTop} y2={roadTop} stroke={look.line} strokeWidth={look.lineW * 1.4} strokeDasharray={street.accesses ? undefined : undefined} />
+          {Array.from({ length: street.accesses }, (_, k) => <rect key={k} x={buildingX - 40 + (k * 22)} y={roadTop - 1} width={12} height={3} fill={look.bg} />)}
+          <line x1={0} x2={W} y1={roadBottom} y2={roadBottom} stroke={look.line} strokeWidth={look.lineW * 1.4} />
+          {Array.from({ length: street.lanes - 1 }, (_, k) => {
+            const y = roadTop + ((k + 1) * laneH)
+            const centre = k + 1 === street.lanes / 2
+            return <line key={k} x1={0} x2={W} y1={y} y2={y} stroke={centre ? '#e9c46a' : '#f4f4f4'} strokeWidth={centre ? 1.6 : 1} strokeDasharray={centre ? undefined : '14 12'} opacity={style === 'sketch' ? 0.9 : 0.85} />
+          })}
+          {street.crossingM !== null && Array.from({ length: 6 }, (_, k) => <rect key={k} x={crossingX + (k * 7)} y={roadTop + 1} width={4} height={roadBottom - roadTop - 2} fill={style === 'sketch' ? '#2f2f2f' : '#f4f4f4'} opacity={0.85} />)}
+          {street.stopM !== null && (
+            <g>
+              <line x1={stopX + 6} x2={stopX + 6} y1={groundY + 8} y2={groundY - 34} stroke={look.line} strokeWidth={1.4} />
+              <rect x={stopX - 4} y={groundY - 46} width={20} height={14} rx={2} fill="#c8102e" />
+              <text x={stopX + 6} y={groundY - 36} textAnchor="middle" fontSize="8" fontWeight={700} fill="#ffffff">TTC</text>
+            </g>
+          )}
+          {/* right of way dimension at the left edge */}
+          <g fill={look.soft} fontSize="10">
+            <line x1={10} x2={10} y1={groundY} y2={streetBottom} stroke={look.soft} strokeWidth={0.9} markerStart={`url(#${uid}-tick)`} markerEnd={`url(#${uid}-tick)`} />
+            <text x={14} y={streetBottom + 13}>{street.rowM ? `ROW ${street.rowM} m` : 'ROW width: check OP Map 3'}</text>
+          </g>
 
           {placed.map((p, k) => {
             if (p.kind === 'building') return <g key={k}>{drawBuilding(p.b, p.x, p.w, k)}</g>
@@ -310,11 +474,28 @@ export function Streetscape({ node, result, attributes }: { node: Node; result: 
               </text>
             </g>
           )}
+          {/* requirement callouts: labelled tags along the bottom, each with a leader to where it applies */}
+          {tags.map((t, k) => {
+            const tw = Math.min(220, ((W - 40) / perRow) - 12)
+            const tx = 20 + ((k % perRow) * (tw + 12))
+            const ty = tagsTop + (Math.floor(k / perRow) * 60)
+            const [ax, ay] = anchorOf(t.anchor)
+            return (
+              <g key={t.title}>
+                <title>{`${t.title}: ${t.text}`}</title>
+                <path d={`M${tx + (tw / 2)},${ty} C${tx + (tw / 2)},${ty - 24} ${ax},${ay + 24} ${ax},${ay}`} fill="none" stroke={look.soft} strokeWidth={0.9} strokeDasharray="3 3" opacity={0.8} />
+                <circle cx={ax} cy={ay} r={2.5} fill={look.soft} />
+                <rect x={tx} y={ty} width={tw} height={44} rx={style === 'blueprint' ? 0 : 8} fill={style === 'blueprint' ? look.bg : '#ffffff'} fillOpacity={style === 'blueprint' ? 1 : 0.88} stroke={look.line} strokeWidth={0.8} />
+                <text x={tx + 9} y={ty + 16} fontSize="11" fontWeight={700} fill={look.text}>{t.title}</text>
+                <text x={tx + 9} y={ty + 33} fontSize="10.5" fill={look.soft}>{t.text.length > (tw / 5.6) ? `${t.text.slice(0, Math.floor(tw / 5.6) - 1)}…` : t.text}</text>
+              </g>
+            )
+          })}
           {zoning?.notes.length ? <text x={16} y={H - 14} fontSize="11.5" fill={look.text}>{zoning.notes.join(' · ')}</text> : null}
         </svg>
       </div>
       <figcaption className="flex flex-wrap items-center justify-between gap-2 text-xs text-ink-mute">
-        <span>Illustration, not to scale. Buildings, parks, transit and roofs come from the pro forma; the dashed line and notes come from the site map's zoning, and they are not a legal building envelope.</span>
+        <span>Drag to move, scroll or use + and − to zoom. Illustration, not to scale; lanes are drawn by street class, not counted. Buildings, parks, transit and roofs come from the pro forma; the dashed line and notes come from the site map's zoning, and they are not a legal building envelope.</span>
         <Button onClick={download}>Download .svg</Button>
       </figcaption>
     </figure>

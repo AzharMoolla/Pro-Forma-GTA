@@ -2,14 +2,14 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Attributes } from '../engine/catalogue'
 import { isPortfolio } from '../engine/portfolio'
 import { cascade, type Layer, type LayerMeta, type Position } from '../location/cascade'
-import { considerationsFrom, heightCheck, type SiteMatch } from '../location/zoning'
+import { considerationsFrom, heightCheck, type SiteMatch, type StreetContext } from '../location/zoning'
 import registry from '../../data/geo/layers.json'
 import { Button, Card, Chip, TableWrap, td, th } from './components'
 import { projectsUnder } from './coverage'
 import { variableInfo } from './data'
 import { useWorkspace } from './workspace'
 
-interface SiteMessage { type: 'planning-map:site'; name: string; point: Position; matches: SiteMatch[] }
+interface SiteMessage extends StreetContext { type: 'planning-map:site'; name: string; point: Position; matches: SiteMatch[] }
 
 /** One row of "what this site means for the pro forma", with where it came from. */
 export interface Row { variable: string; value: string | number | boolean; label: string; layer: string; sourceUrl: string; retrievedAt: string; note?: string }
@@ -66,7 +66,7 @@ export function SiteMap() {
       const fromCascade: Row[] = cascade(site.point, layers).derived
         .filter((d) => d.value !== null)
         .map((d) => ({ variable: d.variable, value: d.value!, label: `${d.provenance.layer}`, layer: d.provenance.layer, sourceUrl: d.provenance.sourceUrl, retrievedAt: d.provenance.retrievedAt }))
-      const fromMap: Row[] = considerationsFrom(site.matches)
+      const fromMap: Row[] = considerationsFrom(site.matches, { street: site.street, nearby: site.nearby })
       const located: Row[] = [
         { variable: 'site.lat', value: Number(site.point[1].toFixed(6)), label: 'Latitude', layer: 'Selected on the site map', sourceUrl: '', retrievedAt: today },
         { variable: 'site.lng', value: Number(site.point[0].toFixed(6)), label: 'Longitude', layer: 'Selected on the site map', sourceUrl: '', retrievedAt: today },

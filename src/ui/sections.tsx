@@ -45,7 +45,7 @@ function Overview() {
   return (
     <div className="flex flex-col gap-4">
       <Card title="At a glance" actions={<Button onClick={() => dispatch({ type: 'section', id: 'map' })}>{state.projects[state.projectId]!.attributes['site.lat'] ? 'Site map' : 'Locate on the site map'}</Button>}>
-        <Streetscape node={node} result={nodeResult} attributes={state.projects[state.projectId]!.attributes} />
+        <Streetscape key={`${state.projectId}/${node.id}`} node={node} result={nodeResult} attributes={state.projects[state.projectId]!.attributes} />
       </Card>
       <Analysis />
       <Card title={state.path.length ? node.name : 'About this project'}>
