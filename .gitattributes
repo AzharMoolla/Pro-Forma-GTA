@@ -1,0 +1,4 @@
+* text=auto eol=lf
+handoff/** -text
+*.xlsx binary
+*.pdf binary

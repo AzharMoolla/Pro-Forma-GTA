@@ -33,13 +33,13 @@
     },
     {
       "path": "data/audit/findings.json",
-      "size_bytes": 15909,
-      "sha256": "9ff30d1d976d19f759327321160f2a679cea6224eda23c364dc415bbc9223721"
+      "size_bytes": 15654,
+      "sha256": "566283430f5b4d660933050097a35fe36c255f4c38fa01c2026d7f53d7394000"
     },
     {
       "path": "data/audit/workbook-inventory.json",
-      "size_bytes": 1968,
-      "sha256": "b10418e0a14913e1242503212c503bacf9ed7c2e3f1e6a2c9c8495a8646067bd"
+      "size_bytes": 1928,
+      "sha256": "3d4673716c798b203e30a8641e816113bcbdbcee310954275229b875859ae2dc"
     },
     {
       "path": "data/examples/dated-rate-observation.json",

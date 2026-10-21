@@ -1,0 +1,35 @@
+{
+  "id": "demo-gta-rental-001",
+  "dataClass": "synthetic",
+  "name": "Synthetic Ontario 120-Unit Rental Project",
+  "jurisdiction": { "province": "ON", "region": "Durham", "municipality": "Oshawa" },
+  "notes": [
+    "Unit mix, areas, land, $300/ft² hard cost, 30-month build and debt limits come from handoff/data/examples/synthetic-rental-project.json.",
+    "Opex, lease-up, exit cap, selling costs, discount rate, amortization and 15%/10% soft/contingency are synthetic placeholders added for engine testing.",
+    "Levies are unknown until Oshawa/Durham schedules are verified (Milestone E). Dependent results are withheld.",
+    "Debt rate = 4.45% BoC prime fixture observed 2026-10-14 + 2.00% hypothetical spread. Not a loan offer."
+  ],
+  "input": {
+    "unitMix": [
+      { "id": "studio", "count": 15, "netSqftPerUnit": 450, "monthlyRent": 1700, "vacancy": 0.04 },
+      { "id": "one_bed", "count": 65, "netSqftPerUnit": 600, "monthlyRent": 2050, "vacancy": 0.035 },
+      { "id": "two_bed", "count": 30, "netSqftPerUnit": 820, "monthlyRent": 2550, "vacancy": 0.03 },
+      { "id": "three_plus_bed", "count": 10, "netSqftPerUnit": 1050, "monthlyRent": 3100, "vacancy": 0.03 }
+    ],
+    "lotAreaSqft": null,
+    "planningGfaSqft": null,
+    "gcaAboveSqft": 120000,
+    "gcaBelowSqft": 25000,
+    "landCost": 6000000,
+    "levies": null,
+    "hardCostPerGcaSqft": 300,
+    "softCostFraction": 0.15,
+    "contingencyFraction": 0.1,
+    "opexPerUnitMonthly": 650,
+    "otherIncomeMonthly": 0,
+    "timing": { "preConstructionMonths": 6, "constructionMonths": 30, "leaseUpMonths": 12, "exitMonth": 60 },
+    "debt": { "annualRate": 0.0645, "ltc": 0.7, "ltv": 0.65, "dscr": 1.25, "amortizationYears": 25 },
+    "exit": { "capRate": 0.045, "sellingCostFraction": 0.02 },
+    "discountRate": 0.08
+  }
+}
