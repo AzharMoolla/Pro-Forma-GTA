@@ -170,7 +170,7 @@ export function analyze(input: AnalysisInput): Analysis {
   // --- returns
   const poc = value('profitOnCost')
   if (poc !== null) {
-    if (poc < 0) add({ id: 'margin-negative', severity: 'concern', title: `Unlevered profit on cost is ${pct(poc)}`, detail: 'As entered, the project loses money before financing. Something has to change: price, density, cost, or the land deal.', drivers: ['profitOnCost'] })
+    if (poc < 0) add({ id: 'margin-negative', severity: 'concern', title: `Profit on cost is ${pct(poc)}`, detail: 'As entered, the project loses money after construction interest. Something has to change: price, density, cost, or the land deal.', drivers: ['profitOnCost'] })
     else if (poc < 0.15) add({ id: 'margin-thin', severity: 'watch', title: `Profit on cost is ${pct(poc)}`, detail: 'Below the 15–20% margin developers and lenders commonly look for. Thin margins leave little room for the cost bands to land high.', drivers: ['profitOnCost'] })
     else add({ id: 'margin-ok', severity: 'good', title: `Profit on cost is ${pct(poc)}`, detail: 'At or above a common developer margin hurdle on these inputs.', drivers: ['profitOnCost'] })
   }

@@ -5,8 +5,8 @@ import { lineTotals, scheduleLine, validateCostLines, type Band, type CostLine }
 import { annualizeMonthly, annuityPayment, irr, monthlyFromEffectiveAnnual, monthlyFromNominalAnnual, npv, sizeLoan, type LoanSizing } from './finance'
 import { roundCents, sumCents } from './money'
 
-export const ENGINE_VERSION = '0.2.1' // 0.2.1: C8 land and pre-construction all equity; full numeric validation
-export const CONVENTION_VERSION = '0.2'
+export const ENGINE_VERSION = '0.3.0' // 0.3.0: unstabilized valuation, unsold condo disposition, matching profit-on-cost bases, gross equity multiple, unique-IRR rule
+export const CONVENTION_VERSION = '0.3'
 
 // ---------------------------------------------------------------- components
 
@@ -43,6 +43,12 @@ export interface CondoComponent {
   occupancyMonths: number // interim occupancy between completion and final closing
   occupancyFeePerUnitMonthly: number
   commissionFraction: number // paid at closing
+  /**
+   * Units still unsold at exit. Omitted = disposition unresolved: dependent results are withheld (C16) rather than
+   * assuming they sell. A bulk sale sells them all in the exit month at the average price less the discount, with
+   * no deposits or retail commission.
+   */
+  unsoldAtExit?: { bulkSaleDiscount: number }
   revenueBand?: Band
 }
 
@@ -230,6 +236,8 @@ export function validateProject(p: ProjectInput): string[] {
       if (!(c.occupancyFeePerUnitMonthly >= 0)) fail('occupancyFeePerUnitMonthly must be ≥ 0')
       if (!(Number.isInteger(c.occupancyMonths) && c.occupancyMonths >= 0)) fail('occupancyMonths must be a whole number ≥ 0')
       if (!(Number.isInteger(c.salesStartMonth) && c.salesStartMonth >= 0)) fail('salesStartMonth must be a whole number ≥ 0')
+      if (completion + c.occupancyMonths > t.exitMonth) fail(`final closing (month ${completion + c.occupancyMonths}) must not be after exit: sold units would never close`)
+      if (c.unsoldAtExit && !(c.unsoldAtExit.bulkSaleDiscount >= 0 && c.unsoldAtExit.bulkSaleDiscount < 1)) fail('unsoldAtExit.bulkSaleDiscount must be in [0, 1)')
     } else if (c.kind === 'commercial') {
       if (!(c.netLeasableSqft >= 0)) fail('netLeasableSqft must be ≥ 0')
       if (!(c.vacancy >= 0 && c.vacancy < 1)) fail('vacancy must be in [0, 1)')
@@ -263,8 +271,18 @@ interface Flows {
   depositsHeld: number[]
   /** Stabilized NOI over the 12 months after `month` (C14). Income components only. */
   forwardNoi?: (month: number) => number
+  /** Projected NOI (on the actual lease-up ramp) over the 12 months after `month`. */
+  forwardProjectedNoi?: (month: number) => number
+  /**
+   * Deduction for selling or refinancing before stabilization: stabilized minus projected NOI for each month from
+   * `month` + 1 until stabilization, plus TI and leasing commissions still to be paid on space not yet leased.
+   * Valued as stabilized NOI ÷ cap − this amount (the usual "below the line" lease-up adjustment, undiscounted).
+   */
+  leaseUpAdjustment?: (month: number) => number
+  stabilizedMonth?: number
   untrendedNoiAnnual: number
   capRate?: number
+  unresolved: string[] // outcomes the model cannot value yet; withhold dependent results like an unknown cost
   warnings: string[]
 }
 
@@ -283,7 +301,7 @@ function componentFlows(c: Component, completion: number, exitMonth: number): Fl
   const flows: Flows = {
     revenue: zeros(), opex: zeros(), sales: zeros(), costs: Array.from({ length: n }, () => ({})),
     rentalUnits: 0, rentalOccupied: zeros(), condoUnits: 0, condoSold: zeros(), depositsHeld: zeros(),
-    untrendedNoiAnnual: 0, warnings: [],
+    untrendedNoiAnnual: 0, unresolved: [], warnings: [],
   }
 
   if (c.kind === 'rental') {
@@ -294,13 +312,23 @@ function componentFlows(c: Component, completion: number, exitMonth: number): Fl
       const i = grow ? stepGrowth(c.opexInflation, month) : 1
       return roundCents(c.unitMix.reduce((s, u) => s + (u.count * u.monthlyRent * g * (1 - u.vacancy)), 0) + (c.otherIncomeMonthly * g) - (c.opexPerUnitMonthly * units * i))
     }
-    for (let m = completion + 1; m < n; m++) {
+    const revenueAt = (m: number) => {
       const g = stepGrowth(c.rentGrowth, m)
-      flows.rentalOccupied[m] = c.unitMix.reduce((s, u) => s + (u.count * ramp(m, completion, c.leaseUpMonths, 1 - u.vacancy)), 0)
-      flows.revenue[m] = roundCents(c.unitMix.reduce((s, u) => s + (u.count * u.monthlyRent * g * ramp(m, completion, c.leaseUpMonths, 1 - u.vacancy)), 0) + (c.otherIncomeMonthly * g))
-      flows.opex[m] = roundCents(c.opexPerUnitMonthly * units * stepGrowth(c.opexInflation, m))
+      return roundCents(c.unitMix.reduce((s, u) => s + (u.count * u.monthlyRent * g * ramp(m, completion, c.leaseUpMonths, 1 - u.vacancy)), 0) + (c.otherIncomeMonthly * g))
     }
+    const opexAt = (m: number) => roundCents(c.opexPerUnitMonthly * units * stepGrowth(c.opexInflation, m))
+    for (let m = completion + 1; m < n; m++) {
+      flows.rentalOccupied[m] = c.unitMix.reduce((s, u) => s + (u.count * ramp(m, completion, c.leaseUpMonths, 1 - u.vacancy)), 0)
+      flows.revenue[m] = revenueAt(m)
+      flows.opex[m] = opexAt(m)
+    }
+    const projectedMonthly = (m: number) => (m > completion ? roundCents(revenueAt(m) - opexAt(m)) : 0)
+    const stabilizedMonth = completion + c.leaseUpMonths
+    flows.stabilizedMonth = stabilizedMonth
     flows.forwardNoi = (month) => sumCents(Array.from({ length: 12 }, (_, k) => stabilizedMonthly(month + k + 1, true)))
+    flows.forwardProjectedNoi = (month) => sumCents(Array.from({ length: 12 }, (_, k) => projectedMonthly(month + k + 1)))
+    flows.leaseUpAdjustment = (month) =>
+      sumCents(Array.from({ length: Math.max(0, stabilizedMonth - month) }, (_, k) => stabilizedMonthly(month + k + 1, true) - projectedMonthly(month + k + 1)))
     flows.untrendedNoiAnnual = roundCents(stabilizedMonthly(0, false) * 12)
     flows.capRate = c.exitCapRate
   } else if (c.kind === 'commercial') {
@@ -308,16 +336,26 @@ function componentFlows(c: Component, completion: number, exitMonth: number): Fl
     const leased = (m: number) => ramp(m, completion, c.leaseUpMonths, stabilized)
     const stabilizedMonthly = (month: number, grow: boolean) =>
       roundCents(((c.netLeasableSqft * stabilized * c.rentPerSqftYear * (grow ? stepGrowth(c.rentGrowth, month) : 1)) - (c.netLeasableSqft * c.unrecoveredOpexPerSqftYear)) / 12)
+    const revenueAt = (m: number) => roundCents((c.netLeasableSqft * leased(m - c.freeRentMonths) * c.rentPerSqftYear * stepGrowth(c.rentGrowth, m)) / 12)
+    const opexAt = () => roundCents((c.netLeasableSqft * c.unrecoveredOpexPerSqftYear) / 12)
     for (let m = completion + 1; m < n; m++) {
-      flows.revenue[m] = roundCents((c.netLeasableSqft * leased(m - c.freeRentMonths) * c.rentPerSqftYear * stepGrowth(c.rentGrowth, m)) / 12)
-      flows.opex[m] = roundCents((c.netLeasableSqft * c.unrecoveredOpexPerSqftYear) / 12)
+      flows.revenue[m] = revenueAt(m)
+      flows.opex[m] = opexAt()
       const newlyLeased = c.netLeasableSqft * (leased(m) - leased(m - 1))
       if (newlyLeased > 0) {
         flows.costs[m]![`${c.id}:ti`] = roundCents(newlyLeased * c.tiPerSqft)
         flows.costs[m]![`${c.id}:leasing`] = roundCents(newlyLeased * c.leasingCommissionPerSqft)
       }
     }
+    const projectedMonthly = (m: number) => (m > completion ? roundCents(revenueAt(m) - opexAt()) : 0)
+    const stabilizedMonth = completion + c.leaseUpMonths + c.freeRentMonths
+    flows.stabilizedMonth = stabilizedMonth
     flows.forwardNoi = (month) => sumCents(Array.from({ length: 12 }, (_, k) => stabilizedMonthly(month + k + 1, true)))
+    flows.forwardProjectedNoi = (month) => sumCents(Array.from({ length: 12 }, (_, k) => projectedMonthly(month + k + 1)))
+    flows.leaseUpAdjustment = (month) => roundCents(
+      sumCents(Array.from({ length: Math.max(0, stabilizedMonth - month) }, (_, k) => stabilizedMonthly(month + k + 1, true) - projectedMonthly(month + k + 1)))
+      + (c.netLeasableSqft * Math.max(0, stabilized - leased(month)) * (c.tiPerSqft + c.leasingCommissionPerSqft)),
+    )
     flows.untrendedNoiAnnual = roundCents(stabilizedMonthly(0, false) * 12)
     flows.capRate = c.exitCapRate
   } else if (c.kind === 'condo') {
@@ -340,7 +378,15 @@ function componentFlows(c: Component, completion: number, exitMonth: number): Fl
       if (m > completion && m <= finalClosing) flows.revenue[m] = roundCents(c.occupancyFeePerUnitMonthly * sold(completion))
       if (closing > 0) flows.costs[m]![`${c.id}:commission`] = roundCents(closing * avgPrice * c.commissionFraction)
     }
-    if (sold(exitMonth) < units) flows.warnings.push(`${c.id}: ${roundCents(units - sold(exitMonth))} units unsold at exit`)
+    const unsold = roundCents(units - sold(exitMonth))
+    if (unsold > 0 && c.unsoldAtExit) {
+      const bulk = roundCents(unsold * avgPrice * (1 - c.unsoldAtExit.bulkSaleDiscount))
+      flows.sales[exitMonth] = roundCents(flows.sales[exitMonth]! + bulk)
+      flows.warnings.push(`${c.id}: ${unsold} units unsold at exit are sold in bulk at a ${(c.unsoldAtExit.bulkSaleDiscount * 100).toFixed(0)}% discount`)
+    } else if (unsold > 0) {
+      flows.unresolved.push(`${c.id}:unsold-inventory`)
+      flows.warnings.push(`${c.id}: ${unsold} units unsold at exit and no disposition chosen (bulk sale or later exit), so results that depend on them are withheld`)
+    }
   } else {
     for (const s of c.sales) flows.sales[s.month] = roundCents(flows.sales[s.month]! + s.amount)
   }
@@ -375,10 +421,21 @@ export function runProject(p: ProjectInput): ProjectResult {
 
   // Components
   const flows = p.components.map((c) => componentFlows(c, completion, exitMonth))
-  for (const f of flows) warnings.push(...f.warnings)
+  for (const f of flows) {
+    warnings.push(...f.warnings)
+    missing.push(...f.unresolved)
+  }
   const incomeFlows = flows.filter((f) => f.forwardNoi)
   const rentalUnits = flows.reduce((s, f) => s + f.rentalUnits, 0)
   const leaseUp = Math.max(0, ...p.components.map((c) => (c.kind === 'rental' || c.kind === 'commercial' ? c.leaseUpMonths : 0)))
+
+  /** Value of the income components at `month`: stabilized forward NOI ÷ cap, less the lease-up adjustment if not yet stabilized. */
+  const valueAt = (month: number) => sumCents(incomeFlows.map((f) => roundCents((f.forwardNoi!(month) / f.capRate!) - f.leaseUpAdjustment!(month))))
+  const adjustmentAt = (month: number) => sumCents(incomeFlows.map((f) => f.leaseUpAdjustment!(month)))
+  for (const [what, month] of [['Exit', exitMonth], ...(p.debt.refinance ? [['Refinance', p.debt.refinance.month]] : [])] as Array<[string, number]>) {
+    const before = incomeFlows.filter((f) => f.stabilizedMonth! > month)
+    if (before.length) warnings.push(`${what} at month ${month} is before stabilization (month ${Math.max(...before.map((f) => f.stabilizedMonth!))}): value deducts $${Math.round(adjustmentAt(month)).toLocaleString('en-CA')} of lease-up shortfall and leasing costs${what === 'Refinance' ? ', and the loan is sized on projected, not stabilized, NOI' : ''}`)
+  }
 
   const costsAt = (m: number): Record<string, number> => {
     const costs: Record<string, number> = {}
@@ -458,8 +515,8 @@ export function runProject(p: ProjectInput): ProjectResult {
 
     if (refi && m === refi.month) {
       refinanceSizing = sizeLoan({
-        noiAnnual: sumCents(incomeFlows.map((f) => f.forwardNoi!(m))),
-        value: sumCents(incomeFlows.map((f) => roundCents(f.forwardNoi!(m) / f.capRate!))),
+        noiAnnual: sumCents(incomeFlows.map((f) => f.forwardProjectedNoi!(m))), // lenders size on income the asset will earn
+        value: valueAt(m),
         cost: Number.POSITIVE_INFINITY, // permanent lenders size on DSCR and LTV
         annualRate: refi.annualRate, amortizationYears: refi.amortizationYears, dscr: refi.dscr, ltv: refi.ltv, ltc: 1,
       })
@@ -482,7 +539,7 @@ export function runProject(p: ProjectInput): ProjectResult {
     let permRepayment = 0
     let exitNet = 0
     if (m === exitMonth) {
-      saleValue = sumCents(incomeFlows.map((f) => roundCents(f.forwardNoi!(m) / f.capRate!)))
+      saleValue = valueAt(m)
       sellingCosts = roundCents(saleValue * p.exit.sellingCostFraction)
       const constructionPayoff = closingDebt
       repayment = roundCents(repayment + constructionPayoff)
@@ -537,8 +594,9 @@ function summarize(
   const levered = irr(equityFlows)
   const totalDevelopmentCost = roundCents(sum((r) => r.totalCost) + capitalizedInterest)
   const peakDebt = Math.max(0, ...ledger.map((r) => r.closingDebt), ...ledger.map((r) => r.repayment))
-  const equityContributed = sum((r) => r.equityDraw)
-  const equityReturned = sumCents(ledger.map((r) => Math.max(0, r.equityCashFlow)))
+  // Gross investor flows: a negative exit (sale short of the loans) is a call, not a negative distribution
+  const equityContributed = sum((r) => r.equityDraw + Math.max(0, -r.equityCashFlow - r.equityDraw))
+  const equityReturned = sum((r) => Math.max(0, r.equityCashFlow + r.equityDraw))
   const saleValue = ledger.at(-1)!.saleValue
   const stabilizedNoi = sumCents(flows.map((f) => f.untrendedNoiAnnual))
   const exitMonth = p.timing.exitMonth
@@ -579,15 +637,20 @@ function summarize(
     costPerGcaSqft: costDependent({ id: 'costPerGcaSqft', label: 'Cost per GCA ft²', value: totalGca ? totalDevelopmentCost / totalGca : null, unit: 'CAD/sqft', basis: 'total GCA above + below', formula: 'TDC ÷ GCA', dependsOn: ['totalDevelopmentCost'], warnings: [] }),
     totalRevenue: plain({ id: 'totalRevenue', label: 'Total revenue', value: totalRevenue, unit: 'CAD', basis: 'operating revenue + sales + exit value', formula: 'Σ revenue + Σ sales proceeds + exit value', dependsOn: ['components'], warnings: [] }),
     profit: costDependent({ id: 'profit', label: 'Unlevered profit', value: profit, unit: 'CAD', basis: 'before financing', formula: 'Σ project cash flows', dependsOn: ['projectCashFlow'], warnings: [] }),
-    profitOnCost: costDependent({ id: 'profitOnCost', label: 'Profit on cost', value: totalDevelopmentCost ? profit / totalDevelopmentCost : null, unit: 'fraction', basis: 'unlevered profit ÷ TDC (not ÷ revenue)', formula: 'profit ÷ TDC', dependsOn: ['profit', 'totalDevelopmentCost'], warnings: [] }),
+    // Matching bases: profit after construction interest over TDC including it; profit before financing over cost before financing
+    profitOnCost: costDependent({ id: 'profitOnCost', label: 'Profit on cost', value: totalDevelopmentCost ? (profit - capitalizedInterest) / totalDevelopmentCost : null, unit: 'fraction', basis: 'after capitalized construction interest, ÷ TDC incl. that interest (not ÷ revenue)', formula: '(unlevered profit − capitalized interest) ÷ TDC', dependsOn: ['profit', 'capitalizedInterest', 'totalDevelopmentCost'], warnings: [] }),
+    profitOnCostBeforeFinancing: costDependent({ id: 'profitOnCostBeforeFinancing', label: 'Profit on cost before financing', value: totalDevelopmentCost - capitalizedInterest ? profit / (totalDevelopmentCost - capitalizedInterest) : null, unit: 'fraction', basis: 'unlevered profit ÷ cost excluding all financing', formula: 'unlevered profit ÷ (TDC − capitalized interest)', dependsOn: ['profit', 'capitalizedInterest', 'totalDevelopmentCost'], warnings: [] }),
+    capitalizedInterest: costDependent({ id: 'capitalizedInterest', label: 'Capitalized construction interest', value: capitalizedInterest, unit: 'CAD', basis: 'through completion (C9)', formula: 'Σ interest on opening balance, months 0…completion', dependsOn: ['debt.annualRate', 'totalDevelopmentCost'], warnings: [] }),
     stabilizedNoi: plain({ id: 'stabilizedNoi', label: 'Stabilized NOI (untrended)', value: stabilizedNoi, unit: 'CAD/yr', basis: 'month-0 rents at stabilized occupancy', formula: '12 × (Σ rent × (1 − vacancy) + other − opex)', dependsOn: ['components'], warnings: [] }),
     forwardNoi: plain({ id: 'forwardNoi', label: 'Forward NOI at exit', value: forwardNoi, unit: 'CAD/yr', basis: `12 months after month ${exitMonth}, trended`, formula: 'Σ stabilized NOI, months exit+1…exit+12', dependsOn: ['components'], warnings: [] }),
     yieldOnCost: costDependent({ id: 'yieldOnCost', label: 'Yield on cost', value: totalDevelopmentCost && stabilizedNoi ? stabilizedNoi / totalDevelopmentCost : null, unit: 'fraction', basis: 'untrended stabilized NOI', formula: 'stabilized NOI ÷ TDC', dependsOn: ['stabilizedNoi', 'totalDevelopmentCost'], warnings: [] }),
-    exitValue: plain({ id: 'exitValue', label: 'Exit value (gross)', value: saleValue, unit: 'CAD', basis: `month ${exitMonth}`, formula: 'Σ forward NOI ÷ exit cap rate, per income component', dependsOn: ['forwardNoi'], warnings: [] }),
+    exitValue: plain({ id: 'exitValue', label: 'Exit value (gross)', value: saleValue, unit: 'CAD', basis: `month ${exitMonth}`, formula: 'Σ per income component: forward stabilized NOI ÷ exit cap rate − lease-up adjustment', dependsOn: ['forwardNoi', 'leaseUpAdjustment'], warnings: [] }),
+    leaseUpAdjustment: plain({ id: 'leaseUpAdjustment', label: 'Lease-up adjustment at exit', value: sumCents(flows.filter((f) => f.leaseUpAdjustment).map((f) => f.leaseUpAdjustment!(exitMonth))), unit: 'CAD', basis: 'zero once stabilized; undiscounted', formula: 'Σ months exit+1…stabilization (stabilized − projected NOI) + TI and commissions on space not yet leased', dependsOn: ['components'], warnings: [] }),
     unleveredIrr: metric({ id: 'unleveredIrr', label: 'Unlevered IRR', value: unlevered.rate === null ? null : annualizeMonthly(unlevered.rate), unit: 'fraction', basis: exitBasis, formula: 'IRR of project cash flows, (1 + monthly)^12 − 1', dependsOn: ['projectCashFlow'], warnings: unlevered.warnings }, true),
     leveredIrr: metric({ id: 'leveredIrr', label: 'Levered IRR', value: levered.rate === null ? null : annualizeMonthly(levered.rate), unit: 'fraction', basis: exitBasis, formula: 'IRR of equity cash flows, (1 + monthly)^12 − 1', dependsOn: ['equityCashFlow'], warnings: levered.warnings }, true),
     unleveredNpv: costDependent({ id: 'unleveredNpv', label: `Unlevered NPV @ ${(p.discountRate * 100).toFixed(2)}%`, value: npv(monthlyFromEffectiveAnnual(p.discountRate), projectFlows), unit: 'CAD', basis: 'month 0 dollars, effective annual discount rate', formula: 'Σ CFₜ ÷ (1 + r_m)^t', dependsOn: ['projectCashFlow', 'discountRate'], warnings: [] }),
-    equityMultiple: costDependent({ id: 'equityMultiple', label: 'Equity multiple', value: equityContributed ? equityReturned / equityContributed : null, unit: 'ratio', basis: 'equity contributed, not loan (PF-009)', formula: 'Σ equity distributions ÷ Σ equity contributions', dependsOn: ['equityCashFlow'], warnings: [] }),
+    equityMultiple: costDependent({ id: 'equityMultiple', label: 'Equity multiple', value: equityContributed ? equityReturned / equityContributed : null, unit: 'ratio', basis: 'gross distributions ÷ gross contributions (PF-009: equity, not loan)', formula: 'Σ distributions ÷ Σ contributions', dependsOn: ['equityCashFlow'], warnings: [] }),
+    equityReturned: costDependent({ id: 'equityReturned', label: 'Equity distributed', value: equityReturned, unit: 'CAD', basis: 'gross, incl. refinance proceeds and exit', formula: 'Σ distributions to equity', dependsOn: ['equityCashFlow'], warnings: [] }),
     equityContributed: costDependent({ id: 'equityContributed', label: 'Equity contributed', value: equityContributed, unit: 'CAD', basis: 'incl. operating shortfalls and refinance top-ups', formula: 'Σ equity draws', dependsOn: ['totalDevelopmentCost', 'debt.ltc'], warnings: [] }),
     peakDebt: costDependent({ id: 'peakDebt', label: 'Peak construction loan', value: peakDebt, unit: 'CAD', basis: 'before repayment', formula: 'max construction loan balance', dependsOn: ['totalDevelopmentCost', 'debt.ltc', 'debt.annualRate'], warnings: [] }),
     maxPermanentLoan: costDependent({ id: 'maxPermanentLoan', label: 'Max permanent loan', value: loanSizing.amount, unit: 'CAD', basis: `binding constraint: ${loanSizing.binding.toUpperCase()}`, formula: 'min(DSCR capacity, value × LTV, cost × LTC)', dependsOn: ['stabilizedNoi', 'exitValue', 'totalDevelopmentCost'], warnings: loanSizing.warnings }),

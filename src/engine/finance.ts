@@ -43,8 +43,16 @@ export function irr(flows: number[]): IrrResult {
   }
   if (signChanges === 0) return { rate: null, warnings: ['IRR unavailable: cash flows never change sign'] }
 
-  const warnings = signChanges > 1 ? ['Cash flows change sign more than once: IRR may not be unique'] : []
   const f = (rate: number) => npv(rate, flows)
+  if (signChanges > 1) {
+    // C15: several sign changes can give several rates with NPV = 0. Report one only if it is the only one.
+    const brackets = rootBrackets(f)
+    if (brackets.length > 1) return { rate: null, warnings: [`IRR unavailable: ${brackets.length} different rates give NPV = 0 (cash flows change sign ${signChanges} times). Use NPV at a stated discount rate`] }
+    if (!brackets.length) return { rate: null, warnings: ['IRR unavailable: no root found'] }
+    return { rate: bisect(f, ...brackets[0]!), warnings: ['Cash flows change sign more than once; only one IRR exists between −99% and +1,000% per period'] }
+  }
+
+  // One sign change (Descartes): exactly one root above −100%.
   // Widen the bracket only while NPV stays finite: near −100% per period, long series underflow to ∞ − ∞ = NaN.
   let low = -0.5
   let high = 1
@@ -54,15 +62,32 @@ export function irr(flows: number[]): IrrResult {
     low = candidate
   }
   while (!bracketed() && high < 1e6 && Number.isFinite(f(high * 2))) high *= 2
-  if (!bracketed()) return { rate: null, warnings: [...warnings, 'IRR unavailable: no root found'] }
+  if (!bracketed()) return { rate: null, warnings: ['IRR unavailable: no root found'] }
+  return { rate: bisect(f, low, high), warnings: [] }
+}
 
+function bisect(f: (rate: number) => number, low: number, high: number): number {
   for (let i = 0; i < 300; i++) {
     const mid = (low + high) / 2
     if (f(low) * f(mid) <= 0) high = mid
     else low = mid
     if (high - low < 1e-13) break
   }
-  return { rate: (low + high) / 2, warnings }
+  return (low + high) / 2
+}
+
+/** Intervals where NPV changes sign, over a grid of per-period rates geometric in (1 + r) from −99% to +1,000%. */
+function rootBrackets(f: (rate: number) => number): Array<[number, number]> {
+  const out: Array<[number, number]> = []
+  let previous: [number, number] | null = null
+  for (let i = 0; i <= 2_000; i++) {
+    const rate = (0.01 * (1_100 ** (i / 2_000))) - 1
+    const value = f(rate)
+    if (!Number.isFinite(value)) continue
+    if (previous && (value === 0 || Math.sign(value) !== Math.sign(previous[1]))) out.push([previous[0], rate])
+    previous = value === 0 ? null : [rate, value]
+  }
+  return out
 }
 
 export type LoanConstraint = 'dscr' | 'ltv' | 'ltc'

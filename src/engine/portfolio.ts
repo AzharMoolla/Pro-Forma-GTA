@@ -79,8 +79,11 @@ export function runNode(node: Node): NodeResult {
 
   const unlevered = irr(projectCashFlow)
   const levered = irr(equityCashFlow)
+  // Gross basis: each child's own calls and distributions, plus shared costs as calls. No recycling between children:
+  // a distribution from one block is not assumed to fund another block's call.
   const equityContributed = roundCents(sharedTotal + childSum('equityContributed'))
-  const equityReturned = sumCents(equityCashFlow.filter((v) => v > 0))
+  const equityReturned = childSum('equityReturned')
+  const capitalizedInterest = childSum('capitalizedInterest')
   let cumulative = 0
   let peakEquity = 0
   for (const v of equityCashFlow) {
@@ -101,13 +104,16 @@ export function runNode(node: Node): NodeResult {
     totalDevelopmentCost: m({ id: 'totalDevelopmentCost', label: 'Total development cost', value: totalCost, unit: 'CAD', basis: 'shared + Σ children TDC', formula: 'shared costs + Σ child TDC', dependsOn: ['sharedCosts', 'children'], warnings: [] }),
     totalRevenue: m({ id: 'totalRevenue', label: 'Total revenue', value: childSum('totalRevenue'), unit: 'CAD', basis: 'all children', formula: 'Σ children', dependsOn: ['children'], warnings: [] }, false),
     profit: m({ id: 'profit', label: 'Unlevered profit', value: profit, unit: 'CAD', basis: 'before financing', formula: 'Σ rolled-up project cash flows', dependsOn: ['projectCashFlow'], warnings: [] }),
-    profitOnCost: m({ id: 'profitOnCost', label: 'Profit on cost', value: totalCost ? profit / totalCost : null, unit: 'fraction', basis: 'unlevered profit ÷ TDC', formula: 'profit ÷ TDC', dependsOn: ['profit', 'totalDevelopmentCost'], warnings: [] }),
+    profitOnCost: m({ id: 'profitOnCost', label: 'Profit on cost', value: totalCost ? (profit - capitalizedInterest) / totalCost : null, unit: 'fraction', basis: 'after capitalized construction interest, ÷ TDC incl. that interest', formula: '(unlevered profit − Σ child capitalized interest) ÷ TDC', dependsOn: ['profit', 'capitalizedInterest', 'totalDevelopmentCost'], warnings: [] }),
+    profitOnCostBeforeFinancing: m({ id: 'profitOnCostBeforeFinancing', label: 'Profit on cost before financing', value: totalCost - capitalizedInterest ? profit / (totalCost - capitalizedInterest) : null, unit: 'fraction', basis: 'unlevered profit ÷ cost excluding financing', formula: 'unlevered profit ÷ (TDC − capitalized interest)', dependsOn: ['profit', 'capitalizedInterest', 'totalDevelopmentCost'], warnings: [] }),
+    capitalizedInterest: m({ id: 'capitalizedInterest', label: 'Capitalized construction interest', value: capitalizedInterest, unit: 'CAD', basis: 'Σ children; shared costs are equity-funded', formula: 'Σ child capitalized interest', dependsOn: ['children'], warnings: [] }),
+    equityReturned: m({ id: 'equityReturned', label: 'Equity distributed', value: equityReturned, unit: 'CAD', basis: 'gross, Σ children', formula: 'Σ child distributions', dependsOn: ['children'], warnings: [] }),
     unleveredIrr: m({ id: 'unleveredIrr', label: 'Unlevered IRR', value: unlevered.rate === null ? null : annualizeMonthly(unlevered.rate), unit: 'fraction', basis, formula: 'IRR of rolled-up project cash flows', dependsOn: ['projectCashFlow'], warnings: unlevered.warnings }),
     leveredIrr: m({ id: 'leveredIrr', label: 'Levered IRR', value: levered.rate === null ? null : annualizeMonthly(levered.rate), unit: 'fraction', basis, formula: 'IRR of rolled-up equity cash flows', dependsOn: ['equityCashFlow'], warnings: levered.warnings }),
     unleveredNpv: m({ id: 'unleveredNpv', label: `Unlevered NPV @ ${(node.discountRate * 100).toFixed(2)}%`, value: npv(monthlyFromEffectiveAnnual(node.discountRate), projectCashFlow), unit: 'CAD', basis: 'month 0 of this level', formula: 'Σ CFₜ ÷ (1 + r_m)^t', dependsOn: ['projectCashFlow'], warnings: [] }),
     equityContributed: m({ id: 'equityContributed', label: 'Equity contributed', value: equityContributed, unit: 'CAD', basis: 'shared costs + Σ children', formula: 'shared + Σ child equity', dependsOn: ['children'], warnings: [] }),
     peakEquity: m({ id: 'peakEquity', label: 'Peak equity at risk', value: roundCents(peakEquity), unit: 'CAD', basis: 'max cumulative net equity outflow', formula: 'max −Σ equity CF to date', dependsOn: ['equityCashFlow'], warnings: [] }),
-    equityMultiple: m({ id: 'equityMultiple', label: 'Equity multiple', value: equityContributed ? equityReturned / equityContributed : null, unit: 'ratio', basis: 'approximate at portfolio level (positive months ÷ contributions)', formula: 'Σ positive equity CF ÷ equity contributed', dependsOn: ['equityCashFlow'], warnings: [] }),
+    equityMultiple: m({ id: 'equityMultiple', label: 'Equity multiple', value: equityContributed ? equityReturned / equityContributed : null, unit: 'ratio', basis: 'gross, no recycling between children', formula: 'Σ child distributions ÷ (shared costs + Σ child contributions)', dependsOn: ['children'], warnings: [] }),
   }
 
   return { id: node.id, name: node.name, kind: 'portfolio', complete, missing, warnings, projectCashFlow, equityCashFlow, sharedCosts, metrics, children }

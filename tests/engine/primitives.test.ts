@@ -55,8 +55,15 @@ describe('irr', () => {
     expect(Number.isFinite(r)).toBe(true)
     expect(npv(r, mockShape)).toBeCloseTo(0, 6)
   })
-  it('multiple sign changes are flagged', () => {
-    expect(irr([-100, 230, -132]).warnings.join()).toMatch(/not be unique/)
+  it('C15: two rates give NPV = 0 (10% and 20%) → IRR unavailable, not one of them', () => {
+    const r = irr([-100, 230, -132])
+    expect(r.rate).toBeNull()
+    expect(r.warnings.join()).toMatch(/2 different rates/)
+  })
+  it('several sign changes but one root → the IRR, with a note', () => {
+    const r = irr([-100, 150, -10, 5]) // later small reversal does not create a second root
+    expect(npv(r.rate!, [-100, 150, -10, 5])).toBeCloseTo(0, 8)
+    expect(r.warnings.join()).toMatch(/only one IRR/)
   })
 })
 

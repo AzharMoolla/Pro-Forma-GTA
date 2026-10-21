@@ -23,7 +23,7 @@ Shape follows Spanier Group's mall-site intensification thesis: build on a strip
 | Cost per GCA ft² | $720 | total GCA above + below |
 | Total revenue | $443M | operating revenue + sales + exit value |
 | Unlevered profit | $73.00M | before financing |
-| Profit on cost | 19.9% | unlevered profit ÷ TDC (not ÷ revenue) |
+| Profit on cost | 12.8% | after capitalized construction interest, ÷ TDC incl. that interest (not ÷ revenue) |
 | Stabilized NOI (untrended) | $12.26M | month-0 rents at stabilized occupancy |
 | Yield on cost | 3.3% | untrended stabilized NOI |
 | Exit value (gross) | $357M | month 120 |
@@ -31,9 +31,9 @@ Shape follows Spanier Group's mall-site intensification thesis: build on a strip
 | Levered IRR | -3.1% | exit month 120, monthly flows annualized |
 | Unlevered NPV @ 7.50% | −$82.64M | month 0 dollars, effective annual discount rate |
 | Equity contributed | $124M | incl. operating shortfalls and refinance top-ups |
-| Equity multiple | 0.77× | equity contributed, not loan (PF-009) |
+| Equity multiple | 0.77× | gross distributions ÷ gross contributions (PF-009: equity, not loan) |
 | Peak construction loan | $262M | before repayment |
-| Refinance proceeds | $268M | month 78, binding: DSCR |
+| Refinance loan (gross) | $268M | month 78, binding: DSCR |
 
 **Engine warnings:**
 
@@ -198,13 +198,13 @@ Shape follows Lakeview Village (Spanier Group reference project): 177-acre forme
 | Total development cost | $2234M | shared + Σ children TDC |
 | Total revenue | $2238M | all children |
 | Unlevered profit | $34.83M | before financing |
-| Profit on cost | 1.6% | unlevered profit ÷ TDC |
+| Profit on cost | -3.7% | after capitalized construction interest, ÷ TDC incl. that interest |
 | Unlevered IRR | 0.4% | 217 months, children offset in time |
 | Levered IRR | -7.3% | 217 months, children offset in time |
 | Unlevered NPV @ 8.00% | −$354M | month 0 of this level |
 | Equity contributed | $812M | shared costs + Σ children |
 | Peak equity at risk | $574M | max cumulative net equity outflow |
-| Equity multiple | 0.61× | approximate at portfolio level (positive months ÷ contributions) |
+| Equity multiple | 0.64× | gross, no recycling between children |
 | Shared costs at this level | $245M | infrastructure, parks, studies at this level |
 
 **Engine warnings:**

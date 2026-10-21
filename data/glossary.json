@@ -75,7 +75,7 @@
       ],
       "definition": "The annual rate at which the project's cash flows break even in present-value terms. Unlevered uses project cash flows before debt; levered uses the investor's equity cash flows.",
       "formula": "IRR = r such that Σ(CFₜ ÷ (1 + r)^t) = 0; annual = ((1 + monthly IRR)^12) − 1",
-      "note": "Solved numerically; shown as unavailable when cash flows never change sign or no root exists.",
+      "note": "Solved numerically. Shown as unavailable when cash flows never change sign, no root exists, or more than one rate gives NPV = 0 (then use NPV at a stated discount rate).",
       "source": "Investopedia: Internal Rate of Return",
       "url": "https://www.investopedia.com/terms/i/irr.asp"
     },
@@ -126,17 +126,19 @@
         "equityMultiple"
       ],
       "definition": "How many dollars investors get back for each dollar they put in, over the whole hold.",
-      "formula": "Equity multiple = Σ(equity distributions) ÷ Σ(equity contributions)"
+      "formula": "Equity multiple = Σ(equity distributions) ÷ Σ(equity contributions)",
+      "note": "Gross basis: calls and distributions are summed separately, and at master-plan level one block’s distributions are not assumed to fund another block’s calls."
     },
     {
       "id": "poc",
       "term": "Profit on cost (margin on cost)",
       "metrics": [
         "profitOnCost",
+        "profitOnCostBeforeFinancing",
         "profit"
       ],
-      "definition": "Unlevered profit as a share of total development cost. Different from margin on revenue: always check the denominator.",
-      "formula": "Profit on cost = (total revenue − TDC) ÷ TDC",
+      "definition": "Profit as a share of total development cost (TDC), with numerator and denominator on the same basis. The headline figure is after capitalized construction interest, over TDC including that interest; the before-financing figure excludes financing from both. Different from margin on revenue: always check the denominator.",
+      "formula": "Profit on cost = (total revenue − TDC) ÷ TDC, where TDC includes capitalized construction interest",
       "note": "Developers commonly look for roughly 15–20% on condo projects; under 5% is generally unviable (Brandon Donnelly).",
       "source": "Brandon Donnelly: Demystifying the development pro forma",
       "url": "https://brandondonnelly.com/demystifying-the-development-pro-forma/"
