@@ -43,58 +43,58 @@
     },
     {
       "path": "data/examples/dated-rate-observation.json",
-      "size_bytes": 535,
-      "sha256": "f89493d950331e887d41e7bc691dea7ff9a4b70b239f86e4cceb54efd7655764"
+      "size_bytes": 522,
+      "sha256": "e7dd7a1910e1cc62251aee202cfb433c3119473a8679e05e930836bc01dd7695"
     },
     {
       "path": "data/examples/policy-change-proposal.json",
-      "size_bytes": 626,
-      "sha256": "cecbd14a6d30f121a282080f5a33286fb39bbfda88632abca161fcb574dce4a6"
+      "size_bytes": 607,
+      "sha256": "3cbb73b73889f869052062e6fae5db5d57c113b7603560030d94c89549ef3885"
     },
     {
       "path": "data/examples/synthetic-rental-project.json",
-      "size_bytes": 2846,
-      "sha256": "f40be14b64bb307b61ff8dcced7a3c2796935a7f91f6200ee8e043ab72484bfc"
+      "size_bytes": 2756,
+      "sha256": "c8221b2093deef56ee9655fdc5cc076f01be05b3bb5215aa791d11c81bcee833"
     },
     {
       "path": "data/fields/field-taxonomy.json",
-      "size_bytes": 8232,
-      "sha256": "4f7acd9de7a02972e9a48f5c9966744568416448c4d59925a54942dbf0bb1926"
+      "size_bytes": 8011,
+      "sha256": "dcf7097554d037fa72dc4630f304580ffa6e7ffd889aa65935b39209bef6f3fc"
     },
     {
       "path": "data/implementation/roadmap.json",
-      "size_bytes": 1506,
-      "sha256": "ef8f81c394364ce1546d8af82ae57a64f71f051d1fdc1c7eeb211f6bbd10308c"
+      "size_bytes": 1456,
+      "sha256": "6727c4e3b908576ee0f795b992744204401fa4e4398177e7ab6b4a841b3d5305"
     },
     {
       "path": "data/model/formula-catalog.json",
-      "size_bytes": 3192,
-      "sha256": "8ef10d0409a47c432f4cdc260cd1f44c47273489fb54e749aa4eada2573cd17a"
+      "size_bytes": 3087,
+      "sha256": "ff5882b6f000fb716ab7ff64b36832d15e6634b47484a4bf41c15e241554e987"
     },
     {
       "path": "data/policy/seed-policy-candidates.json",
-      "size_bytes": 4374,
-      "sha256": "395d7456a118af4b24b437c6172e4a4642ba57e0971fd776bd44313535d5cce6"
+      "size_bytes": 4248,
+      "sha256": "e7faa39a04f025c0b9f02669b883499bc2bcf822efaf574973e5f5d86806e34c"
     },
     {
       "path": "data/policy/source-registry.json",
-      "size_bytes": 11230,
-      "sha256": "07271cd1a8ffd8773647ecdb93803de9ef021c901060bb0884b143c3d0e9c15c"
+      "size_bytes": 10983,
+      "sha256": "2fe489bc0087feb2b1ef7b75a9dd1b381aa2108766660040e3d97cb492336c2d"
     },
     {
       "path": "data/qa/additional-test-cases.json",
-      "size_bytes": 3059,
-      "sha256": "f69397853bf9d591928e7da3050e72ef5baf60c8624ef1ca12db5630f71227c4"
+      "size_bytes": 2935,
+      "sha256": "5b31b97197d1c91b0d449a2ed1b3ce5a7d175fba3ccefbc82ce52849bec85781"
     },
     {
       "path": "data/qa/legacy-acceptance-tests.json",
-      "size_bytes": 4315,
-      "sha256": "0c8dcc61f841f36031fc2c2a3677fee7692eedeb36bcc28b99f3c79d84d65625"
+      "size_bytes": 4198,
+      "sha256": "cf9f2f2e761cc3174e38fdb34263edb48807b0708bfa00b3a63739121c500205"
     },
     {
       "path": "data/ui/modules.json",
-      "size_bytes": 3404,
-      "sha256": "6a81ab7d2ba0e2c3501f2c14e1459f4344d67ed6147c7df1fab11de4f383178d"
+      "size_bytes": 3282,
+      "sha256": "48efa16878c0b8e6824649fdd013377d9844c1ec918c1046140a849b78d85237"
     },
     {
       "path": "docs/00_EXECUTIVE_BRIEF.md",
@@ -217,39 +217,35 @@
       "sha256": "83c21f511a0f8bc884b992ce9d10c62809ed058918a2c65b1c4820511a668375"
     },
     {
-      "path": "reference-workbooks/original/Workbook E - IRR Partitioning.xlsx",
-      "size_bytes": 102139,
-      "sha256": "9ccc3fa3b8945045bf5687a4e90f79763b117b1d0bdd29277581161b11410af2"
-    },
-    {
       "path": "schemas/audit-finding.schema.json",
-      "size_bytes": 924,
-      "sha256": "b992f1903cf2b90fe73db02f2d69f4a5eab95aee2655ef84d83af0c107365866"
+      "size_bytes": 874,
+      "sha256": "c122b9bcd55c507acbc3eb57d978e6e683bce57560aeab1d8bae707c0eb06e7c"
     },
     {
       "path": "schemas/observation.schema.json",
-      "size_bytes": 963,
-      "sha256": "8eb8ca4c4b2c8c391182c536f3cd141ac33b0c305fe0ff1014e161ebba66275f"
+      "size_bytes": 911,
+      "sha256": "13b9ceb2bbc109cbbbd61cc68af8cd0303cc229a27901917288719405e98215e"
     },
     {
       "path": "schemas/policy-rule.schema.json",
-      "size_bytes": 1406,
-      "sha256": "cbc710f3080ff1c362a464543d17e84f31fd59e05c1d10d2143ff2c1ada893c7"
+      "size_bytes": 1329,
+      "sha256": "1ebd5665a2c66bb12c8c50236dbfbcd61f9b0219b7e8b7c5ef40a441690d78f0"
     },
     {
       "path": "schemas/project-input.schema.json",
-      "size_bytes": 902,
-      "sha256": "6dfcc640cfe573023be11abfcadc17c6d51d1198541d0d143a0cdfaa3966f0a9"
+      "size_bytes": 852,
+      "sha256": "9fbe3cf2ff89a4bcfc82a632821a0823b33945463a5bb0f5c93a0cc77786bdc4"
     },
     {
       "path": "schemas/source-entry.schema.json",
-      "size_bytes": 896,
-      "sha256": "e863d652657606c6570a893b75a508d8b91d3a69f187fca9ff9a371d6ff47dd1"
+      "size_bytes": 849,
+      "sha256": "1f2bf90b85591c2f46459e57c39aff6412922a61715477c1f2d12407f53979ef"
     },
     {
       "path": "scripts/verify_handoff.py",
       "size_bytes": 927,
       "sha256": "40d9315d8649ba4930a52a84fed2bf4c2ee23ee96d48c8f279af35bc4ca62076"
     }
-  ]
+  ],
+  "note": "Workbook E is not distributed with this repository (it identifies its author); its audit findings remain."
 }
