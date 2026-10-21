@@ -103,28 +103,27 @@ function streetOf(a: Attributes): Street {
   }
 }
 
-interface Tag { title: string; text: string; anchor: 'road' | 'sidewalk' | 'crossing' | 'stop' | 'building' | 'curb' | 'ground' }
+interface Tag { title: string; text: string }
 
 /** Street, traffic, servicing and parking requirements worth seeing on the picture, from the project's variables. */
 function tagsOf(a: Attributes, s: Street): Tag[] {
   const str = (id: string) => (typeof a[id] === 'string' ? (a[id] as string) : null)
   const tags: Array<Tag | null> = [
-    s.roadClass || s.rowM ? { title: 'Street', text: `${s.roadClass ?? 'class unknown'} · ROW ${s.rowM ? `${s.rowM} m` : 'to check (OP Map 3)'}`, anchor: 'road' } : null,
-    str('site.sidewalks') ? { title: 'Sidewalks', text: str('site.sidewalks')!, anchor: 'sidewalk' } : null,
-    s.crossingM ? { title: 'Crossing', text: `${str('site.crossingType') ?? 'crossing'} · ${s.crossingM} m`, anchor: 'crossing' } : null,
-    s.stopM ? { title: 'Transit', text: `${str('site.nearestTransitStop') ?? 'TTC stop'} · ${s.stopM} m`, anchor: 'stop' } : null,
+    s.roadClass || s.rowM ? { title: 'Street', text: `${s.roadClass ?? 'class unknown'} · ROW ${s.rowM ? `${s.rowM} m` : 'to check (OP Map 3)'}` } : null,
+    str('site.sidewalks') ? { title: 'Sidewalks', text: str('site.sidewalks')! } : null,
+    s.crossingM ? { title: 'Crossing', text: `${str('site.crossingType') ?? 'crossing'} · ${s.crossingM} m` } : null,
+    s.stopM ? { title: 'Transit', text: `${str('site.nearestTransitStop') ?? 'TTC stop'} · ${s.stopM} m` } : null,
     n(a, 'planning.carParkingStalls') || str('zoning.parkingZone') ? {
       title: 'Parking',
-      text: [n(a, 'planning.carParkingStalls') && `${n(a, 'planning.carParkingStalls')} stalls`, n(a, 'planning.parkingLevelsBelowGrade') && `${n(a, 'planning.parkingLevelsBelowGrade')} levels below`, str('zoning.parkingZone') && `zone ${str('zoning.parkingZone')}`, a['site.municipality'] === 'toronto' && 'no res. minimum'].filter(Boolean).join(' · '),
-      anchor: 'building',
+      text: [n(a, 'planning.carParkingStalls') && `${n(a, 'planning.carParkingStalls')} stalls`, n(a, 'planning.parkingLevelsBelowGrade') && `${n(a, 'planning.parkingLevelsBelowGrade')} levels below`, str('zoning.parkingZone') && `zone ${str('zoning.parkingZone')}`, a['site.municipality'] === 'toronto' && 'no res. minimum'].filter(Boolean).join(' · ')
     } : null,
-    n(a, 'planning.bikeParking') ? { title: 'Bicycle parking', text: `${n(a, 'planning.bikeParking')} spaces`, anchor: 'building' } : null,
-    n(a, 'planning.loadingSpaces') || s.accesses ? { title: 'Loading and access', text: [n(a, 'planning.loadingSpaces') && `${n(a, 'planning.loadingSpaces')} loading`, s.accesses && `${s.accesses} driveway${s.accesses === 1 ? '' : 's'}`].filter(Boolean).join(' · '), anchor: 'curb' } : null,
+    n(a, 'planning.bikeParking') ? { title: 'Bicycle parking', text: `${n(a, 'planning.bikeParking')} spaces` } : null,
+    n(a, 'planning.loadingSpaces') || s.accesses ? { title: 'Loading and access', text: [n(a, 'planning.loadingSpaces') && `${n(a, 'planning.loadingSpaces')} loading`, s.accesses && `${s.accesses} driveway${s.accesses === 1 ? '' : 's'}`].filter(Boolean).join(' · ') } : null,
     (() => {
       const flags = [a['design.stormwaterTank'] === true && 'stormwater tank', a['site.highWaterTable'] === true && 'dewatering', a['site.utilityRelocation'] === true && 'utility relocation', a['design.hydroVault'] === true && 'hydro vault'].filter(Boolean)
-      return flags.length ? { title: 'Servicing', text: flags.join(' · '), anchor: 'ground' as const } : null
+      return flags.length ? { title: 'Servicing', text: flags.join(' · ') } : null
     })(),
-    n(a, 'site.frontageM') ? { title: 'Frontage', text: `${n(a, 'site.frontageM')} m`, anchor: 'sidewalk' } : null,
+    n(a, 'site.frontageM') ? { title: 'Frontage', text: `${n(a, 'site.frontageM')} m` } : null,
   ]
   return tags.filter((t): t is Tag => t !== null)
 }
@@ -179,7 +178,7 @@ export function Streetscape({ node, result, attributes }: { node: Node; result: 
   const laneH = Math.min(9, 40 / street.lanes)
   const roadBottom = roadTop + (laneH * street.lanes)
   const streetBottom = roadBottom + 10 // far sidewalk
-  const tagsTop = streetBottom + 40
+  const tagsTop = streetBottom + 26
   const H = tagsTop + (tagRows * 60) + notesH + 16
   const maxStoreys = Math.max(4, zoning?.storeys ?? 0, ...buildings.map((b) => b.storeys + 1.5))
   const scale = Math.min(4, (groundY - 90) / (maxStoreys * FLOOR_H))
@@ -326,15 +325,11 @@ export function Streetscape({ node, result, attributes }: { node: Node; result: 
     return () => box.removeEventListener('wheel', onWheel)
   })
 
-  // Anchors for the callouts: where on the picture each requirement belongs
+  // Where the street details sit
   const firstBuilding = placed.find((p) => p.kind === 'building')
   const buildingX = firstBuilding ? firstBuilding.x + (firstBuilding.w / 2) : W / 3
   const stopX = placed.find((p) => p.kind === 'transit')?.x ?? Math.max(30, (firstBuilding?.x ?? 60) - 30)
   const crossingX = W - 120
-  const anchorOf = (a: Tag['anchor']): [number, number] => ({
-    road: [W * 0.55, (roadTop + roadBottom) / 2], sidewalk: [buildingX + 40, groundY + 6], crossing: [crossingX + 20, roadBottom],
-    stop: [stopX + 6, groundY + 4], building: [buildingX, groundY - 8], curb: [buildingX - 30, roadTop], ground: [buildingX + 60, groundY + 2],
-  } as Record<Tag['anchor'], [number, number]>)[a]
 
   const download = () => {
     const svg = svgRef.current?.cloneNode(true) as SVGSVGElement | undefined
@@ -474,17 +469,14 @@ export function Streetscape({ node, result, attributes }: { node: Node; result: 
               </text>
             </g>
           )}
-          {/* requirement callouts: labelled tags along the bottom, each with a leader to where it applies */}
+          {/* requirements: labelled boxes listed along the bottom */}
           {tags.map((t, k) => {
             const tw = Math.min(220, ((W - 40) / perRow) - 12)
             const tx = 20 + ((k % perRow) * (tw + 12))
             const ty = tagsTop + (Math.floor(k / perRow) * 60)
-            const [ax, ay] = anchorOf(t.anchor)
             return (
               <g key={t.title}>
                 <title>{`${t.title}: ${t.text}`}</title>
-                <path d={`M${tx + (tw / 2)},${ty} C${tx + (tw / 2)},${ty - 24} ${ax},${ay + 24} ${ax},${ay}`} fill="none" stroke={look.soft} strokeWidth={0.9} strokeDasharray="3 3" opacity={0.8} />
-                <circle cx={ax} cy={ay} r={2.5} fill={look.soft} />
                 <rect x={tx} y={ty} width={tw} height={44} rx={style === 'blueprint' ? 0 : 8} fill={style === 'blueprint' ? look.bg : '#ffffff'} fillOpacity={style === 'blueprint' ? 1 : 0.88} stroke={look.line} strokeWidth={0.8} />
                 <text x={tx + 9} y={ty + 16} fontSize="11" fontWeight={700} fill={look.text}>{t.title}</text>
                 <text x={tx + 9} y={ty + 33} fontSize="10.5" fill={look.soft}>{t.text.length > (tw / 5.6) ? `${t.text.slice(0, Math.floor(tw / 5.6) - 1)}…` : t.text}</text>
