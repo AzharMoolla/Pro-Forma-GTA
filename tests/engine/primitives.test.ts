@@ -45,6 +45,16 @@ describe('irr', () => {
     expect(result.rate).toBeNull()
     expect(result.warnings[0]).toMatch(/never change sign/)
   })
+  it('long monthly series with a loss solve to a finite negative rate (regression: NaN bracket gave 409,500%)', () => {
+    // −100 now, +80 in month 180 → (0.8)^(1/180) − 1 per month
+    const flows = [-100, ...Array(179).fill(0), 80]
+    expect(irr(flows).rate).toBeCloseTo(0.8 ** (1 / 180) - 1, 10)
+    // big early outflows, small inflows, partial recovery: the Mock A shape
+    const mockShape = [...Array(60).fill(-5), ...Array(60).fill(1), 150]
+    const r = irr(mockShape).rate!
+    expect(Number.isFinite(r)).toBe(true)
+    expect(npv(r, mockShape)).toBeCloseTo(0, 6)
+  })
   it('multiple sign changes are flagged', () => {
     expect(irr([-100, 230, -132]).warnings.join()).toMatch(/not be unique/)
   })

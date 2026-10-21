@@ -53,6 +53,9 @@ These are engine defaults. Each one is recorded in the snapshot (`modelConventio
 | C15 | Returns | Unlevered and levered cash flows are kept separate. Monthly IRR annualized as (1+i)^12 − 1. "IRR unavailable" if no sign change or no unique root in the bracket | Handoff returns |
 | C16 | Unknown inputs | `status: 'unknown'` propagates. A KPI that depends on an unknown shows **incomplete** and names the missing inputs, never a number built on zero | Graveyard "honest unavailability"; synthetic project notices |
 | C17 | Taxes (HST/GST) | Modelled in a later milestone. Until then it shows as an explicit "not yet modelled" line rather than a silent zero (audit PF-013) | Cash-tax timing is complex and needs a proper design |
+| C19 | Escalation | Lines flagged `escalate` grow at the project's annual rate from month 0 to the month they are spent: base × (1 + r)^(month/12) | Per-month escalation is more precise than escalating everything to the construction midpoint |
+| C20 | Condo deposits | Held in trust and unusable until closing unless the component says deposits are insured/usable; final closings occur after the interim-occupancy months; commissions are paid at closing | Matches default Ontario practice; insured deposits are a switch |
+| C21 | Refinance | Permanent loan sized on forward 12-month NOI by min(DSCR capacity, value × LTV); it repays the construction loan, and the surplus goes to equity (a shortfall is drawn from equity) | Permanent lenders size on DSCR and LTV, not cost |
 | C18 | Construction costs | Altus Canadian Cost Guide $/ft² range per building type and city (low/high), pinned to the guide year, escalated to the construction midpoint. A user quote overrides it, and both are kept in the trace | Benchmark that professionals recognise; the range drives sensitivity |
 
 Every conventions row gets at least one fixture test whose expected values are hand-derived in the test file, not produced by running the engine.

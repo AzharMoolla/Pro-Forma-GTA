@@ -1,7 +1,7 @@
 # Cost catalogue: every cost from first look to operations
 
 **Date:** 2026-10-21 · **Scope:** Ontario / GTA first (Toronto, Durham/Oshawa), structured so other municipalities slot in
-**Purpose:** the master list of cost (and cost-offset) items the engine must be able to carry, with how each is calculated, when it is paid, and where the number comes from. This becomes `data/costs/catalogue.json` and the cost-line types in the engine.
+**Purpose:** the narrative and source notes behind the cost catalogue. **The machine-readable source of truth is now `data/costs/catalogue.json`** (151 variables, 232 items, 9 project types, with the variables that switch each item on). Per-type checklists are generated into `PROJECT_TYPE_CHECKLISTS.md`, and two fully costed mock projects into `MOCK_PROJECTS.md` (`npm run report`).
 
 ### How to read the tags
 

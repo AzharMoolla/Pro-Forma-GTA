@@ -44,11 +44,17 @@ export function irr(flows: number[]): IrrResult {
   if (signChanges === 0) return { rate: null, warnings: ['IRR unavailable: cash flows never change sign'] }
 
   const warnings = signChanges > 1 ? ['Cash flows change sign more than once: IRR may not be unique'] : []
-  let low = -0.9999
-  let high = 1
   const f = (rate: number) => npv(rate, flows)
-  while (f(low) * f(high) > 0 && high < 1e6) high *= 2
-  if (f(low) * f(high) > 0) return { rate: null, warnings: [...warnings, 'IRR unavailable: no root found'] }
+  // Widen the bracket only while NPV stays finite: near −100% per period, long series underflow to ∞ − ∞ = NaN.
+  let low = -0.5
+  let high = 1
+  const bracketed = () => Number.isFinite(f(low)) && Number.isFinite(f(high)) && f(low) * f(high) <= 0
+  for (const candidate of [-0.9, -0.99, -0.999]) {
+    if (bracketed() || !Number.isFinite(f(candidate))) break
+    low = candidate
+  }
+  while (!bracketed() && high < 1e6 && Number.isFinite(f(high * 2))) high *= 2
+  if (!bracketed()) return { rate: null, warnings: [...warnings, 'IRR unavailable: no root found'] }
 
   for (let i = 0; i < 300; i++) {
     const mid = (low + high) / 2
