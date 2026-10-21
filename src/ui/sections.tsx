@@ -9,7 +9,7 @@ import { metricValue, money, num, pct } from './format'
 import { lineTotal } from './Inspector'
 import { Audit, Finance, Returns, Revenue, Scenarios } from './sections2'
 import { Analysis, Progress } from './sections3'
-import { BuildingSketch } from './BuildingSketch'
+import { AsciiStreet } from './AsciiStreet'
 import { atLeast, type SectionId } from './store'
 import { getResult } from './tree'
 import { useWorkspace } from './workspace'
@@ -43,7 +43,7 @@ function Overview() {
   return (
     <div className="flex flex-col gap-4">
       <Card title="At a glance">
-        <BuildingSketch node={node} result={nodeResult} />
+        <AsciiStreet node={node} result={nodeResult} attributes={state.projects[state.projectId]!.attributes} seed={state.projectId} />
       </Card>
       <Analysis />
       <Card title={state.path.length ? node.name : 'About this project'}>

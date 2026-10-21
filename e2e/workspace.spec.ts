@@ -71,7 +71,7 @@ test('master plan: plan tree, roll-up and range run in a worker', async ({ page 
 
 test('overview shows the sketch and colour-coded analysis', async ({ page }) => {
   await fresh(page)
-  await expect(page.getByRole('img', { name: /Sketch of .*38 storeys/ })).toBeVisible()
+  await expect(page.getByRole('img', { name: /ASCII streetscape of .*38-storey tower/ })).toBeVisible()
   await expect(page.getByRole('heading', { name: /Analysis/ })).toBeVisible()
   await expect(page.getByText('Negative development spread')).toBeVisible()
   await expect(page.getByText(/Land-to-revenue/).first()).toBeVisible()
