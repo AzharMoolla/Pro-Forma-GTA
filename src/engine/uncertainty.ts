@@ -13,18 +13,19 @@ export interface Uncertainty {
 
 const hasWidth = (band: Band) => band.low !== 0 || band.high !== 0
 
-export function listUncertainties(node: Node, path = node.id): Uncertainty[] {
+export function listUncertainties(node: Node, path = node.id, isChild = false): Uncertainty[] {
+  const where = isChild ? ` · ${node.name}` : '' // keeps labels unique when many blocks share line names
   const list: Uncertainty[] = node.costLines
     .filter((line) => line.driver !== null && hasWidth(bandOf(line)))
-    .map((line) => ({ key: `${path}/cost:${line.id}`, label: `${line.label} (${line.estimateClass === 'exact' ? 'override' : `class ${line.estimateClass}`})`, band: bandOf(line) }))
+    .map((line) => ({ key: `${path}/cost:${line.id}`, label: `${line.label} (${line.estimateClass === 'exact' ? 'override' : `class ${line.estimateClass}`})${where}`, band: bandOf(line) }))
   if (isPortfolio(node)) {
-    for (const child of node.children) list.push(...listUncertainties(child.node, `${path}/${child.node.id}`))
+    for (const child of node.children) list.push(...listUncertainties(child.node, `${path}/${child.node.id}`, true))
     return list
   }
   for (const c of node.components) {
-    if (c.revenueBand && hasWidth(c.revenueBand)) list.push({ key: `${path}/${c.id}:revenue`, label: `${c.id} rents/prices`, band: c.revenueBand })
+    if (c.revenueBand && hasWidth(c.revenueBand)) list.push({ key: `${path}/${c.id}:revenue`, label: `${c.id} rents/prices${where}`, band: c.revenueBand })
     if ((c.kind === 'rental' || c.kind === 'commercial') && c.capRateBand && hasWidth(c.capRateBand)) {
-      list.push({ key: `${path}/${c.id}:cap`, label: `${c.id} exit cap rate`, band: c.capRateBand })
+      list.push({ key: `${path}/${c.id}:cap`, label: `${c.id} exit cap rate${where}`, band: c.capRateBand })
     }
   }
   return list

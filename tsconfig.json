@@ -2,7 +2,9 @@
   "compilerOptions": {
     "target": "es2023",
     "lib": [
-      "ES2023"
+      "ES2023",
+      "DOM",
+      "DOM.Iterable"
     ],
     "module": "esnext",
     "moduleResolution": "bundler",
@@ -15,12 +17,20 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "allowImportingTsExtensions": true
+    "allowImportingTsExtensions": true,
+    "jsx": "react-jsx",
+    "types": [
+      "vite/client",
+      "node"
+    ]
   },
   "include": [
     "src",
     "tests",
     "data",
-    "scripts"
+    "scripts",
+    "e2e",
+    "vite.config.ts",
+    "playwright.config.ts"
   ]
 }
