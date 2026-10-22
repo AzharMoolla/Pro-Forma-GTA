@@ -8,6 +8,7 @@ import { Button, Card, Chip, TableWrap, td, th } from './components'
 import { projectsUnder } from './coverage'
 import { variableInfo } from './data'
 import { scoped, scopedKey } from './streetscapeScene'
+import { IndigenousCard } from './Indigenous'
 import { useWorkspace } from './workspace'
 
 interface SiteMessage extends StreetContext { type: 'planning-map:site'; name: string; point: Position; matches: SiteMatch[] }
@@ -165,6 +166,10 @@ export function SiteMap() {
           </>
         )}
       </Card>
+      <IndigenousCard
+        treaty={String(rows.find((r) => r.variable === 'site.treaty')?.value ?? attributes['site.treaty'] ?? '') || null}
+        municipality={String(rows.find((r) => r.variable === 'site.municipality')?.value ?? attributes['site.municipality'] ?? '') || null}
+      />
     </div>
   )
 }

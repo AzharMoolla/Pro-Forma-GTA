@@ -18,7 +18,7 @@ const download = (name: string, text: string, type: string) => {
 }
 
 /** Title, explanation, chart or table, downloads. */
-function ChartFigure({ title, about, csv, file, children, table }: { title: string; about: string; csv: string; file: string; children: ReactNode; table: ReactNode }) {
+export function ChartFigure({ title, about, csv, file, children, table }: { title: string; about: string; csv: string; file: string; children: ReactNode; table: ReactNode }) {
   const [asTable, setAsTable] = useState(false)
   const box = useRef<HTMLDivElement>(null)
   const svg = () => {

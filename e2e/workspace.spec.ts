@@ -1,7 +1,7 @@
 import { AxeBuilder } from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
 
-const sections = ['Overview', 'Site map', 'Market evidence', 'Site & program', 'Cost & budget', 'Revenue & operations', 'Finance & ledger', 'Returns & range', 'Charts', 'Scenarios', 'Sources & audit', 'Report & export']
+const sections = ['Overview', 'Site map', 'Market evidence', 'People & affordability', 'Site & program', 'Cost & budget', 'Revenue & operations', 'Finance & ledger', 'Returns & range', 'Charts', 'Scenarios', 'Sources & audit', 'Report & export']
 
 async function fresh(page: Page) {
   await page.goto('/')
@@ -76,7 +76,8 @@ test('overview shows the sketch and colour-coded analysis', async ({ page }) => 
     await page.getByText(style, { exact: true }).click()
     await expect(page.getByRole('img', { name: new RegExp(`^${style} streetscape`) })).toBeVisible()
   }
-  await expect(page.getByRole('heading', { name: /Analysis/ })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Decision summary' })).toBeVisible()
+  await page.getByRole('button', { name: /Show all \d+ observations/ }).click()
   await expect(page.getByText('Negative development spread')).toBeVisible()
   await expect(page.getByText(/Land-to-revenue/).first()).toBeVisible()
 })
@@ -169,6 +170,7 @@ test('report: the Excel workbook downloads; charts switch to tables', async ({ p
 test('analysis: zoning checks, and modelling the rezoning locks the as-of-right case', async ({ page }) => {
   await fresh(page)
   await expect(page.getByText(/over the zoning height/).first()).toBeVisible()
+  await page.locator('#observations summary', { hasText: /over the zoning height/ }).click()
   const before = await page.getByRole('button', { name: /^Total development cost: / }).getAttribute('aria-label')
   await page.getByRole('button', { name: 'Lock the current draft and model the rezoning' }).click()
   await expect(page.getByText(/Draft from scenario/)).toBeVisible()
@@ -244,4 +246,30 @@ test('site variables: unset reads as unknown, never as No or 0', async ({ page }
   const air = page.getByRole('textbox', { name: 'Aeronautical height limit above ground (AZR surface elevation − site elevation)' })
   await expect(air).toHaveValue('') // …and an unset one is blank
   await expect(air).toHaveAttribute('placeholder', 'unknown')
+})
+
+test('overview: decision summary with expandable findings and next actions', async ({ page }) => {
+  await fresh(page)
+  await expect(page.getByRole('heading', { name: 'Decision summary' })).toBeVisible()
+  await expect(page.getByText(/Relies on a rezoning|Does not fit the mapped limits/)).toBeVisible()
+  const first = page.locator('#observations details').first()
+  await expect(first).not.toHaveAttribute('open', '')
+  await first.locator('summary').click()
+  await expect(first).toHaveAttribute('open', '')
+  await page.getByRole('button', { name: /Show all \d+ observations/ }).click()
+  await expect(page.locator('#observations details')).not.toHaveCount(3)
+})
+
+test('people & affordability: income drives the 30% test; Indigenous context on the report', async ({ page }) => {
+  await fresh(page)
+  await openSection(page, 'People & affordability')
+  await expect(page.getByText(/Enter the median renter household income/)).toBeVisible()
+  const income = page.getByRole('textbox', { name: 'Median renter household income (before tax)' })
+  await income.fill('62000')
+  await income.press('Enter')
+  await expect(page.getByText(/studio: \d+% in year 1/)).toBeVisible()
+  await expect(page.getByRole('img', { name: /against the 30% threshold/ })).toBeVisible()
+  await openSection(page, 'Report & export')
+  await expect(page.getByRole('heading', { name: 'Indigenous context: treaty and territory' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Mississaugas of the Credit First Nation' })).toBeVisible()
 })

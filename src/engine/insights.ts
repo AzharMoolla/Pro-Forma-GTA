@@ -278,11 +278,14 @@ export function analyze(input: AnalysisInput): Analysis {
     if (p50Profit !== null && p50Profit < 0) add({ id: 'range-loss-likely', severity: 'concern', title: 'Likely outcome is a loss', detail: `The median simulated profit is ${M(p50Profit)}. Upward-skewed cost bands pull the likely result below the base case.`, drivers: ['profit'] })
     else if (p10Profit !== null && p10Profit < 0) add({ id: 'range-loss-tail', severity: 'watch', title: 'At least a 1-in-10 chance of a loss', detail: `The P10 profit is ${M(p10Profit)}. Narrowing the widest cost bands reduces this.`, drivers: ['profit'] })
   }
-  if (input.site) insights.push(...siteInsights(input.site))
+  const siteFindings = input.site ? siteInsights(input.site) : []
+  insights.push(...siteFindings)
   if (input.unaccountedItems) {
     add({ id: 'unaccounted', severity: 'watch', title: `${input.unaccountedItems} applicable cost items are not in the model`, detail: 'The checklist says these apply to this project. Totals are understated until they are estimated or marked as covered.', drivers: [] })
   }
 
-  insights.sort((a, b) => severityRank[a.severity] - severityRank[b.severity])
+  // most severe first; within a severity, site findings (what the land allows) before the project's own numbers
+  const fromSite = new Set(siteFindings.map((i) => i.id))
+  insights.sort((a, b) => (severityRank[a.severity] - severityRank[b.severity]) || (Number(fromSite.has(b.id)) - Number(fromSite.has(a.id))))
   return { buckets, insights, total }
 }

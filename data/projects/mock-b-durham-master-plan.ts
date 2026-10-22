@@ -251,7 +251,7 @@ export const mockBMeta = {
     'site.archaeologicalPotential': true, 'site.protectedTrees': 40, 'site.nearTtc60m': false, 'site.nearRailCorridor': true,
     'site.nearHighway': false, 'site.majorTransitStationArea': true, 'site.utilityRelocation': true, 'site.tightUrbanSite': false,
     'site.parcelsToAssemble': 1, 'site.waterfront': true, 'site.lat': 43.8686, 'site.lng': -78.8366,
-    'site.municipalityName': 'OSHAWA', 'site.region': 'DURHAM', 'site.greenbelt': false, 'site.conservationAuthority': 'Central Lake Ontario Conservation', 'site.nearAerodrome': true,
+    'site.municipalityName': 'OSHAWA', 'site.region': 'DURHAM', 'site.greenbelt': false, 'site.conservationAuthority': 'Central Lake Ontario Conservation', 'site.nearAerodrome': true, 'site.treaty': 'Williams Treaties (1923)',
     'site.secondaryPlan': 'new secondary plan through the OPA (synthetic)', 'zoning.holding': false,
     'site.airportZoning': false, 'site.nearMajorFacility': true, 'site.transitInfrastructureBelow': false, 'site.publicUniversityLand': false,
     'deal.vacantOrCommercialLand': true, 'deal.buyerNonResident': false, 'deal.landLoan': false, 'deal.holdMonths': 30,

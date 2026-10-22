@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react'
-import { isPortfolio, runNode } from '../engine/portfolio'
+import { isPortfolio, runNode, type Node } from '../engine/portfolio'
 import { Button, Chip, cx } from './components'
 import { ProjectMenu } from './ProjectMenu'
 import { demoProjects } from './data'
@@ -14,7 +14,17 @@ import { atLeast, SECTIONS, useStore, type Mode } from './store'
 import { flatten, getNode, getResult } from './tree'
 import { WorkspaceContext, type Workspace } from './workspace'
 
-const KPIS = ['totalDevelopmentCost', 'profit', 'profitOnCost', 'yieldOnCost', 'unleveredIrr', 'leveredIrr', 'unleveredNpv', 'equityContributed']
+/** Headline numbers by what is being built: rental is judged on yield and income, condo on sales, a plan on its phases. */
+const KPIS = {
+  rental: ['totalDevelopmentCost', 'stabilizedNoi', 'yieldOnCost', 'profitOnCost', 'unleveredIrr', 'leveredIrr', 'equityMultiple', 'unleveredNpv'],
+  condo: ['totalDevelopmentCost', 'totalRevenue', 'profit', 'profitOnCost', 'peakDepositsHeld', 'leveredIrr', 'equityContributed', 'unleveredNpv'],
+  plan: ['totalUnits', 'totalDevelopmentCost', 'profit', 'profitOnCost', 'unleveredIrr', 'leveredIrr', 'peakEquity', 'unleveredNpv'],
+}
+const tenureOf = (n: Node): keyof typeof KPIS => {
+  if (isPortfolio(n)) return 'plan'
+  const kinds = new Set(n.components.map((c) => c.kind))
+  return kinds.has('condo') && !kinds.has('rental') ? 'condo' : 'rental'
+}
 
 function ReadinessChips({ onOpen }: { onOpen: () => void }) {
   const l = readinessLabels(useReadiness())
@@ -129,7 +139,7 @@ export function App() {
       {nodeResult && (
         <div className="border-b border-line bg-surface">
           <ul className="mx-auto grid max-w-[1600px] grid-cols-2 gap-px bg-line sm:grid-cols-4 xl:grid-cols-8 print:hidden" aria-label={`Headline results for ${node.name}`}>
-            {KPIS.map((id) => nodeResult.metrics[id]).filter((m) => m !== undefined).map((m) => (
+            {KPIS[tenureOf(node)].map((id) => nodeResult.metrics[id]).filter((m) => m !== undefined).map((m) => (
               <li key={m.id} className={cx('flex flex-col bg-surface', state.inspect?.kind === 'metric' && state.inspect.id === m.id && 'bg-accent-soft')}>
                 <span className="px-4 pt-3 text-xs text-ink-soft"><MetricLabel id={m.id} label={m.label} /></span>
                 <button

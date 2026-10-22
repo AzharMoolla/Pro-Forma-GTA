@@ -68,12 +68,12 @@ const inBbox = (g: Geometry) => allPositions(g).some(([x, y]) => x >= BBOX.west 
 
 // ---------------------------------------------------------------- sources
 
-async function arcgis(path: string, outFields: string): Promise<Feature[]> {
+async function arcgis(path: string, outFields: string, base = LIO): Promise<Feature[]> {
   const q = new URLSearchParams({
     where: '1=1', geometry: `${BBOX.west},${BBOX.south},${BBOX.east},${BBOX.north}`, geometryType: 'esriGeometryEnvelope', inSR: '4326',
     spatialRel: 'esriSpatialRelIntersects', outFields, outSR: '4326', returnGeometry: 'true', maxAllowableOffset: '0.0004', geometryPrecision: '5', f: 'geojson',
   })
-  const res = await fetch(`${LIO}/${path}/query?${q}`)
+  const res = await fetch(`${base}/${path}/query?${q}`)
   if (!res.ok) throw new Error(`${path}: HTTP ${res.status}`)
   return ((await res.json()) as { features: Feature[] }).features
 }
@@ -184,6 +184,16 @@ await build({
   sets: [{ variable: 'site.nearTtc60m', value: true }],
   caveat: 'Subway centrelines from 2019: Lines 5 and 6 and the Ontario Line are missing, and 60 m is measured from the line, not from structures or entrances.',
 }, () => torontoShapefile(`${TO}/dataset/c01c6d71-de1f-493d-91ba-364ce64884ac/resource/7d68bb52-3285-45d7-a248-7748cb47f6ce/download/ttc-subway-shapefile-wgs84.zip`), ['ROUTE_NAME'], 0.00002)
+
+// Treaties: Indigenous Services Canada, Historic Treaties (federal open data). Coarse in southern Ontario: the
+// Upper Canada land surrenders are one area; the panel adds the treaty partners and the City's own acknowledgement.
+const ISC = 'https://geo.sac-isc.gc.ca/geomatics/rest/services/Donnees_Ouvertes-Open_Data'
+await build({
+  id: 'treaties', label: 'Historic treaty area', level: 'federal', kind: 'polygon', publisher: 'Indigenous Services Canada (Historic Treaties)',
+  sourceUrl: 'https://open.canada.ca/data/en/dataset/f281b150-0645-48e4-9c30-01f55f93f78e', licence: 'Open Government Licence – Canada', dataDate: TODAY, nameProperty: 'ENAME',
+  sets: [{ variable: 'site.treaty', fromProperty: 'ENAME' }],
+  caveat: 'Treaty boundaries are approximate and do not define rights, interests or consultation obligations. Speak with the Nations named here.',
+}, () => arcgis('Historic_Treaty_E/MapServer/0', 'ENAME,SUBTYPE_ENAME,TAG_ID', ISC), ['ENAME', 'SUBTYPE_ENAME', 'TAG_ID'], 0.0005)
 
 // Aeronautical screen: no AZR geometry is published as open data, so flag sites within 6 NM of an aerodrome.
 const aerodromes: Array<[string, number, number]> = [['Toronto Pearson International (CYYZ)', -79.6306, 43.6777], ['Billy Bishop Toronto City (CYTZ)', -79.3962, 43.6275], ['Oshawa Executive (CYOO)', -78.895, 43.9228]]

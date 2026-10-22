@@ -226,6 +226,14 @@
       "source": "Conservation authority areas (map)"
     },
     {
+      "id": "site.treaty",
+      "group": "site",
+      "label": "Historic treaty area",
+      "type": "text",
+      "source": "Indigenous Services Canada, Historic Treaties (map)",
+      "ref": "https://open.canada.ca/data/en/dataset/f281b150-0645-48e4-9c30-01f55f93f78e"
+    },
+    {
       "id": "site.secondaryPlan",
       "group": "site",
       "label": "Secondary plan",
@@ -1574,6 +1582,167 @@
       "label": "Nearest TTC stop name",
       "type": "text",
       "source": "planning map: TTC stops"
+    },
+    {
+      "id": "demo.geography",
+      "group": "demographics",
+      "label": "Area the figures describe (census tract, DA or neighbourhood)",
+      "type": "text",
+      "source": "Statistics Canada, 2021 Census Profile (census tract, dissemination area or neighbourhood); user-entered",
+      "ref": "https://www12.statcan.gc.ca/census-recensement/2021/dp-pd/prof/index.cfm"
+    },
+    {
+      "id": "demo.censusYear",
+      "group": "demographics",
+      "label": "Census year of the figures",
+      "type": "number",
+      "unit": "year",
+      "source": "Statistics Canada, 2021 Census Profile (census tract, dissemination area or neighbourhood); user-entered",
+      "ref": "https://www12.statcan.gc.ca/census-recensement/2021/dp-pd/prof/index.cfm"
+    },
+    {
+      "id": "demo.population",
+      "group": "demographics",
+      "label": "Population",
+      "type": "number",
+      "unit": "people",
+      "source": "Statistics Canada, 2021 Census Profile (census tract, dissemination area or neighbourhood); user-entered",
+      "ref": "https://www12.statcan.gc.ca/census-recensement/2021/dp-pd/prof/index.cfm"
+    },
+    {
+      "id": "demo.households",
+      "group": "demographics",
+      "label": "Private households",
+      "type": "number",
+      "unit": "households",
+      "source": "Statistics Canada, 2021 Census Profile (census tract, dissemination area or neighbourhood); user-entered",
+      "ref": "https://www12.statcan.gc.ca/census-recensement/2021/dp-pd/prof/index.cfm"
+    },
+    {
+      "id": "demo.avgHouseholdSize",
+      "group": "demographics",
+      "label": "Average household size",
+      "type": "number",
+      "unit": "persons",
+      "source": "Statistics Canada, 2021 Census Profile (census tract, dissemination area or neighbourhood); user-entered",
+      "ref": "https://www12.statcan.gc.ca/census-recensement/2021/dp-pd/prof/index.cfm"
+    },
+    {
+      "id": "demo.medianHouseholdIncome",
+      "group": "demographics",
+      "label": "Median total household income (before tax)",
+      "type": "number",
+      "unit": "CAD/yr",
+      "source": "Statistics Canada, 2021 Census Profile (census tract, dissemination area or neighbourhood); user-entered",
+      "ref": "https://www12.statcan.gc.ca/census-recensement/2021/dp-pd/prof/index.cfm"
+    },
+    {
+      "id": "demo.medianRenterIncome",
+      "group": "demographics",
+      "label": "Median renter household income (before tax)",
+      "type": "number",
+      "unit": "CAD/yr",
+      "source": "Statistics Canada, 2021 Census Profile (census tract, dissemination area or neighbourhood); user-entered",
+      "ref": "https://www12.statcan.gc.ca/census-recensement/2021/dp-pd/prof/index.cfm"
+    },
+    {
+      "id": "demo.medianOwnerIncome",
+      "group": "demographics",
+      "label": "Median owner household income (before tax)",
+      "type": "number",
+      "unit": "CAD/yr",
+      "source": "Statistics Canada, 2021 Census Profile (census tract, dissemination area or neighbourhood); user-entered",
+      "ref": "https://www12.statcan.gc.ca/census-recensement/2021/dp-pd/prof/index.cfm"
+    },
+    {
+      "id": "demo.incomeGrowth",
+      "group": "demographics",
+      "label": "Household income growth (assumption)",
+      "type": "number",
+      "unit": "fraction/yr",
+      "source": "Statistics Canada, 2021 Census Profile (census tract, dissemination area or neighbourhood); user-entered",
+      "ref": "https://www12.statcan.gc.ca/census-recensement/2021/dp-pd/prof/index.cfm"
+    },
+    {
+      "id": "demo.renterShare",
+      "group": "demographics",
+      "label": "Renter households",
+      "type": "number",
+      "unit": "fraction",
+      "source": "Statistics Canada, 2021 Census Profile (census tract, dissemination area or neighbourhood); user-entered",
+      "ref": "https://www12.statcan.gc.ca/census-recensement/2021/dp-pd/prof/index.cfm"
+    },
+    {
+      "id": "demo.shelterCost30Share",
+      "group": "demographics",
+      "label": "Tenant households spending 30%+ of income on shelter",
+      "type": "number",
+      "unit": "fraction",
+      "source": "Statistics Canada, 2021 Census Profile (census tract, dissemination area or neighbourhood); user-entered",
+      "ref": "https://www12.statcan.gc.ca/census-recensement/2021/dp-pd/prof/index.cfm"
+    },
+    {
+      "id": "demo.coreHousingNeedShare",
+      "group": "demographics",
+      "label": "Households in core housing need",
+      "type": "number",
+      "unit": "fraction",
+      "source": "Statistics Canada, 2021 Census Profile (census tract, dissemination area or neighbourhood); user-entered",
+      "ref": "https://www12.statcan.gc.ca/census-recensement/2021/dp-pd/prof/index.cfm"
+    },
+    {
+      "id": "demo.lowIncomeShare",
+      "group": "demographics",
+      "label": "Population in low income (LIM-AT)",
+      "type": "number",
+      "unit": "fraction",
+      "source": "Statistics Canada, 2021 Census Profile (census tract, dissemination area or neighbourhood); user-entered",
+      "ref": "https://www12.statcan.gc.ca/census-recensement/2021/dp-pd/prof/index.cfm"
+    },
+    {
+      "id": "demo.age0to14Share",
+      "group": "demographics",
+      "label": "Population aged 0–14",
+      "type": "number",
+      "unit": "fraction",
+      "source": "Statistics Canada, 2021 Census Profile (census tract, dissemination area or neighbourhood); user-entered",
+      "ref": "https://www12.statcan.gc.ca/census-recensement/2021/dp-pd/prof/index.cfm"
+    },
+    {
+      "id": "demo.age65PlusShare",
+      "group": "demographics",
+      "label": "Population aged 65+",
+      "type": "number",
+      "unit": "fraction",
+      "source": "Statistics Canada, 2021 Census Profile (census tract, dissemination area or neighbourhood); user-entered",
+      "ref": "https://www12.statcan.gc.ca/census-recensement/2021/dp-pd/prof/index.cfm"
+    },
+    {
+      "id": "demo.employmentRate",
+      "group": "demographics",
+      "label": "Employment rate (15+)",
+      "type": "number",
+      "unit": "fraction",
+      "source": "Statistics Canada, 2021 Census Profile (census tract, dissemination area or neighbourhood); user-entered",
+      "ref": "https://www12.statcan.gc.ca/census-recensement/2021/dp-pd/prof/index.cfm"
+    },
+    {
+      "id": "demo.transitCommuteShare",
+      "group": "demographics",
+      "label": "Commuters by public transit",
+      "type": "number",
+      "unit": "fraction",
+      "source": "Statistics Canada, 2021 Census Profile (census tract, dissemination area or neighbourhood); user-entered",
+      "ref": "https://www12.statcan.gc.ca/census-recensement/2021/dp-pd/prof/index.cfm"
+    },
+    {
+      "id": "demo.recentImmigrantShare",
+      "group": "demographics",
+      "label": "Recent immigrants (2016–2021)",
+      "type": "number",
+      "unit": "fraction",
+      "source": "Statistics Canada, 2021 Census Profile (census tract, dissemination area or neighbourhood); user-entered",
+      "ref": "https://www12.statcan.gc.ca/census-recensement/2021/dp-pd/prof/index.cfm"
     }
   ],
   "items": [

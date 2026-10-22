@@ -8,10 +8,11 @@ import { catalogue, catalogueItem, variableInfo } from './data'
 import { metricValue, money, num, pct } from './format'
 import { lineTotal } from './Inspector'
 import { Audit, Finance, Returns, Revenue, Scenarios } from './sections2'
-import { Analysis, Progress } from './sections3'
+import { CostBuckets, DecisionSummary, Progress } from './sections3'
 import { readSources, SiteMap } from './SiteMap'
 import { Streetscape } from './Streetscape'
 import { Visuals } from './Visuals'
+import { People } from './People'
 import { Report } from './Report'
 import { PrivacyPolicy, Terms } from './Legal'
 import { atLeast, type SectionId } from './store'
@@ -23,6 +24,7 @@ export function Sections({ section }: { section: SectionId }) {
     case 'overview': return <Overview />
     case 'map': return <SiteMap />
     case 'charts': return <Visuals />
+    case 'people': return <People />
     case 'report': return <Report />
     case 'privacy': return <PrivacyPolicy />
     case 'terms': return <Terms />
@@ -51,19 +53,9 @@ function Overview() {
   const flows = basis === 'project' ? nodeResult.projectCashFlow : nodeResult.equityCashFlow
   return (
     <div className="flex flex-col gap-4">
-      <Card title="At a glance" actions={<Button onClick={() => dispatch({ type: 'section', id: 'map' })}>{state.projects[state.projectId]!.attributes['site.lat'] ? 'Site map' : 'Locate on the site map'}</Button>}>
-        <Streetscape key={`${state.projectId}/${node.id}`} node={node} result={nodeResult} attributes={state.projects[state.projectId]!.attributes} />
-      </Card>
-      <Analysis />
-      <Card title={state.path.length ? node.name : 'About this project'}>
-        <p className="text-sm text-ink-soft">{demo.reference}</p>
-        {!state.path.length && (
-          <details className="mt-2 text-sm">
-            <summary className="cursor-pointer text-accent">Assumptions and limits ({demo.notes.length})</summary>
-            <ul className="mt-2 list-disc pl-5 text-ink-soft">{demo.notes.map((n) => <li key={n}>{n}</li>)}</ul>
-          </details>
-        )}
-      </Card>
+      <DecisionSummary />
+      <div className="grid gap-4 xl:grid-cols-2">
+        <Card title="Where the money goes"><CostBuckets /></Card>
       <Card
         title="Cash flow by year"
         actions={
@@ -80,11 +72,35 @@ function Overview() {
       >
         <CashFlowChart values={yearly(flows)} title={`${basis === 'project' ? 'Unlevered project' : 'Levered equity'} cash flow by year, ${node.name}`} />
       </Card>
-      {nodeResult.warnings.length > 0 && (
-        <Card title={`Warnings (${nodeResult.warnings.length})`}>
-          <ul className="flex flex-col gap-2 text-sm">{nodeResult.warnings.map((w) => <li key={w} className="rounded border border-warn bg-warn-soft p-2 text-warn">{w}</li>)}</ul>
+      </div>
+      <details open className="group rounded-lg border border-line bg-surface">
+        <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-2 px-4 py-2 [&::-webkit-details-marker]:hidden">
+          <span className="text-base font-semibold">Streetscape</span>
+          <span className="text-xs text-ink-mute"><span className="group-open:hidden">Show</span><span className="hidden group-open:inline">Hide</span> ▾</span>
+        </summary>
+        <div className="px-4 pb-4">
+          <Streetscape key={`${state.projectId}/${node.id}`} node={node} result={nodeResult} attributes={state.projects[state.projectId]!.attributes} />
+          <Button className="mt-2" onClick={() => dispatch({ type: 'section', id: 'map' })}>{state.projects[state.projectId]!.attributes['site.lat'] ? 'Open the site map' : 'Locate on the site map'}</Button>
+        </div>
+      </details>
+      <div className="grid gap-4 xl:grid-cols-2">
+        <Card title={state.path.length ? node.name : 'About this project'}>
+          <p className="text-sm text-ink-soft">{demo.reference}</p>
+          {!state.path.length && (
+            <details className="mt-2 text-sm">
+              <summary className="cursor-pointer text-accent">Assumptions and limits ({demo.notes.length})</summary>
+              <ul className="mt-2 list-disc pl-5 text-ink-soft">{demo.notes.map((n) => <li key={n}>{n}</li>)}</ul>
+            </details>
+          )}
         </Card>
-      )}
+        {nodeResult.warnings.length > 0 && (
+          <Card title={`Model warnings (${nodeResult.warnings.length})`}>
+            <ul className="flex flex-col gap-1.5 text-sm">{nodeResult.warnings.map((w) => (
+              <li key={w}><details className="rounded border border-warn bg-warn-soft px-2 py-1.5 text-warn"><summary className="cursor-pointer">{w.length > 90 ? `${w.slice(0, w.lastIndexOf(' ', 88))}…` : w}</summary>{w.length > 90 && <p className="mt-1">{w}</p>}</details></li>
+            ))}</ul>
+          </Card>
+        )}
+      </div>
       {isPortfolio(node) && (
         <Card title="Phases and blocks">
           <TableWrap caption="Children of this level">

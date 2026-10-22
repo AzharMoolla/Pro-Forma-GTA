@@ -121,68 +121,144 @@ const SEVERITY: Record<Severity, { label: string; icon: string; tone: 'good' | '
   good: { label: 'Strength', icon: '✓', tone: 'good' },
 }
 
-export function Analysis() {
+/** Analysis of the selected node: cost buckets and observations (own numbers + mapped site facts). */
+export function useAnalysis() {
   const { node, nodeResult, demo, state, draft } = useWorkspace()
   const attributes = state.projects[state.projectId]!.attributes
-  const analysis = useMemo(() => {
+  return useMemo(() => {
     if (!nodeResult) return null
     const unaccounted = state.path.length ? 0 : coverage(demo.projectType, attributes, draft, demo.coverage).filter((e) => e.status === 'unaccounted').length
     const prog = isPortfolio(node) ? undefined : node.program
     return analyze({ items: costItems(node, nodeResult, stageOf), metrics: nodeResult.metrics, isMasterPlan: isPortfolio(node), unaccountedItems: unaccounted, buildableSqft: prog ? (prog.planningGfaSqft ?? prog.gcaAboveSqft) : null, site: siteFactsFor(node, state.path, attributes) })
   }, [node, nodeResult, demo, attributes, draft, state.path])
-  if (!analysis) return null
-  const max = Math.max(...analysis.buckets.map((b) => b.share))
+}
 
+/** First sentence of a detail, for the collapsed line. */
+const lead = (s: string) => {
+  const m = s.match(/^.*?[.!?](\s|$)/)
+  return m ? m[0].trim() : s
+}
+
+/** Where the money goes, with the bridge to total development cost. */
+export function CostBuckets() {
+  const { nodeResult } = useWorkspace()
+  const analysis = useAnalysis()
+  if (!analysis || !nodeResult) return null
+  const max = Math.max(...analysis.buckets.map((b) => b.share))
+  const tdc = nodeResult.metrics.totalDevelopmentCost?.value
   return (
-    <Card title="Analysis: what stands out" actions={<Chip tone="neutral" title="Rules of thumb comparing this project's own numbers. Not market benchmarks.">screening heuristics</Chip>}>
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-        <div>
-          <h3 className="mb-1 text-sm font-semibold">Where the money goes · {money(analysis.total)}</h3>
-          <p className="mb-2 text-xs text-ink-mute">
-            Every cost dollar including all interest paid.
-            {nodeResult!.metrics.totalDevelopmentCost?.value != null && <> Bridge: total development cost {money(nodeResult!.metrics.totalDevelopmentCost.value)} + {money(analysis.total - nodeResult!.metrics.totalDevelopmentCost.value)} of interest, loan fees and costs after construction (not in TDC) = {money(analysis.total)}.</>}
-          </p>
-          <ul className="flex flex-col gap-2">
-            {analysis.buckets.map((b) => {
-              const s = SEVERITY[b.severity]
-              return (
-                <li key={b.id} className="text-xs">
-                  <div className="flex items-baseline justify-between gap-2">
-                    <span className="font-medium">{b.label}</span>
-                    <span className="num">{pct(b.share, 0)} · {money(b.total)}</span>
-                  </div>
-                  <div className="mt-1 flex items-center gap-2">
-                    <span className="h-2.5 flex-1 rounded-full bg-sunken" aria-hidden>
-                      <span className="block h-full rounded-full" style={{ width: `${Math.max(2, (b.share / max) * 100)}%`, background: b.severity === 'concern' ? 'var(--bad)' : b.severity === 'watch' ? 'var(--warn)' : 'var(--accent)' }} />
-                    </span>
-                    {b.severity !== 'info' && <Chip tone={s.tone}>{s.icon} {s.label}</Chip>}
-                  </div>
-                  {b.top[0] && <p className="mt-0.5 text-ink-mute">Largest: {b.top[0].label} {money(b.top[0].total)}</p>}
-                </li>
-              )
-            })}
-          </ul>
+    <div>
+      <p className="mb-2 text-xs text-ink-mute">
+        {tdc != null ? <>Total development cost {money(tdc)} + {money(analysis.total - tdc)} of interest, loan fees and costs after construction = {money(analysis.total)} spent in all.</> : <>Every cost dollar including all interest paid: {money(analysis.total)}.</>}
+      </p>
+      <ul className="flex flex-col gap-1.5">
+        {analysis.buckets.map((b) => {
+          const s = SEVERITY[b.severity]
+          return (
+            <li key={b.id} className="grid grid-cols-[minmax(0,9rem)_1fr_auto] items-center gap-2 text-xs" title={b.top[0] ? `Largest: ${b.top[0].label} ${money(b.top[0].total)}` : undefined}>
+              <span className="truncate font-medium">{b.label}</span>
+              <span className="h-2.5 rounded-full bg-sunken" aria-hidden>
+                <span className="block h-full rounded-full" style={{ width: `${Math.max(2, (b.share / max) * 100)}%`, background: b.severity === 'concern' ? 'var(--bad)' : b.severity === 'watch' ? 'var(--warn)' : 'var(--accent)' }} />
+              </span>
+              <span className="num whitespace-nowrap">{pct(b.share, 0)} · {money(b.total)}{b.severity !== 'info' && <span className="sr-only"> ({s.label})</span>}{b.severity === 'concern' ? ' ▲' : b.severity === 'watch' ? ' !' : ''}</span>
+            </li>
+          )
+        })}
+      </ul>
+    </div>
+  )
+}
+
+/** Observations as one line each; open one for the reasoning, the source and what to do. */
+export function Observations({ limit }: { limit?: number }) {
+  const analysis = useAnalysis()
+  const [all, setAll] = useState(false)
+  if (!analysis) return null
+  const firstAction = analysis.insights.find((x) => x.action === 'model-rezoning')
+  // the top few, plus the one carrying an action so it is never hidden behind "Show all"
+  const top = limit && !all ? analysis.insights.slice(0, limit) : analysis.insights
+  const list = firstAction && !top.includes(firstAction) ? [...top, firstAction] : top
+  return (
+    <div>
+      <ul className="flex flex-col gap-1.5">
+        {list.map((i) => {
+          const s = SEVERITY[i.severity]
+          return (
+            <li key={i.id}>
+              <details className={cx('group rounded-md border text-sm', i.severity === 'concern' ? 'border-bad bg-bad-soft' : i.severity === 'watch' ? 'border-warn bg-warn-soft' : i.severity === 'good' ? 'border-good bg-good-soft' : 'border-line bg-surface')}>
+                <summary className="flex cursor-pointer list-none items-start gap-2 p-2.5 [&::-webkit-details-marker]:hidden">
+                  <Chip tone={s.tone}>{s.icon} {s.label}</Chip>
+                  <span className="min-w-0 flex-1">
+                    <span className="font-medium text-ink">{i.title}</span>
+                    <span className="block text-xs text-ink-soft group-open:hidden">{lead(i.detail)}</span>
+                  </span>
+                  <span aria-hidden className="text-xs text-ink-mute group-open:rotate-180">▾</span>
+                </summary>
+                <div className="flex flex-col gap-1 border-t border-line/60 px-2.5 pb-2.5 pt-2">
+                  <p className="text-ink-soft">{i.detail}</p>
+                  {i.drivers.length > 0 && i.drivers[0]!.includes('$') && <p className="text-xs text-ink-soft">Driven by: {i.drivers.join(' · ')}</p>}
+                  {i.source && <p className="text-xs text-ink-soft">Source: {i.source} (screening data; check the by-law and plans)</p>}
+                  {i === firstAction && <ModelRezoning insight={i} />}
+                </div>
+              </details>
+            </li>
+          )
+        })}
+      </ul>
+      {limit !== undefined && analysis.insights.length > limit && (
+        <Button variant="ghost" className="mt-1" onClick={() => setAll((v) => !v)}>{all ? 'Show fewer' : `Show all ${analysis.insights.length} observations`}</Button>
+      )}
+    </div>
+  )
+}
+
+/** The decision view: a verdict, the findings that matter most, and what to do next. */
+export function DecisionSummary() {
+  const { state, dispatch, nodeResult } = useWorkspace()
+  const analysis = useAnalysis()
+  const project = state.projects[state.projectId]!
+  if (!analysis || !nodeResult) return null
+  const concerns = analysis.insights.filter((i) => i.severity === 'concern')
+  const has = (id: string) => analysis.insights.some((i) => i.id.startsWith(id))
+  const severityOf = (id: string) => analysis.insights.find((i) => i.id === id)?.severity
+  const verdict = !nodeResult.complete
+    ? { tone: 'warn' as const, text: 'Not ready to judge: some costs are not yet estimated, so key results are withheld.' }
+    : has('airport-over')
+      ? { tone: 'bad' as const, text: 'Taller than the airport limit: a rezoning cannot fix that, so the design has to change.' }
+      : has('height-over') || severityOf('fsi-over') === 'concern'
+      ? { tone: 'bad' as const, text: 'Does not fit the mapped limits as drawn: it needs a rezoning or a redesign, and the model does not include that yet.' }
+      : has('height-rezoning-assumed') || severityOf('fsi-over') === 'watch'
+      ? { tone: 'warn' as const, text: 'Relies on a rezoning (assumed in the project variables): check its time and cost are in the model.' }
+      : concerns.length
+        ? { tone: 'bad' as const, text: `Works on paper only with changes: ${concerns.length} concern${concerns.length === 1 ? '' : 's'} to resolve.` }
+        : { tone: 'good' as const, text: 'No major concerns on these inputs. Check the sources before relying on it.' }
+  const go = (id: Parameters<typeof dispatch>[0]) => () => dispatch(id)
+  const actions: Array<{ label: string; run: () => void }> = [
+    ...(project.attributes['site.lat'] ? [] : [{ label: 'Locate the site on the map to bring in zoning, height and policy', run: go({ type: 'section', id: 'map' }) }]),
+    ...(has('height-over') || has('fsi-over') ? [{ label: 'Model the rezoning (time and cost) on a branch', run: () => document.getElementById('observations')?.scrollIntoView({ behavior: 'smooth' }) }] : []),
+    ...(analysis.insights.some((i) => i.id === 'unaccounted') ? [{ label: 'Estimate the applicable costs that are not in the model', run: go({ type: 'section', id: 'audit' }) }] : []),
+    ...(!nodeResult.complete ? [{ label: 'Fill the unknown cost lines', run: go({ type: 'section', id: 'costs' }) }] : []),
+    ...(project.scenarios.length ? [] : [{ label: 'Lock a scenario so this version can be cited', run: go({ type: 'section', id: 'scenarios' }) }]),
+    { label: 'Test the assumptions that matter most', run: go({ type: 'section', id: 'charts' }) },
+  ].slice(0, 4)
+  return (
+    <Card title="Decision summary" actions={<Chip tone="neutral" title="Rules of thumb comparing this project's own numbers and mapped site facts. Not market benchmarks or a zoning opinion.">screening</Chip>}>
+      <p className={cx('mb-3 rounded-md border p-2.5 text-sm font-medium', verdict.tone === 'good' ? 'border-good bg-good-soft text-good' : verdict.tone === 'warn' ? 'border-warn bg-warn-soft text-warn' : 'border-bad bg-bad-soft text-bad')}>{verdict.text}</p>
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,7fr)_minmax(0,4fr)]">
+        <div id="observations">
+          <h3 className="mb-2 text-sm font-semibold">What stands out</h3>
+          <Observations limit={3} />
         </div>
         <div>
-          <h3 className="mb-2 text-sm font-semibold">Observations ({analysis.insights.length})</h3>
-          <ul className="flex flex-col gap-2">
-            {analysis.insights.map((i) => {
-              const s = SEVERITY[i.severity]
-              return (
-                <li key={i.id} className={cx('rounded-md border p-3 text-sm', i.severity === 'concern' ? 'border-bad bg-bad-soft' : i.severity === 'watch' ? 'border-warn bg-warn-soft' : i.severity === 'good' ? 'border-good bg-good-soft' : 'border-line bg-surface')}>
-                  <p className="flex items-start gap-2">
-                    <Chip tone={s.tone}>{s.icon} {s.label}</Chip>
-                    <span className="font-medium text-ink">{i.title}</span>
-                  </p>
-                  <p className="mt-1 text-ink-soft">{i.detail}</p>
-                  {i.drivers.length > 0 && i.drivers[0]!.includes('$') && <p className="mt-1 text-xs text-ink-soft">Driven by: {i.drivers.join(' · ')}</p>}
-                  {i.source && <p className="mt-1 text-xs text-ink-soft">Source: {i.source} (screening data; check the by-law and plans)</p>}
-                  {i.action === 'model-rezoning' && analysis.insights.find((x) => x.action === 'model-rezoning') === i && <ModelRezoning insight={i} />}
-                </li>
-              )
-            })}
-          </ul>
-          <p className="mt-3 text-xs text-ink-mute">Observations compare this project's own numbers (shares of cost, yield vs exit cap, levered vs unlevered) and its mapped site facts (zoning, airport, heritage, conservation). They are prompts to look closer, not an assessment of viability or a zoning opinion.</p>
+          <h3 className="mb-2 text-sm font-semibold">Next actions</h3>
+          <ol className="flex flex-col gap-1.5 text-sm">
+            {actions.map((a, k) => (
+              <li key={a.label} className="flex gap-2">
+                <span className="num flex size-5 shrink-0 items-center justify-center rounded-full bg-accent-soft text-xs text-accent">{k + 1}</span>
+                <button type="button" className="text-left text-accent underline-offset-2 hover:underline" onClick={a.run}>{a.label}</button>
+              </li>
+            ))}
+          </ol>
         </div>
       </div>
     </Card>

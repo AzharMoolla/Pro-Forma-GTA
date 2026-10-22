@@ -151,7 +151,8 @@
     "site.nearestCrossingM": 48,
     "site.crossingType": "traffic signal",
     "site.nearestTransitStopM": 38,
-    "site.nearestTransitStop": "Yonge St at Eglinton Ave West - Eglinton Station"
+    "site.nearestTransitStop": "Yonge St at Eglinton Ave West - Eglinton Station",
+    "site.treaty": "Southern Ontario Treaties (1764-1862)"
   },
   "coverage": {
     "substructure": "benchmark: inside the above-grade $/ft² hard cost",

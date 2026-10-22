@@ -15,10 +15,11 @@ import { readSources } from './SiteMap'
 import { StreetscapeSvg } from './Streetscape'
 import { sceneOf } from './streetscapeScene'
 import { getResult } from './tree'
+import { IndigenousCard } from './Indigenous'
 import { useWorkspace } from './workspace'
 
 const KEY_METRICS = ['totalUnits', 'totalDevelopmentCost', 'totalRevenue', 'profit', 'profitOnCost', 'profitOnCostBeforeFinancing', 'yieldOnCost', 'unleveredIrr', 'leveredIrr', 'equityMultiple', 'equityContributed', 'peakDebt']
-const SITE_VARS = ['site.address', 'site.municipality', 'site.region', 'site.ward', 'zoning.code', 'zoning.heightLimitM', 'zoning.heightLimitStoreys', 'zoning.fsiLimit', 'zoning.exception', 'zoning.holding', 'site.secondaryPlan', 'site.mtsaType', 'site.heritage', 'site.regulatedArea', 'site.greenbelt', 'site.nearAerodrome', 'site.aeronauticalLimitM', 'site.frontageRoadClass', 'site.nearestTransitStop', 'planning.zba']
+const SITE_VARS = ['site.address', 'site.municipality', 'site.region', 'site.ward', 'site.treaty', 'zoning.code', 'zoning.heightLimitM', 'zoning.heightLimitStoreys', 'zoning.fsiLimit', 'zoning.exception', 'zoning.holding', 'site.secondaryPlan', 'site.mtsaType', 'site.heritage', 'site.regulatedArea', 'site.greenbelt', 'site.nearAerodrome', 'site.aeronauticalLimitM', 'site.frontageRoadClass', 'site.nearestTransitStop', 'planning.zba']
 
 /** Report & export: an Excel workbook with every input, line, ledger row and source, and a printable report (PDF). */
 export function Report() {
@@ -125,6 +126,10 @@ export function Report() {
               {entries.filter((e) => e.status === 'unaccounted' || e.status === 'gap').map((e) => <li key={e.item.id}>{e.item.label} <span className="text-xs text-ink-mute">({e.status === 'gap' ? 'known gap' : 'not in model'})</span></li>)}
             </ul>
           )}
+        </section>
+
+        <section className="break-inside-avoid">
+          <IndigenousCard treaty={typeof project.attributes['site.treaty'] === 'string' ? project.attributes['site.treaty'] : null} municipality={typeof project.attributes['site.municipality'] === 'string' ? project.attributes['site.municipality'] : null} />
         </section>
 
         {project.scenarios.length > 0 && (

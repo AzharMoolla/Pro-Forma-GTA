@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-21",
+  "generatedAt": "2026-10-22",
   "bbox": {
     "west": -79.66,
     "south": 43.57,
@@ -24,7 +24,7 @@
         }
       ],
       "caveat": "Single-tier cities (e.g. Toronto) have no upper tier; regional rules then do not apply.",
-      "retrievedAt": "2026-10-21",
+      "retrievedAt": "2026-10-22",
       "featureCount": 11
     },
     {
@@ -53,7 +53,7 @@
         }
       ],
       "caveat": "Municipal boundaries decide which DC, fee and zoning by-laws apply.",
-      "retrievedAt": "2026-10-21",
+      "retrievedAt": "2026-10-22",
       "featureCount": 40
     },
     {
@@ -72,7 +72,7 @@
         }
       ],
       "caveat": "Outer boundary only: Protected Countryside, Oak Ridges Moraine and Niagara Escarpment designations inside it differ.",
-      "retrievedAt": "2026-10-21",
+      "retrievedAt": "2026-10-22",
       "featureCount": 1
     },
     {
@@ -92,7 +92,7 @@
         }
       ],
       "caveat": "Jurisdiction only. Whether the site is inside the regulated area (valleys, floodplains, shorelines) needs the authority's own regulation mapping.",
-      "retrievedAt": "2026-10-21",
+      "retrievedAt": "2026-10-22",
       "featureCount": 8
     },
     {
@@ -117,7 +117,7 @@
         }
       ],
       "caveat": "Toronto only. Inclusionary zoning also needs the IZ market area (not published as open data) and is paused until 2027-07-01.",
-      "retrievedAt": "2026-10-21",
+      "retrievedAt": "2026-10-22",
       "featureCount": 120
     },
     {
@@ -138,7 +138,7 @@
         }
       ],
       "caveat": "Toronto only. Secondary plan policies override parent Official Plan designations for height, density and uses.",
-      "retrievedAt": "2026-10-21",
+      "retrievedAt": "2026-10-22",
       "featureCount": 55
     },
     {
@@ -159,7 +159,7 @@
         }
       ],
       "caveat": "Toronto only. Read the policy text: SASPs can add or remove permissions.",
-      "retrievedAt": "2026-10-21",
+      "retrievedAt": "2026-10-22",
       "featureCount": 868
     },
     {
@@ -181,8 +181,28 @@
         }
       ],
       "caveat": "Subway centrelines from 2019: Lines 5 and 6 and the Ontario Line are missing, and 60 m is measured from the line, not from structures or entrances.",
-      "retrievedAt": "2026-10-21",
+      "retrievedAt": "2026-10-22",
       "featureCount": 4
+    },
+    {
+      "id": "treaties",
+      "label": "Historic treaty area",
+      "level": "federal",
+      "kind": "polygon",
+      "publisher": "Indigenous Services Canada (Historic Treaties)",
+      "sourceUrl": "https://open.canada.ca/data/en/dataset/f281b150-0645-48e4-9c30-01f55f93f78e",
+      "licence": "Open Government Licence – Canada",
+      "dataDate": "2026-10-22",
+      "nameProperty": "ENAME",
+      "sets": [
+        {
+          "variable": "site.treaty",
+          "fromProperty": "ENAME"
+        }
+      ],
+      "caveat": "Treaty boundaries are approximate and do not define rights, interests or consultation obligations. Speak with the Nations named here.",
+      "retrievedAt": "2026-10-22",
+      "featureCount": 2
     },
     {
       "id": "aerodromes",
@@ -193,8 +213,8 @@
       "publisher": "Aerodrome reference points (approximate)",
       "sourceUrl": "https://tc.canada.ca/en/aviation/operating-airports-aerodromes/airport-zoning-regulations",
       "licence": "Public facts",
-      "dataDate": "2026-10-21",
-      "retrievedAt": "2026-10-21",
+      "dataDate": "2026-10-22",
+      "retrievedAt": "2026-10-22",
       "featureCount": 3,
       "nameProperty": "NAME",
       "sets": [
