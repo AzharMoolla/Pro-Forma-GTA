@@ -2,7 +2,7 @@
 // This lab has no dependency on financial inputs or production rendering.
 export type Skin = 'watercolour' | 'blueprint'
 export interface Piece { id: string; name: string; size: string; trigger: string; note: string; width: number; height: number; draw: (p: Palette, height?: number) => string; below?: number }
-interface Palette { ink: string; paper: string; wall: string; shade: string; roof: string; glass: string; green: string; foliage: string; warm: string; road: string; water: string; fine: string; shadow: string; sheen: string; brick: string; glassShade: string; spandrel: string; limit: string }
+export interface Palette { ink: string; paper: string; wall: string; shade: string; roof: string; glass: string; green: string; foliage: string; warm: string; road: string; water: string; fine: string; shadow: string; sheen: string; brick: string; glassShade: string; spandrel: string; limit: string }
 export const palettes: Record<Skin, Palette> = {
   watercolour: { ink:'#526065',paper:'#faf8f1',wall:'#e9e6da',shade:'#d6d8d1',roof:'#a7b2ad',glass:'#c3d8de',green:'#6c8261',foliage:'#c5d0ad',warm:'#c8a586',road:'#deddd6',water:'#b4d3d8',fine:'#9da5a0',shadow:'#3f4a4e',sheen:'#ffffff',brick:'#d9b9a3',glassShade:'#a9c3cb',spandrel:'#93a6aa',limit:'#b5452b' },
   blueprint: { ink:'#e1edf0',paper:'#123958',wall:'#1d4662',shade:'#163d58',roof:'#426b80',glass:'#376781',green:'#9dbcb5',foliage:'#29596a',warm:'#839fac',road:'#1a405b',water:'#285b78',fine:'#7395ab',shadow:'#061d30',sheen:'#bfe0ee',brick:'#244e69',glassShade:'#2b5670',spandrel:'#24506a',limit:'#ff9f8a' },
@@ -23,7 +23,7 @@ function roofPlane(p:Palette,x:number,y:number,w:number,depth=1.7,rise=.95){
   return s
 }
 // ---- Shared drawing rules (pilot): one oblique projection, light from the upper left, three line weights.
-const RISE = .56 // every side wall and roof rises .56 m per metre of depth, so pieces line up in a street
+export const RISE = .56 // every side wall and roof rises .56 m per metre of depth, so pieces line up in a street
 const LW = { outline: .13, edge: .075, detail: .045, fine: .03 }
 const shade = (x:number,y:number,w:number,h:number,p:Palette,o=.18) => rect(x,y,w,h,p.shadow,'none',0,`opacity="${o}"`)
 /** Side wall from yBottom up to yTop at x, receding `depth` metres; darker than the lit front. */
@@ -42,7 +42,7 @@ function pane(x:number,y:number,w:number,h:number,p:Palette,mullion=true,sill=tr
     +(sill ? rect(x-.08,y+h,w+.16,.11,p.wall,p.ink,LW.fine) : '')
 }
 
-function building(p:Palette,height=40,podium=false){
+export function building(p:Palette,height=40,podium=false){
   if(!podium) return tower(p,height,false)
   // Mixed use: the tower sits on the podium, set back 1.2 m behind its front face, so the podium roof reads as a
   // terrace in front of it. The setback lifts the tower by its projection, so the tower is shortened to keep the
@@ -93,12 +93,12 @@ function tower(p:Palette,height:number,podium:boolean){
   return podium ? s : s+line(-.3,0,w+depth+.3,0,p.ink,LW.outline)
 }
 
-function greenRoof(p:Palette,w:number,y:number){
+export function greenRoof(p:Palette,w:number,y:number){
   let s=rect(.25,y-.02,w-.5,.22,p.shade,p.ink,LW.detail)+rect(.25,y+.2,w-.5,.08,p.shadow,'none',0,'opacity=".2"')+rect(.35,y-.13,w-.7,.23,p.green)
   for(let i=0;i<Math.floor(w*2);i++){const x=.45+(i*.46), t=i%5===2?1.35:1;s+=path(`M${x},${y} q${-.12*t},${-.5*t} .13,${-.6*t} q.26,.1 .12,${.6*t}`,p.foliage,p.green,.035)}
   return s
 }
-function townhouses(p:Palette,bays=4){
+export function townhouses(p:Palette,bays=4){
   const height=9, gable=1.7, end=(bays*4.4)-.1, depth=1.1
   const doors=[p.warm,p.green,p.roof,p.warm]
   let s=groundShadow(end,depth,p)
@@ -127,7 +127,7 @@ function townhouses(p:Palette,bays=4){
   return s+line(-.2,0,end+depth+.2,0,p.ink,LW.outline)
 }
 
-function tree(p:Palette,x=3.2,y=0,k=1,variant=0){
+export function tree(p:Palette,x=3.2,y=0,k=1,variant=0){
   const shapes=[
     'M0,-4.6 C-2.6,-4.1 -3.7,-5.9 -2.7,-7.1 C-3.5,-8.3 -1.7,-9.5 -.6,-9.1 C.1,-10.3 2.5,-9.7 2.5,-8.4 C4,-8.1 3.3,-5.8 2.1,-5.5 C2.2,-4.6 1,-4.1 0,-4.6 Z',
     'M0,-2.9 C-1.4,-2.8 -2,-4.1 -1.3,-5.2 C-2,-6.2 -.8,-7.1 -.9,-8 C-1,-9.9 .1,-10.5 .8,-9.4 C1.5,-8.5 1,-7.5 1.5,-6.6 C2.2,-5.6 1.4,-4.6 1.5,-3.9 C1.4,-3 .7,-2.7 0,-2.9 Z',
@@ -165,7 +165,7 @@ function wheelchair(p:Palette,x=0){return `<g data-feature="wheelchair-figure" t
   path('M.2,-1.29 Q.34,-1.3 .39,-1.16 L.43,-1.08 L.32,-1.02 L.19,-1.18Z',p.glass,p.ink,.02)+
   path('M.4,-1.13 Q.54,-1.04 .51,-.98 Q.49,-.93 .18,-.86 L.14,-.92 L.4,-1.02 L.32,-1.07Z',p.warm,p.ink,.018)+circle(.14,-.88,.045,p.warm,p.ink,.015)+`</g>`}
 function bench(p:Palette,x=0){return `<g transform="translate(${x})">`+`<ellipse cx=".95" cy=".02" rx="1.05" ry=".08" fill="${p.shadow}" opacity=".22"/>`+rect(0,-.62,1.8,.13,p.warm,p.ink,.045)+rect(.05,-1.12,1.7,.3,p.warm,p.ink,.045)+line(.27,-.5,.27,0,p.ink,.08)+line(1.53,-.5,1.53,0,p.ink,.08)+line(.25,-.8,.25,-.4,p.ink,.055)+line(1.55,-.8,1.55,-.4,p.ink,.055)+`</g>`}
-function lamp(p:Palette,x=0){return `<g data-feature="warm-lamp">`+path(`M${x+.8},-6.56 L${x-1},-.12 Q${x+1.15},.35 ${x+3.3},-.12 L${x+1.5},-6.56 Z`,'url(#LAMP-GLOW)','none',0,'filter="url(#SOFT-GLOW)"')+path(`M${x},0 v-6.2 q0,-.45 .45,-.45 h.75`, 'none',p.ink,.09)+rect(x+.8,-6.73,.7,.16,p.warm,p.ink,.055)+line(x+.9,-6.54,x+1.4,-6.54,'#ead89c',.09)+rect(x-.12,-.35,.24,.35,p.shade,p.ink,.04)+line(x+.04,-6.2,x+.04,-.35,p.shadow,.035,'opacity=".35"')+`</g>`}
+export function lamp(p:Palette,x=0){return `<g data-feature="warm-lamp">`+path(`M${x+.8},-6.56 L${x-1},-.12 Q${x+1.15},.35 ${x+3.3},-.12 L${x+1.5},-6.56 Z`,'url(#LAMP-GLOW)','none',0,'filter="url(#SOFT-GLOW)"')+path(`M${x},0 v-6.2 q0,-.45 .45,-.45 h.75`, 'none',p.ink,.09)+rect(x+.8,-6.73,.7,.16,p.warm,p.ink,.055)+line(x+.9,-6.54,x+1.4,-6.54,'#ead89c',.09)+rect(x-.12,-.35,.24,.35,p.shade,p.ink,.04)+line(x+.04,-6.2,x+.04,-.35,p.shadow,.035,'opacity=".35"')+`</g>`}
 function playground(p:Palette){
   let s=path('M0,0 H7 v-.1 H0Z',p.warm,p.fine,.025)+rect(1.1,-2.15,1.5,.12,p.wall,p.ink,.035)
   s+=path('M1.1,-.05 V-2.15 M2.6,-2.15 V-.05 M1.04,-2.2 L1.85,-2.78 L2.66,-2.2Z',p.warm,p.ink,.045)
@@ -181,7 +181,7 @@ function shelter(p:Palette){
     path('M.25,-.05 V-2.53 M2.45,-2.53 V-.05 M4.65,-2.53 V-.05','none',p.ink,.055)+line(.35,-1.05,4.55,-1.05,p.fine,.025)+
     bench(p,.65)+rect(3.15,-2.3,1.08,1.2,p.paper,p.fine,.025)+line(3.32,-2.08,4.02,-2.08,p.fine,.025)+line(3.32,-1.9,3.85,-1.9,p.fine,.025)+line(3.32,-1.72,4.02,-1.72,p.fine,.025)+`</g>`
 }
-function subway(p:Palette){
+export function subway(p:Palette){
   let s=groundShadow(6.5,.4,p)+rect(0,-3.05,6.5,3.05,p.wall,p.ink,LW.edge)+path('M6.5,0 v-3.05 l.4,-.23 V-.23Z',p.shade,p.ink,.04)+roofPlane(p,-.15,-3.15,6.8,.4,.23)
   s+=rect(.35,-2.75,3.65,2.6,p.shade,p.ink,.04)+shade(.35,-2.75,3.65,.35,p,.3)
   // Steps are drawn inside their own aperture, terminating above the pavement datum.
@@ -193,14 +193,14 @@ function subway(p:Palette){
   return s+line(5.9,-3.38,5.9,-4.2,p.ink,.055)+circle(5.9,-4.53,.34,p.warm,p.ink,.045)+path('M5.74,-4.6 h.32 M5.9,-4.6 v.25','none',p.ink,.04)
 }
 function wheel(p:Palette,x:number,y=-.31,r=.31){return `<ellipse cx="${x}" cy=".02" rx="${r*1.3}" ry="${r*.22}" fill="${p.shadow}" opacity=".25"/>`+circle(x,y,r,p.ink,p.ink,.035)+circle(x,y,r*.65,p.shade,p.fine,.035)+circle(x,y,.055,p.fine)+path(`M${x-r*.4},${y} h${r*.8} M${x},${y-r*.4} v${r*.8}`,'none',p.fine,.025)}
-function car(p:Palette){return `<g data-feature="refined-car">`+path('M.35,0 H4.25 l-.2,.1 H.55Z',p.shadow,'none',0,'opacity=".2"')+
+export function car(p:Palette){return `<g data-feature="refined-car">`+path('M.35,0 H4.25 l-.2,.1 H.55Z',p.shadow,'none',0,'opacity=".2"')+
   path('M.12,-.32 L.15,-.71 Q.19,-.89 .49,-.93 L.92,-1.01 L1.43,-1.43 Q1.57,-1.55 1.88,-1.54 H2.55 Q2.8,-1.53 3.04,-1.28 L3.32,-.98 L4.08,-.85 Q4.4,-.77 4.46,-.58 V-.29 H3.93 Q3.93,-.73 3.55,-.73 Q3.17,-.73 3.16,-.29 H1.27 Q1.27,-.73 .89,-.73 Q.51,-.73 .5,-.29 Z',p.wall,p.ink,.06)+rect(1.27,-.48,1.89,.17,p.shadow,'none',0,'opacity=".16"')+
   path('M1.14,-1.02 L1.56,-1.4 H2.03 V-1.02 Z M2.16,-1.4 H2.55 Q2.72,-1.38 2.91,-1.17 L3.05,-1.02 H2.16 Z',p.glass,p.ink,.035)+path('M1.5,-1.08 L1.75,-1.33 M2.35,-1.08 L2.6,-1.33','none',p.sheen,.04,'opacity=".7"')+
   path('M1.05,-.95 H3.22 M1.43,-.9 V-.38 M2.15,-.94 V-.38 M3.13,-.9 V-.45 M1.4,-.37 H3.13','none',p.fine,.03)+
   path('M.29,-.67 H.56 M4.12,-.66 H4.36','none',p.warm,.09)+line(1.72,-.81,1.9,-.81,p.ink,.035)+line(2.7,-.81,2.87,-.81,p.ink,.035)+
   path('M2.93,-1.01 l.15,-.1 .17,.02 .02,.07 -.27,.07 Z',p.shade,p.ink,.025)+wheel(p,.89)+wheel(p,3.55)+`</g>`}
 function furniture(p:Palette){return lamp(p,.3)+bench(p,2)+`<ellipse cx="4.7" cy=".02" rx=".4" ry=".06" fill="${p.shadow}" opacity=".22"/>`+rect(4.4,-.95,.5,.95,p.shade,p.ink,.055)+rect(4.67,-.95,.23,.95,p.shadow,'none',0,'opacity=".2"')+rect(4.35,-1.02,.6,.1,p.warm,p.ink,.04)+path('M5.7,0 v-.85 q0,-.65 .5,-.65 q.5,0 .5,.65 V0 M7.2,0 v-.85 q0,-.65 .5,-.65 q.5,0 .5,.65 V0','none',p.ink,.075)+person(p,9)}
-function creek(p:Palette){
+export function creek(p:Palette){
   let s=`<g data-feature="refined-bridge">`+path('M0,0 Q2,-.4 4,.1 T8,.1 T12,.1 T16,0 V1.8 H0Z',p.water,p.fine,.035)
   for(let i=0;i<15;i++){const x=.4+(i*1.03),y=.45+((i%3)*.38);s+=path(`M${x},${y} q.3,-.08 .65,0`,'none',p.paper,.055)}
   s+=path('M2.4,.25 Q8.4,-.5 14.4,.25 V.75 Q8.4,0 2.4,.75Z',p.shadow,'none',0,'opacity=".14"')
@@ -217,7 +217,7 @@ function creek(p:Palette){
   return s+'</g>'
 }
 
-function office(p:Palette,height=15){
+export function office(p:Palette,height=15){
   const w=17, depth=1.7, lobby=4.2
   const floors=Math.max(1,Math.round((height-lobby-1.3)/3.4)), ff=(height-lobby-1.3)/floors, vision=ff-.85
   let s=rect(0,-height,w,height,'none','none',0,'data-envelope="height"')+groundShadow(w,depth,p)
@@ -245,7 +245,7 @@ function office(p:Palette,height=15){
   s+=rect(0,-height,w,height,'none',p.ink,LW.outline)
   return s+line(-.3,0,w+depth+.3,0,p.ink,LW.outline)
 }
-function industrial(p:Palette,height=6){
+export function industrial(p:Palette,height=6){
   const w=23, depth=1.7, saw=1 // sawtooth roof lights sit inside the stated height
   let s=rect(0,-height,w,height,'none','none',0,'data-envelope="height"')+groundShadow(w,depth,p)
   s+=sideWall(p,w,0,-height+saw,depth)
@@ -278,7 +278,7 @@ function industrial(p:Palette,height=6){
   s+=rect(0,-height+saw,w,height-saw,'none',p.ink,LW.outline)
   return s+line(-.3,0,w+depth+.3,0,p.ink,LW.outline)
 }
-function civic(p:Palette,height=6.7){
+export function civic(p:Palette,height=6.7){
   const w=12, depth=1.7, eave=-height+.95
   let s=groundShadow(w,depth,p)+sideWall(p,w,0,eave,depth)
   // Stone body with rusticated base courses
@@ -356,8 +356,8 @@ function podiumBase(p:Palette,kind:PodiumType){
   return s+rect(0,-5.5,w,5.5,'none',p.ink,LW.outline)+'</g>'
 }
 export function podiumSvg(kind:PodiumType,skin:Skin){return uniqueSvg(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="-1.2 -7 20.5 7.5" role="img" aria-label="${kind} podium · illustrative template">${definitions(skin)}${podiumBase(palettes[skin],kind)}</svg>`,`podium-${kind}-${skin}`)}
-function solar(p:Palette){let s='';for(let i=0;i<4;i++){const x=i*1.55;s+=path(`M${x+.15},0 h1.3 l.35,-.1 h-1.3Z`,p.shadow,'none',0,'opacity=".22"')+path(`M${x},-.25 l.5,-1.35 h1.4 l-.5,1.35 Z`,p.glass,p.ink,LW.edge)+line(x+.45,-.4,x+.85,-1.45,p.sheen,.04,'opacity=".6"')+line(x+.65,-1.25,x+1.55,-1.25,p.fine,.03)+line(x+.5,-.85,x+1.4,-.85,p.fine,.03)+line(x+.8,-1.6,x+.3,-.25,p.fine,.03)+line(x+1.2,-1.6,x+.7,-.25,p.fine,.03)+line(x+.15,-.25,x+.15,0,p.ink,.055)+line(x+1.1,-.25,x+1.1,0,p.ink,.055)}return s}
-function bus(p:Palette){
+export function solar(p:Palette){let s='';for(let i=0;i<4;i++){const x=i*1.55;s+=path(`M${x+.15},0 h1.3 l.35,-.1 h-1.3Z`,p.shadow,'none',0,'opacity=".22"')+path(`M${x},-.25 l.5,-1.35 h1.4 l-.5,1.35 Z`,p.glass,p.ink,LW.edge)+line(x+.45,-.4,x+.85,-1.45,p.sheen,.04,'opacity=".6"')+line(x+.65,-1.25,x+1.55,-1.25,p.fine,.03)+line(x+.5,-.85,x+1.4,-.85,p.fine,.03)+line(x+.8,-1.6,x+.3,-.25,p.fine,.03)+line(x+1.2,-1.6,x+.7,-.25,p.fine,.03)+line(x+.15,-.25,x+.15,0,p.ink,.055)+line(x+1.1,-.25,x+1.1,0,p.ink,.055)}return s}
+export function bus(p:Palette){
   let s=`<g data-feature="city-bus">`+path('M.12,-.5 V-2.67 Q.12,-3.08 .58,-3.08 H11.35 Q11.86,-3.08 11.88,-2.57 L11.95,-.84 Q11.97,-.5 11.65,-.5Z',p.wall,p.ink,.045)
   s+=rect(.46,-2.69,8.5,1.18,p.glass,p.ink,.035)+path('M1.7,-1.6 l.6,-1 h.25 l-.6,1Z M5.9,-1.6 l.6,-1 h.18 l-.6,1Z',p.sheen,'none',0,'opacity=".45"')+rect(.12,-.9,11.8,.4,p.shadow,'none',0,'opacity=".14"')
   for(let x=1.53;x<9;x+=1.07)s+=line(x,-2.67,x,-1.53,p.ink,.04)
@@ -393,7 +393,7 @@ function conifer(p:Palette,x:number,y=0,k=1){
   return s+'</g>'
 }
 
-function schoolSite(p:Palette){
+export function schoolSite(p:Palette){
   const w=20, d=3
   let s=path(ground(0,w,d),p.foliage,'none',0)+path(ground(0,w,d),p.green,'none',0,'opacity=".12"')
   s+=path(ground(0,w,d),'none',p.ink,LW.edge,'stroke-dasharray=".55 .35"') // reserved boundary, not a building
@@ -405,7 +405,7 @@ function schoolSite(p:Palette){
   s+=path('M1.75,-2.15 v-.55 l.55,-.38 .55,.38 v.55Z',p.warm,p.ink,LW.fine)+rect(2.2,-2.45,.2,.3,p.glass,p.ink,LW.fine)+line(2.3,-3.08,2.3,-2.98,p.ink,LW.fine)+path('M2.3,-3.08 h.35 v.16 h-.35',p.limit,'none',0)
   return s
 }
-function existingBuilding(p:Palette,height=12){
+export function existingBuilding(p:Palette,height=12){
   // Context massing only: neutral, hatched, no invented facade
   const w=14, depth=1.7
   let s=groundShadow(w,depth,p)+sideWall(p,w,0,-height,depth)
@@ -414,7 +414,7 @@ function existingBuilding(p:Palette,height=12){
   s+=roofPlane(p,0,-height,w,depth,depth*RISE)+rect(0,-height,w,height,'none',p.ink,LW.edge)
   return s+line(-.3,0,w+depth+.3,0,p.ink,LW.outline)
 }
-function landPlot(p:Palette){
+export function landPlot(p:Palette){
   const w=18, d=4
   let s=path(ground(0,w,d),p.warm,'none',0,'opacity=".28"')+path(ground(0,w,d),'url(#HATCH)','none',0)+path(ground(0,w,d),'none',p.ink,LW.edge)
   // Survey stakes at the corners, with flagging tape
@@ -454,7 +454,7 @@ function entrance(p:Palette){
   s+=rect(4.25,-2.2,.55,.4,p.warm,p.ink,LW.fine)+path('M.7,0 v-.1 h.15 v-.1 H4.15 v.1 h.15 V0Z',p.shade,p.ink,LW.detail)
   return s+rect(0,-4,5,4,'none',p.ink,LW.outline)
 }
-function roofTerrace(p:Palette){
+export function roofTerrace(p:Palette){
   const w=10, d=1.7
   // Decking on the roof plane, planters, glass guard, a table and umbrella, a pergola
   let s=path(ground(0,w,d),p.warm,p.ink,LW.edge)
@@ -475,7 +475,7 @@ function rainGarden(p:Palette){
   s+=rect(-.6,-.18,.6,.18,p.shade,p.ink,LW.detail)+path('M-.5,-.32 h.45 l-.1,-.08 M-.05,-.32 l-.1,.08','none',p.water,.05)
   return s+line(-.6,0,8.4,0,p.ink,LW.edge)
 }
-function lakeEdge(p:Palette){
+export function lakeEdge(p:Palette){
   let s=rect(0,0,18,2.1,p.water,'none',0)+path('M0,0 H18','none',p.ink,LW.edge)
   for(let i=0;i<16;i++){const x=.4+(i*1.1),y=.55+((i%3)*.45);s+=path(`M${x},${y} q.3,-.08 .65,0`,'none',p.paper,.055)}
   // Armour-stone shoreline and a boardwalk on piles
@@ -513,7 +513,7 @@ function busStopPole(p:Palette){
   s+=rect(.25,-1.9,.5,.65,p.paper,p.ink,LW.fine)+line(.32,-1.75,.68,-1.75,p.fine,LW.fine)+line(.32,-1.6,.6,-1.6,p.fine,LW.fine)
   return s
 }
-function railPlatform(p:Palette){
+export function railPlatform(p:Palette){
   const w=20, d=3
   let s=groundShadow(w,1,p)+rect(0,-1.1,w,1.1,p.shade,p.ink,LW.edge)+sideWall(p,w,0,-1.1,1)
   s+=path(`M0,-1.1 H${w} l${d},${-d*RISE} H${d}Z`,p.wall,p.ink,LW.edge)+path(`M0,-1.1 H${w} l.35,-.2 H.35Z`,p.warm,'none',0) // tactile edge strip
@@ -608,7 +608,7 @@ function plantingBed(p:Palette){
   for(let x=.3;x<5.9;x+=.45)s+=path(`M${x},-.45 q-.08,-.45 -.18,-.55 M${x},-.45 q.06,-.5 .12,-.6`,'none',p.green,.035)+circle(x+.1,-.85,.06,p.warm)
   return s
 }
-function pond(p:Palette){
+export function pond(p:Palette){
   let s=path('M.4,0 C1.5,.9 8.5,.9 9.6,0 Z',p.water,p.ink,LW.edge)+path('M1.2,.18 C3,.55 7,.55 8.8,.18','none',p.paper,.05,'opacity=".7"')
   for(const x of [.8,1.3,8.4,8.9])s+=path(`M${x},0 q-.1,-.6 -.05,-.95 M${x+.12},0 q.05,-.5 .15,-.8`,'none',p.green,.045)+rect(x-.02,-1.02,.07,.22,p.warm)
   for(const [x,r] of [[2.2,.18],[7.6,.22],[3,.13]] as const)s+=circle(x,.04,r,p.shade,p.ink,LW.fine)
@@ -681,7 +681,7 @@ function constructionKit(p:Palette){
 function badgeBase(p:Palette,inner:string){
   return contactAt(1.1,.3,p,.05)+line(1.1,0,1.1,-1.1,p.ink,LW.edge)+circle(1.1,-1.95,.85,p.wall,p.ink,LW.edge)+circle(1.1,-1.95,.68,'none',p.fine,LW.fine)+inner
 }
-function amenityBadge(p:Palette){
+export function amenityBadge(p:Palette){
   // A marker for an amenity the program confirms (here: a pool); placement is illustrative
   return badgeBase(p,path('M.6,-2.05 q.25,-.18 .5,0 q.25,.18 .5,0 M.6,-1.8 q.25,-.18 .5,0 q.25,.18 .5,0','none',p.water,.09)+path('M.85,-2.45 v.35 M1.35,-2.45 v.35 M.85,-2.35 h.5','none',p.ink,.05))
 }
@@ -696,7 +696,7 @@ function phaseBadge(p:Palette){
 const slab = (x:number,w:number,depth:number,fill:string,p:Palette,thick=.18,extra='') =>
   path(ground(x,w,depth),fill,p.ink,LW.edge,extra)+rect(x,0,w,thick,p.shade,p.ink,LW.detail)+path(`M${x+w},0 l${depth},${-depth*RISE} v${thick} l${-depth},${depth*RISE}Z`,p.shadow,'none',0,'opacity=".25"')
 
-function park(p:Palette){
+export function park(p:Palette){
   // Pocket park: lawn with a curved path, a shade tree group, a planted edge, seating, a lamp and a small play corner
   let s=slab(0,17,2.6,p.foliage,p)
   for(let k=0;k<8;k++){const x=k*2.2;s+=path(`M${x},0 h1.1 l2.6,${-2.6*RISE} h-1.1Z`,p.green,'none',0,'opacity=".1"')}
@@ -707,7 +707,7 @@ function park(p:Palette){
   s+=bench(p,4.6)+lamp(p,11.2)+person(p,6.1,0,1)+`<g transform="translate(9.7 -.75) scale(.7)">${person(p,0,0,0)}</g>`
   return s
 }
-function playgroundPiece(p:Palette){
+export function playgroundPiece(p:Palette){
   const w=9.5, d=2.4
   // Poured rubber surface on a curbed slab, flecked; equipment, a spring rider, a fence with a gate, parents' bench, trees
   let s=slab(0,w,d,p.warm,p,.2,'fill-opacity=".55"')
@@ -753,7 +753,7 @@ function ravineGround(x:number){
   if(x<=11.5)return 2.7
   return along([11.5,14,15,18],[2.7,2.6,0,0])
 }
-function ravine(p:Palette){
+export function ravine(p:Palette){
   // A wooded valley below the table land, with a creek at the bottom
   const valley='M0,0 C2.5,0 3.5,2.6 6,2.7 H11.5 C14,2.6 15,0 18,0 V3.2 H0Z'
   let s=path(valley,p.foliage,p.ink,LW.edge)+path('M0,0 C2.5,0 3.5,2.6 6,2.7 L4,3.2 H0Z','url(#HATCH)','none',0)
@@ -770,7 +770,7 @@ function track(p:Palette,L=26){
   for(let x=.3;x<L;x+=.6)s+=rect(x,.06,.32,.12,p.warm,p.ink,LW.fine)
   return s+rect(0,-.02,L,.08,p.ink,'none',0)+line(0,.06,L,.06,p.fine,LW.fine)
 }
-function train(p:Palette){
+export function train(p:Palette){
   const L=25
   // Cab car: a sloped nose with windscreen and headlight at the right, bilevel body, bogies, underfloor kit, roof units
   let s=track(p,L+.6)
@@ -910,7 +910,7 @@ export function sceneSvg(skin:Skin,buildingHeight=40){
 }
 
 /** Atmospheric sample context only; replace with sourced context geometry in production. */
-function background(p:Palette){
+export function background(p:Palette){
   let art='<g data-feature="illustrative-background">'
   for(let layer=0;layer<2;layer++){
     art+=`<g opacity="${layer===0?.17:.29}">`

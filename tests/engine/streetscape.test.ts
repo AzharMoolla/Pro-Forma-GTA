@@ -13,6 +13,7 @@ import type { Component, ProjectInput } from '../../src/engine/project'
 import { projectsUnder } from '../../src/ui/coverage'
 import { StreetscapeSvg, type ArtStyle } from '../../src/ui/Streetscape'
 import { controllingLimit, sceneOf, scoped, type Scene } from '../../src/ui/streetscapeScene'
+import { GROUND_Y, kitArt, kitLayout } from '../../src/ui/kitStreetscape'
 import { tinyProject } from './fixtures'
 
 const rental = tinyProject().components[0]!
@@ -105,8 +106,13 @@ describe('streetscape: 15 buildings, mixed zoning, transit near some blocks', ()
       }
       expect(count(svg, 'data-feature="tag"')).toBe(scene.tags.length)
       expect(scene.tags.map((t) => t.title)).toEqual(['Street', 'Sidewalks', 'Crossing', 'Transit', 'Parking', 'Bicycle parking', 'Loading and access', 'Servicing', 'Frontage', 'New roads', 'New services'])
-      // nothing drawn above the top of the picture, even the 80-storey tower with its roof
-      const ys = [...svg.matchAll(/ y="(-?[\d.]+)"/g)].map((m) => Number(m[1]))
+      // nothing drawn above the top of the picture, even the 80-storey tower with its roof: kit art is in metres
+      // (y up is negative) under one scale, so check the scaled tallest piece and every limit line instead
+      const K = kitLayout(scene)
+      const tallest = Math.max(...K.placed.map((q) => q.top), ...scene.buildings.map((x) => (x.limitMetres ?? 0) + 2))
+      expect(GROUND_Y - (tallest * K.S)).toBeGreaterThanOrEqual(0)
+      const overlays = svg.replace(kitArt(scene, style === 'sketch' ? 'watercolour' : 'blueprint', 's', K), '')
+      const ys = [...overlays.matchAll(/ y="(-?[\d.]+)"/g)].map((m) => Number(m[1]))
       expect(Math.min(...ys)).toBeGreaterThanOrEqual(0)
     })
   }
@@ -141,5 +147,19 @@ describe('streetscape: real projects and edge cases', () => {
     write('airport-blueprint', svg)
     expect(svg).toContain('data-feature="air-limit-line"')
     expect(svg).toContain('data-feature="limit-line"')
+  })
+})
+
+describe('streetscape: water and nature context from the map', () => {
+  const kinds = (a: Attributes) => sceneOf([{ path: [], project: tinyProject() }], a).parts.map((p) => p.kind)
+  it('a waterfront ends at the lake; a regulated ravine otherwise; a floodplain gets a creek; ponds from the plan', () => {
+    expect(kinds({})).not.toEqual(expect.arrayContaining(['lake', 'ravine', 'creek', 'pond']))
+    expect(kinds({ 'site.waterfront': true, 'site.regulatedArea': true })).toEqual(expect.arrayContaining(['lake']))
+    expect(kinds({ 'site.waterfront': true, 'site.regulatedArea': true })).not.toContain('ravine')
+    expect(kinds({ 'site.regulatedArea': true })).toContain('ravine')
+    expect(kinds({ 'site.floodplain': true, 'mp.swmPonds': 2 })).toEqual(expect.arrayContaining(['creek', 'pond']))
+    const svg = render(sceneOf([{ path: [], project: tinyProject() }], { 'site.waterfront': true, 'site.floodplain': true }), 'sketch', 'Water')
+    write('water-sketch', svg)
+    for (const f of ['lake', 'creek']) expect(svg).toContain(`data-feature="${f}"`)
   })
 })

@@ -45,7 +45,7 @@ export interface Tag { title: string; text: string }
 export type Part =
   | { kind: 'building'; b: Building; x: number; w: number }
   | { kind: 'station'; transit: Exclude<Transit, null>; x: number; w: number }
-  | { kind: 'tree' | 'park' | 'school' | 'community'; x: number; w: number }
+  | { kind: 'tree' | 'park' | 'school' | 'community' | 'pond' | 'creek' | 'ravine' | 'lake'; x: number; w: number }
 
 type PartSpec = Part extends infer P ? (P extends Part ? Omit<P, 'x'> : never) : never
 
@@ -209,6 +209,11 @@ export function sceneOf(projects: Array<{ path: string[]; project: ProjectInput;
   })
   if (num(a['mp.schoolSites']) > 0) push({ kind: 'school', w: 104 })
   if (a['mp.communityCentre'] === true) push({ kind: 'community', w: 124 })
+  // Water and nature context at the end of the street, only where the map or the program says so
+  if (num(a['mp.swmPonds']) > 0) push({ kind: 'pond', w: 110 })
+  if (a['site.floodplain'] === true) push({ kind: 'creek', w: 160 })
+  if (a['site.waterfront'] === true || a['mp.shorelineWorks'] === true) push({ kind: 'lake', w: 180 })
+  else if (a['site.regulatedArea'] === true) push({ kind: 'ravine', w: 180 })
   const W = Math.max(980, x + 30)
   const street = streetOf(a)
   const uniform = (pick: (b: Building) => number | null) => {
