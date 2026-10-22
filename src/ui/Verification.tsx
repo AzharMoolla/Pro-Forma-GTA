@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { CALCULATORS, runAll, type Calculator } from '../verification/cases'
-import { FITTED_RENTAL_SPREAD, NBLC_PEEL_2021, type BenchmarkRow } from '../verification/benchmarks'
+import { FITTED_RENTAL_SPREAD, NBLC_PEEL_2021, type BenchmarkRow, type DirectionRow } from '../verification/benchmarks'
 import { Button, Card, Chip, TableWrap, td, tdNum, th } from './components'
 import { money, pct } from './format'
 import { GlossaryText } from './Glossary'
@@ -47,7 +47,7 @@ export function Verification() {
 
 /** The model against a published pro forma with known answers: NBLC's residual land values for 15 Peel sites. */
 function Benchmark() {
-  const [rows, setRows] = useState<{ condo: BenchmarkRow[]; rental: BenchmarkRow[] } | null>(null)
+  const [rows, setRows] = useState<{ condo: BenchmarkRow[]; rental: BenchmarkRow[]; toronto: DirectionRow[] } | null>(null)
   const [state, setState] = useState<'idle' | 'running' | string>('idle')
   const worker = useRef<Worker | null>(null)
   useEffect(() => () => worker.current?.terminate(), [])
@@ -55,8 +55,8 @@ function Benchmark() {
     setState('running')
     worker.current?.terminate()
     worker.current = new Worker(new URL('./benchmark.worker.ts', import.meta.url), { type: 'module' })
-    worker.current.onmessage = (e: MessageEvent<{ ok: boolean; condo: BenchmarkRow[]; rental: BenchmarkRow[]; error?: string }>) => {
-      if (e.data.ok) { setRows({ condo: e.data.condo, rental: e.data.rental }); setState('idle') } else setState(e.data.error ?? 'failed')
+    worker.current.onmessage = (e: MessageEvent<{ ok: boolean; condo: BenchmarkRow[]; rental: BenchmarkRow[]; toronto: DirectionRow[]; error?: string }>) => {
+      if (e.data.ok) { setRows({ condo: e.data.condo, rental: e.data.rental, toronto: e.data.toronto }); setState('idle') } else setState(e.data.error ?? 'failed')
     }
     worker.current.postMessage(null)
   }
@@ -69,8 +69,9 @@ function Benchmark() {
       </p>
       <p className="mt-2 text-xs text-ink-mute">Where the study is silent, one assumption applies to every site: 375 ft² of underground parking per stall, 18 months before construction, 20–36 months to build by height, HST remitted net of the Ontario rebate, deposits held in trust. The rental profit spread is unpublished; {pct(FITTED_RENTAL_SPREAD, 2)} is the one value fitted to the study. Full method and results: docs/implementation/BENCHMARK.md.</p>
       <div className="mt-3 flex flex-wrap items-center gap-3">
-        <Button variant="primary" onClick={run} disabled={state === 'running'}>{state === 'running' ? 'Running 30 land solves…' : rows ? 'Run again' : 'Run the benchmark'}</Button>
-        {rows && <Chip tone={within >= 9 ? 'good' : 'warn'}>Condo: {within} of 15 within 2% of revenue</Chip>}
+        <Button variant="primary" onClick={run} disabled={state === 'running'}>{state === 'running' ? 'Running 52 land solves…' : rows ? 'Run again' : 'Run the benchmark'}</Button>
+        {rows && <Chip tone={within >= 9 ? 'good' : 'warn'}>Peel condo: {within} of 15 within 2% of revenue</Chip>}
+        {rows && <Chip tone="neutral">Toronto: {rows.toronto.filter((r) => r.agrees).length} of {rows.toronto.length} viable/challenge calls agree</Chip>}
         {state !== 'idle' && state !== 'running' && <span role="alert" className="text-sm text-bad">{state}</span>}
       </div>
       {rows && (
@@ -92,6 +93,22 @@ function Benchmark() {
                 </tr>
               )
             })}</tbody>
+          </TableWrap>
+          <h3 className="mt-4 mb-1 text-sm font-semibold">Second answer key: Toronto 2019 (direction)</h3>
+          <p className="mb-2 text-xs text-ink-soft">NBLC's 2019 Toronto study publishes inputs for 11 sites but states results only as viable (land value at least 10% above the existing site's value) or challenge. The rental spread is Peel's, not refitted, so this half is out of sample.</p>
+          <TableWrap caption="Toronto 2019: viable or challenge, study vs this model">
+            <thead><tr>{['Site', 'Tenure', 'Viable above', 'Model land value', 'Study', 'Model', ''].map((h, i) => <th key={h || i} scope="col" className={i >= 2 && i <= 3 ? `${th} text-right` : th}>{h}</th>)}</tr></thead>
+            <tbody>{rows.toronto.map((r) => (
+              <tr key={`${r.site}-${r.tenure}`}>
+                <td className={td}>{r.site}</td>
+                <td className={td}>{r.tenure}</td>
+                <td className={tdNum}>{money(r.threshold)}</td>
+                <td className={tdNum}>{r.ours === null ? 'n/a' : money(r.ours)}</td>
+                <td className={td}>{r.studyViable ? 'viable' : 'challenge'}</td>
+                <td className={td}>{r.modelViable === null ? 'n/a' : r.modelViable ? 'viable' : 'challenge'}</td>
+                <td className={td}><span className={r.agrees ? 'text-good' : 'text-warn'}>{r.agrees ? '✓ agrees' : '✗ differs'}</span></td>
+              </tr>
+            ))}</tbody>
           </TableWrap>
         </div>
       )}

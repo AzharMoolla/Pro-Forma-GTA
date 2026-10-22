@@ -14,7 +14,20 @@ import type { CostLine } from '../engine/costs'
 import { runNode } from '../engine/portfolio'
 import type { ProjectInput } from '../engine/project'
 
-export type Municipality = 'caledon' | 'brampton' | 'mississauga'
+export type Municipality = 'caledon' | 'brampton' | 'mississauga' | 'toronto'
+
+/** Cost inputs resolved for one site: Peel sites derive them from Table 5; Toronto sites carry the 2019 study's. */
+export interface SiteCosts {
+  hardPsf: number
+  parkingPsf: number
+  dcTotal: number
+  parkland: { ofLand: number; perUnit: number }
+  feesTotal: number
+  taxRate: number
+  cbcOfLand: number
+  loanRate: number
+  opexRatio: number
+}
 
 export interface StudySite {
   name: string
@@ -37,6 +50,8 @@ export interface StudySite {
   dcWaiver?: number
   /** Stated residual land values, current policy (no IZ), Tables 6–8 */
   stated: { condo: number; rental: number }
+  /** Resolved cost inputs when the site is not a Peel site */
+  costs?: SiteCosts
 }
 
 const M = 1_000_000
@@ -86,29 +101,41 @@ const A = STUDY_ASSUMPTIONS
 const line = (id: string, label: string, driver: CostLine['driver'], timing: CostLine['timing'], escalate = false): CostLine => ({ id, label, driver, timing, estimateClass: 'C', ...(escalate ? { escalate } : {}) })
 
 /** Costs common to both tenures, with land as a lump sum at month 0. */
+/** Peel Table 5 applied to a site, or the site's own costs. */
+export function costsOf(s: StudySite): SiteCosts {
+  if (s.costs) return s.costs
+  const m = s.municipality as Exclude<Municipality, 'toronto'>
+  return {
+    hardPsf: A.hardPsf(s.storeys), parkingPsf: A.undergroundParkingPsf,
+    dcTotal: A.dc[m][s.unitSqft <= 753 ? 0 : 1]! * s.units * (1 - (s.dcWaiver ?? 0)),
+    parkland: A.parkland[m], feesTotal: (A.permitPerSqm[m] * s.gfaSqft / 10.7639) + A.planningFees[m],
+    taxRate: A.propertyTax[m], cbcOfLand: A.cbc, loanRate: A.loanRate, opexRatio: A.opexRatio,
+  }
+}
+
 function costLines(s: StudySite, land: number, pre: number): CostLine[] {
+  const c = costsOf(s)
   const stalls = Math.round(s.units * (s.parkingRes + s.parkingVisitor))
-  const dc = A.dc[s.municipality][s.unitSqft <= 753 ? 0 : 1]! * s.units * (1 - (s.dcWaiver ?? 0))
   const hard = ['hard', 'parking', 'site']
   const years = (pre + A.constructionMonths(s.storeys)) / 12
-  const park = A.parkland[s.municipality]
+  const park = c.parkland
   return [
     line('land', 'Land (residual)', { kind: 'lumpSum', amount: land }, { kind: 'month', month: 0 }),
-    line('hard', 'Hard costs (by height)', { kind: 'perArea', rate: A.hardPsf(s.storeys), area: s.gfaSqft }, { kind: 'construction' }, true),
-    line('parking', 'Underground parking', { kind: 'perArea', rate: A.undergroundParkingPsf, area: stalls * A.parkingSqftPerStall }, { kind: 'construction' }, true),
+    line('hard', 'Hard costs (by height)', { kind: 'perArea', rate: c.hardPsf, area: s.gfaSqft }, { kind: 'construction' }, true),
+    line('parking', 'Underground parking', { kind: 'perArea', rate: c.parkingPsf, area: stalls * A.parkingSqftPerStall }, { kind: 'construction' }, true),
     line('site', 'Servicing, landscaping, demolition', { kind: 'lumpSum', amount: (s.units * (A.servicingPerUnit + A.landscapingPerUnit)) + (s.acres * 43_560 * A.demolitionPsfSite) }, { kind: 'construction' }, true),
     line('contingency', 'Contingency', { kind: 'percentOf', rate: A.contingency, of: hard }, { kind: 'construction' }),
     line('soft', 'Consultants, PM, legal, insurance, marketing', { kind: 'percentOf', rate: A.consultantsPm + A.insurance + A.marketing, of: hard }, { kind: 'spread', from: 0, to: pre + A.constructionMonths(s.storeys) - 1 }),
-    line('dc', 'Development charges', { kind: 'lumpSum', amount: dc }, { kind: 'constructionStart' }),
-    line('cbc', 'Community benefits charge (4% of land value)', { kind: 'percentOf', rate: A.cbc, of: ['land'] }, { kind: 'constructionStart' }),
+    line('dc', 'Development charges', { kind: 'lumpSum', amount: c.dcTotal }, { kind: 'constructionStart' }),
+    ...(c.cbcOfLand ? [line('cbc', 'Community benefits charge (share of land value)', { kind: 'percentOf', rate: c.cbcOfLand, of: ['land'] }, { kind: 'constructionStart' })] : []),
     line('parkland', 'Parkland cash-in-lieu', park.ofLand ? { kind: 'percentOf', rate: park.ofLand, of: ['land'] } : { kind: 'lumpSum', amount: park.perUnit * s.units }, { kind: 'constructionStart' }),
-    line('permits', 'Building permit and planning fees', { kind: 'lumpSum', amount: (A.permitPerSqm[s.municipality] * s.gfaSqft / 10.7639) + A.planningFees[s.municipality] }, { kind: 'constructionStart' }),
-    line('tax', 'Property tax during development', { kind: 'percentOf', rate: A.propertyTax[s.municipality] * years, of: ['land'] }, { kind: 'spread', from: 0, to: pre + A.constructionMonths(s.storeys) - 1 }),
+    line('permits', 'Building permit and planning fees', { kind: 'lumpSum', amount: c.feesTotal }, { kind: 'constructionStart' }),
+    line('tax', 'Property tax during development', { kind: 'percentOf', rate: c.taxRate * years, of: ['land'] }, { kind: 'spread', from: 0, to: pre + A.constructionMonths(s.storeys) - 1 }),
     line('lender', 'Lender fee', { kind: 'percentOf', rate: A.lenderFee, of: ['land', ...hard, 'contingency', 'soft', 'dc'] }, { kind: 'constructionStart' }),
   ]
 }
 
-const debt = { annualRate: A.loanRate, ltc: A.ltc, ltv: 0.65, dscr: 1.2, amortizationYears: 25, sweepAfterCompletion: true }
+const debtOf = (s: StudySite) => ({ annualRate: costsOf(s).loanRate, ltc: A.ltc, ltv: 0.65, dscr: 1.2, amortizationYears: 25, sweepAfterCompletion: true })
 
 export function condoInput(s: StudySite, land: number): ProjectInput {
   const pre = A.preConstructionMonths
@@ -131,7 +158,7 @@ export function condoInput(s: StudySite, land: number): ProjectInput {
       occupancyMonths: A.occupancyMonths, occupancyFeePerUnitMonthly: 0, commissionFraction: A.commission,
       unsoldAtExit: { bulkSaleDiscount: 0 },
     }],
-    debt, exit: { sellingCostFraction: 0 }, discountRate: A.discountRate,
+    debt: debtOf(s), exit: { sellingCostFraction: 0 }, discountRate: A.discountRate,
   }
 }
 
@@ -151,10 +178,10 @@ export function rentalInput(s: StudySite, land: number, profitSpread: number): P
       kind: 'rental', id: 'rental',
       unitMix: [{ id: 'unit', count: s.units, netSqftPerUnit: s.unitSqft, monthlyRent: rent, vacancy: A.vacancy }],
       otherIncomeMonthly: Math.round(s.units * s.parkingRes) * s.stallRentMonth,
-      opexPerUnitMonthly: rent * A.opexRatio, leaseUpMonths: lease, rentGrowth: 0.02, opexInflation: 0.02,
+      opexPerUnitMonthly: rent * costsOf(s).opexRatio, leaseUpMonths: lease, rentGrowth: 0.02, opexInflation: 0.02,
       exitCapRate: s.capRate + profitSpread,
     }],
-    debt: { ...debt, sweepAfterCompletion: false }, exit: { sellingCostFraction: 0 }, discountRate: A.discountRate,
+    debt: { ...debtOf(s), sweepAfterCompletion: false }, exit: { sellingCostFraction: 0 }, discountRate: A.discountRate,
   }
 }
 
@@ -193,5 +220,99 @@ export function benchmark(tenure: 'condo' | 'rental', profitSpread = FITTED_RENT
     const ours = tenure === 'condo' ? residualLand((l) => condoInput(s, l), condoGap) : residualLand((l) => rentalInput(s, l, profitSpread), rentalGap)
     const stated = s.stated[tenure]
     return { site: s.name, stated, ours, error: ours === null ? null : ours - stated }
+  })
+}
+
+// ---------------------------------------------------------------- second answer key: Toronto 2019 (direction)
+//
+// Source: N. Barry Lyon Consultants (NBLC), "City of Toronto Inclusionary Zoning Market Feasibility Analysis",
+// May 2019, Tables 1–4. Published at
+// https://www.toronto.ca/wp-content/uploads/2019/05/90b6-Final-Draft-City-of-Toronto-IZ-Analysis-May-21-accessible.pdf
+// The study states results as categories, not dollars: a site is "viable" when its residual land value without IZ is
+// at least 10% above the stated value of the existing site, else "challenge". So this key tests direction.
+
+export interface TorontoSite {
+  no: number
+  name: string
+  siteSqm: number
+  storeys: number
+  units: number
+  /** Table 3 */
+  s37PerUnit: number
+  unitSqft: number
+  salesPerMonth: number
+  condoPsf: number
+  stallPrice: number
+  rentPsfMonth: number
+  stallRentMonth: number
+  parkingRatio: number
+  /** Downtown and Yonge-Eglinton: +10% hard cost */
+  premium: boolean
+  /** Table 4: existing site land value (TREB/Altus) and the no-IZ verdicts */
+  existingValue: number
+  viable: { condo: boolean; rental: boolean }
+}
+
+export const NBLC_TORONTO_2019: TorontoSite[] = [
+  { no: 1, name: 'Etobicoke Centre', siteSqm: 3_800, storeys: 28, units: 200, s37PerUnit: 2_800, unitSqft: 750, salesPerMonth: 12, condoPsf: 775, stallPrice: 35_000, rentPsfMonth: 3.25, stallRentMonth: 120, parkingRatio: 0.9, premium: false, existingValue: 7_194_000, viable: { condo: true, rental: false } },
+  { no: 2, name: 'Stockyards / Junction', siteSqm: 4_400, storeys: 12, units: 261, s37PerUnit: 2_600, unitSqft: 700, salesPerMonth: 20, condoPsf: 800, stallPrice: 40_000, rentPsfMonth: 3.4, stallRentMonth: 120, parkingRatio: 0.65, premium: false, existingValue: 11_351_000, viable: { condo: true, rental: true } },
+  { no: 3, name: 'Weston', siteSqm: 3_400, storeys: 25, units: 240, s37PerUnit: 2_400, unitSqft: 750, salesPerMonth: 10, condoPsf: 675, stallPrice: 35_000, rentPsfMonth: 2.75, stallRentMonth: 85, parkingRatio: 0.8, premium: false, existingValue: 5_329_000, viable: { condo: false, rental: false } },
+  { no: 4, name: 'Finch West', siteSqm: 6_600, storeys: 14, units: 256, s37PerUnit: 1_800, unitSqft: 700, salesPerMonth: 10, condoPsf: 725, stallPrice: 40_000, rentPsfMonth: 3, stallRentMonth: 85, parkingRatio: 0.7, premium: false, existingValue: 10_037_000, viable: { condo: false, rental: false } },
+  { no: 5, name: 'Yonge-Eglinton Centre', siteSqm: 2_000, storeys: 15, units: 222, s37PerUnit: 3_200, unitSqft: 720, salesPerMonth: 15, condoPsf: 1_000, stallPrice: 70_000, rentPsfMonth: 4, stallRentMonth: 150, parkingRatio: 0.35, premium: true, existingValue: 19_310_000, viable: { condo: true, rental: false } },
+  { no: 6, name: 'North York Centre', siteSqm: 3_500, storeys: 38, units: 283, s37PerUnit: 5_600, unitSqft: 700, salesPerMonth: 15, condoPsf: 950, stallPrice: 60_000, rentPsfMonth: 3.75, stallRentMonth: 125, parkingRatio: 0.8, premium: false, existingValue: 16_983_000, viable: { condo: true, rental: true } },
+  { no: 7, name: 'Downtown', siteSqm: 2_600, storeys: 47, units: 640, s37PerUnit: 4_800, unitSqft: 710, salesPerMonth: 20, condoPsf: 1_200, stallPrice: 90_000, rentPsfMonth: 4.25, stallRentMonth: 180, parkingRatio: 0.25, premium: true, existingValue: 28_268_000, viable: { condo: true, rental: true } },
+  { no: 8, name: 'Toronto West', siteSqm: 3_698, storeys: 16, units: 352, s37PerUnit: 3_000, unitSqft: 700, salesPerMonth: 20, condoPsf: 975, stallPrice: 75_000, rentPsfMonth: 4, stallRentMonth: 150, parkingRatio: 0.5, premium: false, existingValue: 7_840_000, viable: { condo: true, rental: true } },
+  { no: 9, name: 'Toronto East', siteSqm: 700, storeys: 6, units: 16, s37PerUnit: 3_400, unitSqft: 750, salesPerMonth: 12, condoPsf: 950, stallPrice: 65_000, rentPsfMonth: 3.75, stallRentMonth: 150, parkingRatio: 0.6, premium: false, existingValue: 1_620_000, viable: { condo: true, rental: true } },
+  { no: 10, name: 'Golden Mile', siteSqm: 24_900, storeys: 39, units: 227, s37PerUnit: 2_600, unitSqft: 750, salesPerMonth: 10, condoPsf: 740, stallPrice: 40_000, rentPsfMonth: 3.05, stallRentMonth: 85, parkingRatio: 0.9, premium: false, existingValue: 3_572_000, viable: { condo: true, rental: true } },
+  { no: 11, name: 'Scarborough Centre', siteSqm: 4_500, storeys: 41, units: 398, s37PerUnit: 2_000, unitSqft: 750, salesPerMonth: 10, condoPsf: 745, stallPrice: 35_000, rentPsfMonth: 3.1, stallRentMonth: 85, parkingRatio: 0.9, premium: false, existingValue: 4_345_000, viable: { condo: true, rental: true } },
+]
+
+/** Table 2 (STUDY) and what the 2019 study leaves out (ASSUMED). */
+export const TORONTO_2019 = {
+  hardPsf: (storeys: number) => (storeys <= 6 ? 215 : storeys <= 12 ? 225 : storeys <= 39 ? 228 : storeys <= 60 ? 230 : 253), // STUDY
+  premium: 0.10, undergroundParkingPsf: 138, loanRate: 0.05, opexRatio: 0.36, propertyTax: 0.00636, // STUDY
+  dc: { small: 30_656, large: 46_963, education: 1_793 }, // STUDY (apartments, 1 bed and bachelor; 2+ bedrooms)
+  planning: { opaZbl: 29_165, opaZblPerSqm: 2.88, spa: 21_257, spaPerSqm: 4.83, condo: 9_375, condoPerUnit: 26 }, // STUDY
+  largeUnitShare: 0.4, // ASSUMED: unit mix not published
+  parklandOfLand: 0.10, // ASSUMED: Toronto's alternative rate, capped at 10% of land value for sites under 1 ha
+  permitPerSqm: 18, // ASSUMED
+  netToGross: 0.83, // ASSUMED (the Peel study's stated ratio): gross area from units, since some sites are one phase of a larger parcel
+  viableMargin: 1.10, // STUDY: viable when the land value is at least 10% above the existing site's value
+}
+
+const T = TORONTO_2019
+
+/** A Toronto prototype as a benchmark site, with its own costs. */
+export function torontoSite(t: TorontoSite): StudySite {
+  const gfaSqft = Math.round(t.units * t.unitSqft / T.netToGross)
+  const gfaSqm = gfaSqft / 10.7639
+  const dcPerUnit = ((1 - T.largeUnitShare) * T.dc.small) + (T.largeUnitShare * T.dc.large) + T.dc.education
+  const fees = T.planning.opaZbl + (T.planning.opaZblPerSqm * gfaSqm) + T.planning.spa + (T.planning.spaPerSqm * gfaSqm) + T.planning.condo + (T.planning.condoPerUnit * t.units) + (T.permitPerSqm * gfaSqm)
+  return {
+    name: t.name, municipality: 'toronto', acres: t.siteSqm / 4_046.86, storeys: t.storeys, units: t.units, gfaSqft,
+    unitSqft: t.unitSqft, parkingRes: t.parkingRatio, parkingVisitor: 0, condoPsf: t.condoPsf, stallPrice: t.stallPrice,
+    salesPerMonth: t.salesPerMonth, rentPsfMonth: t.rentPsfMonth, stallRentMonth: t.stallRentMonth, capRate: 0.04,
+    stated: { condo: t.existingValue * T.viableMargin, rental: t.existingValue * T.viableMargin },
+    costs: {
+      hardPsf: T.hardPsf(t.storeys) * (t.premium ? 1 + T.premium : 1), parkingPsf: T.undergroundParkingPsf,
+      dcTotal: (dcPerUnit + t.s37PerUnit) * t.units, // section 37 per unit (Table 3) carried with the charges
+      parkland: { ofLand: T.parklandOfLand, perUnit: 0 }, feesTotal: fees, taxRate: T.propertyTax, cbcOfLand: 0,
+      loanRate: T.loanRate, opexRatio: T.opexRatio,
+    },
+  }
+}
+
+export interface DirectionRow { site: string; tenure: 'condo' | 'rental'; threshold: number; ours: number | null; studyViable: boolean; modelViable: boolean | null; agrees: boolean | null }
+
+/** Viable or challenge, by the study's rule, for each site and tenure; the rental spread is Peel's, not refitted. */
+export function torontoDirection(): DirectionRow[] {
+  return NBLC_TORONTO_2019.flatMap((t) => {
+    const s = torontoSite(t)
+    return (['condo', 'rental'] as const).map((tenure): DirectionRow => {
+      const ours = tenure === 'condo' ? residualLand((l) => condoInput(s, l), condoGap) : residualLand((l) => rentalInput(s, l, FITTED_RENTAL_SPREAD), rentalGap)
+      const threshold = t.existingValue * T.viableMargin
+      const modelViable = ours === null ? null : ours >= threshold
+      return { site: t.name, tenure, threshold, ours, studyViable: t.viable[tenure], modelViable, agrees: modelViable === null ? null : modelViable === t.viable[tenure] }
+    })
   })
 }

@@ -20,3 +20,13 @@ describe('benchmark: published pro formas (NBLC, Peel 2021)', () => {
     expect(errs.filter((e) => e <= 2e6).length).toBeGreaterThanOrEqual(9)
   }, 120_000)
 })
+
+describe('benchmark: Toronto 2019 (direction: viable or challenge)', () => {
+  it('agrees with the study on 18 or more of 22 site and tenure cases, using the Peel rental spread unchanged', async () => {
+    const { torontoDirection } = await import('../../src/verification/benchmarks')
+    const rows = torontoDirection()
+    expect(rows).toHaveLength(22)
+    expect(rows.filter((r) => r.agrees).length).toBeGreaterThanOrEqual(18)
+    expect(rows.filter((r) => r.tenure === 'condo' && r.agrees).length).toBeGreaterThanOrEqual(9)
+  }, 120_000)
+})

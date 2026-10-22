@@ -1,6 +1,6 @@
 # Benchmark: the model against published pro formas
 
-Run date: 2026-10-22. Code: `src/verification/benchmarks.ts`. Test: `tests/engine/benchmarks.test.ts`. In the app: Verification → "Benchmark: published pro formas".
+Run date: 2026-10-22. Two answer keys: Peel 2021 (dollars) and Toronto 2019 (direction). Code: `src/verification/benchmarks.ts`. Test: `tests/engine/benchmarks.test.ts`. In the app: Verification → "Benchmark: published pro formas".
 
 ## The question
 
@@ -75,11 +75,39 @@ A residual magnifies small differences. On a $170M project, missing by 1% of rev
 - **Schedule and deposits barely matter at this level.** Moving pre-construction from 18 to 12 months shifts the result by about 0.5% of revenue.
 - **Downtown Brampton high-rise** is the one site where the model comes out higher, by 1.6% of revenue. That is consistent with the 50% DC waiver being applied a little differently than the study did.
 
+## Second answer key: Toronto 2019 (direction)
+
+**Source:** NBLC, *City of Toronto Inclusionary Zoning Market Feasibility Analysis*, May 2019, Tables 1–4 ([toronto.ca](https://www.toronto.ca/wp-content/uploads/2019/05/90b6-Final-Draft-City-of-Toronto-IZ-Analysis-May-21-accessible.pdf)).
+
+**What the study publishes:** inputs for 11 sites.
+- **Each site:** site area, storeys, units, Section 37 per unit, unit size, sales pace, condo and parking prices, rents and parking ratio.
+- **Shared assumptions:** hard costs by height (+10% Downtown and Yonge-Eglinton), parking, DCs, planning fees, property tax, a 75% loan at 5%, profit at 15% and a 4% cap rate.
+
+**What it states as results:** only categories, not dollars. A site is "viable" when its land value without IZ is at least 10% above the stated value of the existing site, else "challenge". So this key tests direction: does the model reach the same verdict?
+
+**Added assumptions:**
+- the unit mix (40% two-bedroom or larger), which sets the DCs;
+- parkland at 10% of land value;
+- building permits at $18/m²;
+- gross area taken from units at 83% net-to-gross, because some prototypes are one phase of a larger parcel (Golden Mile's site is 2.5 ha).
+
+**The rental spread** is Peel's 0.25%, not refitted, so the rental half is out of sample.
+
+**Result: 18 of 22 verdicts agree** (condo 9 of 11, rental 9 of 11).
+
+| Disagrees | Study | Model | Why |
+|---|---|---|---|
+| Etobicoke Centre, condo | viable | challenge | $7.2M against a $7.9M threshold: just under the line |
+| Golden Mile, condo | viable | challenge | $2.9M against $3.9M; the site is one phase of a 2.5 ha parcel, and the phase's share of land is not published |
+| Etobicoke Centre, rental | challenge | viable | Rental method (below) |
+| Yonge-Eglinton, rental | challenge | viable | Rental method (below) |
+
+**The rental miss is systematic, not noise.** The 2019 study reports rental land values typically 31% below condo. With Peel's 2021 spread, the model's rental values come out higher than condo at most Toronto sites. So the 2019 study held rental to a higher return than the 2021 study did, and a single rental spread does not carry across studies or years. In practice the rental return target should be the user's own, and that is how the tool already treats it: the target is an input on Feasibility & stress.
+
 ## How to read this
 
-- **What it shows:** where the inputs are stated, the tool reproduces a professional consultant's residual land model within a couple of percent of revenue.
-- **Where it misses:** the large misses trace to one input the study leaves unstated, not to a formula.
-- **Its limits:** this is a comparison with another model, not with a built project's actual cost. The next answer keys, in order of value:
-  1. Toronto's 2019 IZ study (NBLC). Its 11 prototypes publish inputs but give only "viable or challenge" results, so they test direction, not dollars.
-  2. Projects with public cost and yield, such as REIT development disclosures and CMHC-financed rentals. These test against actual results.
-  3. A request to NBLC for the parking area per stall and the rental spread.
+- **What it shows:** where the inputs are stated, the tool reproduces a professional consultant's residual land model within a couple of percent of revenue (Peel), and reaches the same viable-or-challenge verdict in 18 of 22 cases (Toronto).
+- **Where it misses:** the large misses trace to inputs the studies leave unstated, not to a formula: parking area per stall, and the return a rental must earn.
+- **Its limits:** this is a comparison with other models, not with a built project's actual cost. The next answer keys, in order of value:
+  1. Projects with public cost and yield, such as REIT development disclosures and CMHC-financed rentals. These test against actual results.
+  2. A request to NBLC for the parking area per stall and the rental spread.
