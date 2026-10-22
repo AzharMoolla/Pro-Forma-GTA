@@ -111,7 +111,8 @@ describe('streetscape: 15 buildings, mixed zoning, transit near some blocks', ()
       const K = kitLayout(scene)
       const tallest = Math.max(...K.placed.map((q) => q.top), ...scene.buildings.map((x) => (x.limitMetres ?? 0) + 2))
       expect(GROUND_Y - (tallest * K.S)).toBeGreaterThanOrEqual(0)
-      const overlays = svg.replace(kitArt(scene, style === 'sketch' ? 'watercolour' : 'blueprint', 's', K), '')
+      // The paper deliberately runs past the frame (x, y negative); everything else stays inside
+      const overlays = svg.replace(kitArt(scene, style === 'sketch' ? 'watercolour' : 'blueprint', 's', K), '').replace(/<rect x="-[\d.]+" y="-[\d.]+"[^>]*>/g, '')
       const ys = [...overlays.matchAll(/ y="(-?[\d.]+)"/g)].map((m) => Number(m[1]))
       expect(Math.min(...ys)).toBeGreaterThanOrEqual(0)
     })
@@ -161,5 +162,31 @@ describe('streetscape: water and nature context from the map', () => {
     const svg = render(sceneOf([{ path: [], project: tinyProject() }], { 'site.waterfront': true, 'site.floodplain': true }), 'sketch', 'Water')
     write('water-sketch', svg)
     for (const f of ['lake', 'creek']) expect(svg).toContain(`data-feature="${f}"`)
+  })
+})
+
+describe('streetscape: field-to-visual rules', () => {
+  const one = (a: Attributes) => sceneOf([{ path: [], project: tinyProject() }], a)
+  it('nothing extra is drawn when nothing is entered', () => {
+    const svg = render(one({}), 'sketch', 'Bare')
+    for (const f of ['rail-corridor', 'subway-tunnel', 'bus-stop', 'bike-rack', 'pops', 'garage', 'utility', 'woodland', 'phase-badge']) expect(svg).not.toContain(`data-feature="${f}"`)
+  })
+  it('each input draws its piece, and the drivers list names the input', () => {
+    const a: Attributes = {
+      'site.nearRailCorridor': true, 'site.transitInfrastructureBelow': true, 'site.nearestTransitStopM': 120, 'planning.bikeParking': 40,
+      'planning.pops': true, 'planning.loadingSpaces': 1, 'design.hydroVault': true, 'site.greenbelt': true,
+    }
+    const scene = one(a)
+    const svg = render(scene, 'blueprint', 'Everything')
+    write('fields-blueprint', svg)
+    for (const f of ['rail-corridor', 'subway-tunnel', 'bus-stop', 'bike-rack', 'pops', 'garage', 'utility', 'woodland']) expect(svg).toContain(`data-feature="${f}"`)
+    const from = scene.drivers.map((d) => d.from).join(' | ')
+    for (const label of ['Near a rail corridor', 'Bicycle parking spaces', 'Privately owned publicly accessible space', 'Inside the Greenbelt Area', 'Nearest TTC stop']) expect(from).toContain(label)
+  })
+  it('a plan of phases badges each building with its own phase', () => {
+    const scene = sceneFor(plan([['p1', [b('a', 6, 0, [rental])]], ['p2', [b('b', 6, 0, [rental]), b('c', 6, 0, [rental])]]]), {})
+    expect(scene.phases).toBe(2)
+    expect(scene.buildings.map((x) => x.phase)).toEqual([1, 2, 2])
+    expect(count(render(scene, 'sketch', 'Phases'), 'data-feature="phase-badge"')).toBe(3)
   })
 })

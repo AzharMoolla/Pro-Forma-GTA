@@ -77,12 +77,12 @@ export const StreetscapeSvg = forwardRef<SVGSVGElement, SvgProps>(function Stree
           <line x1={0} y1={0} x2={0} y2={5} stroke={L.limit} strokeWidth={1.2} opacity={0.6} />
         </pattern>
       </defs>
-      <rect width={W} height={H} fill={L.bg} />
+      <rect x={-W} y={-H} width={3 * W} height={3 * H} fill={L.bg} />
       {/* Spotlight: the night falls on everything else; the selected building glows and a light sweeps across its glass */}
       {selected && <style>{`#${uid}-art > :not([data-building="${selected}"]):not(defs) { filter: brightness(.4) saturate(.55); transition: filter .25s }
 #${uid}-art > [data-building="${selected}"] { filter: drop-shadow(0 0 .25px ${GLOW}) drop-shadow(0 0 1.6px ${GLOW}cc) }
 @media (prefers-reduced-motion: reduce) { .${uid}-shine { display: none } }`}</style>}
-      {selected && <rect width={W} height={H} fill="#050a14" opacity={0.45} pointerEvents="none" />}
+      {selected && <rect x={-W} y={-H} width={3 * W} height={3 * H} fill="#050a14" opacity={0.45} pointerEvents="none" />}
       <g id={`${uid}-art`} transform={`translate(${KIT_MARGIN} ${GROUND_Y}) scale(${K.S})`} dangerouslySetInnerHTML={{ __html: art }} />
       {selected && (() => {
         const q = buildings.find(({ part }) => buildingKey(part.b.id) === selected)
@@ -373,6 +373,14 @@ export function Streetscape({ node, result, attributes }: { node: Node; result: 
         <span>Click a building to spotlight it and see its numbers (Escape clears). Drag to move, scroll or use + and − to zoom. Illustration, not to scale; lanes are drawn by street class, not counted. Buildings, roofs, storefronts and stations come from the pro forma; the dashed lines and notes come from the site map's zoning (hatched where a building is over), and they are not a legal building envelope.</span>
         <Button onClick={download}>Download .svg</Button>
       </figcaption>
+      <details className="mt-2 text-xs">
+        <summary className="cursor-pointer text-ink-soft">What drives this picture ({scene.drivers.length})</summary>
+        <table className="mt-2 w-full">
+          <thead><tr className="text-left text-ink-mute"><th className="py-1 pr-3 font-normal">Drawn</th><th className="py-1 font-normal">Because of</th></tr></thead>
+          <tbody>{scene.drivers.map((d) => <tr key={d.drawn} className="border-t border-line"><td className="py-1 pr-3">{d.drawn}</td><td className="py-1 text-ink-soft">{d.from}</td></tr>)}</tbody>
+        </table>
+        <p className="mt-2 text-ink-mute">Anything else you enter (costs, market, finance) changes the numbers, not the picture. Switch on a project variable to add its piece.</p>
+      </details>
     </figure>
   )
 }

@@ -37,15 +37,25 @@ export interface Building {
   solar: boolean
   heritage: boolean
   childcare: boolean
+  /** Phase number in a plan of phases (1-based), null for a single building */
+  phase: number | null
+  /** The program provides bicycle parking: a rack on the sidewalk in front */
+  bikeParking: boolean
 }
 
-export interface Street { roadClass: string | null; lanes: number; sidewalkNear: boolean; sidewalkFar: boolean; rowM: number | null; crossingM: number | null; stopM: number | null; accesses: number }
+export interface Street {
+  roadClass: string | null; lanes: number; sidewalkNear: boolean; sidewalkFar: boolean; rowM: number | null; crossingM: number | null; stopM: number | null; accesses: number
+  /** A rail corridor next to the site: track drawn behind the buildings */
+  rail: boolean
+  /** Subway or transit infrastructure under the frontage: a tunnel section below the street */
+  tunnel: boolean
+}
 export interface Tag { title: string; text: string }
 
 export type Part =
   | { kind: 'building'; b: Building; x: number; w: number }
   | { kind: 'station'; transit: Exclude<Transit, null>; x: number; w: number }
-  | { kind: 'tree' | 'park' | 'school' | 'community' | 'pond' | 'creek' | 'ravine' | 'lake'; x: number; w: number }
+  | { kind: 'tree' | 'park' | 'school' | 'community' | 'pond' | 'creek' | 'ravine' | 'lake' | 'pops' | 'garage' | 'utility' | 'greenbelt'; x: number; w: number }
 
 type PartSpec = Part extends infer P ? (P extends Part ? Omit<P, 'x'> : never) : never
 
@@ -60,7 +70,13 @@ export interface Scene {
   uniformLimit: number | null
   uniformAirLimit: number | null
   over: Building[]
+  /** Phases in a plan of phases (0 for a single building or a single phase) */
+  phases: number
+  /** What is drawn and the input that put it there, for the "what drives this picture" list */
+  drivers: Driver[]
 }
+
+export interface Driver { drawn: string; from: string }
 
 export const scopedKey = (path: string[], id: string) => (path.length ? `${path.join('/')}|${id}` : id)
 
@@ -115,6 +131,8 @@ export function buildingOf(project: ProjectInput, path: string[], a: Attributes,
     solar: v('design.solarPv') === true,
     heritage: v('site.heritage') === true,
     childcare: v('program.childcare') === true,
+    phase: null,
+    bikeParking: num(v('planning.bikeParking')) > 0,
   }
 }
 
@@ -133,6 +151,8 @@ export function streetOf(a: Attributes): Street {
     crossingM: num(a['site.nearestCrossingM']) || null,
     stopM: num(a['site.nearestTransitStopM']) || null,
     accesses: Math.min(3, num(a['design.vehicleAccessPoints'])),
+    rail: a['site.nearRailCorridor'] === true,
+    tunnel: a['site.transitInfrastructureBelow'] === true,
   }
 }
 
@@ -153,6 +173,7 @@ export function tagsOf(a: Attributes, s: Street): Tag[] {
     n('planning.bikeParking') ? { title: 'Bicycle parking', text: `${n('planning.bikeParking')} spaces` } : null,
     n('planning.loadingSpaces') || s.accesses ? { title: 'Loading and access', text: list(n('planning.loadingSpaces') && `${n('planning.loadingSpaces')} loading`, s.accesses && `${s.accesses} driveway${s.accesses === 1 ? '' : 's'}`) } : null,
     servicing ? { title: 'Servicing', text: servicing } : null,
+    a['site.existingBuilding'] === true ? { title: 'Existing building', text: list('on site', n('site.existingRentalUnits') && `${n('site.existingRentalUnits')} rental units`) } : null,
     n('site.frontageM') ? { title: 'Frontage', text: `${n('site.frontageM')} m` } : null,
     n('mp.arterialM') + n('mp.collectorM') + n('mp.localRoadM') ? { title: 'New roads', text: list(n('mp.arterialM') && `${n('mp.arterialM')} m arterial`, n('mp.collectorM') && `${n('mp.collectorM')} m collector`, n('mp.localRoadM') && `${n('mp.localRoadM')} m local`) } : null,
     n('mp.watermainM') + n('mp.sanitaryM') + n('mp.stormM') ? { title: 'New services', text: list(n('mp.watermainM') && `${n('mp.watermainM')} m water`, n('mp.sanitaryM') && `${n('mp.sanitaryM')} m sanitary`, n('mp.stormM') && `${n('mp.stormM')} m storm`, n('mp.swmPonds') && `${n('mp.swmPonds')} SWM ponds`) } : null,
@@ -195,8 +216,14 @@ export const widthOf = (b: Building, single: boolean) => {
  */
 export function sceneOf(projects: Array<{ path: string[]; project: ProjectInput; label?: string }>, a: Attributes): Scene {
   const buildings = projects.map(({ path, project, label }) => buildingOf(project, path, a, label))
+  // Phases: the first path segment of each building in a plan of phases, numbered in plan order
+  const phaseIds = [...new Set(projects.filter((q) => q.path.length > 1).map((q) => q.path[0]))]
+  const phases = phaseIds.length > 1 ? phaseIds.length : 0
+  if (phases) buildings.forEach((b, i) => { const k = phaseIds.indexOf(projects[i]?.path[0] ?? ''); b.phase = k < 0 ? null : k + 1 })
   const single = buildings.length === 1
-  const trees = num(a['design.streetscapeM']) > 0 || num(a['site.protectedTrees']) > 0
+  const trees = num(a['design.streetscapeM']) > 0 || num(a['site.protectedTrees']) > 0 || num(a['design.landscapingM2']) > 0
+  const loading = num(a['planning.loadingSpaces']) > 0 || num(a['planning.parkingLevelsBelowGrade']) > 0 || a['mp.sharedParkingStructure'] === true
+  const utility = a['design.hydroVault'] === true || a['design.standbyGenerator'] === true || a['mp.districtEnergy'] === true || a['mp.pumpingStation'] === true
   const park = num(a['mp.parksHa']) > 0 || a['planning.parklandOnSite'] === true
   const parts: Part[] = []
   let x = 30
@@ -204,6 +231,10 @@ export function sceneOf(projects: Array<{ path: string[]; project: ProjectInput;
   buildings.forEach((b, i) => {
     if (b.transit && buildings[i - 1]?.transit !== b.transit) push({ kind: 'station', transit: b.transit, w: 86 })
     push({ kind: 'building', b, w: widthOf(b, single) })
+    // Beside the first building: its public space, its garage or loading door and its utility box
+    if (i === 0 && a['planning.pops'] === true) push({ kind: 'pops', w: 100 })
+    if (i === 0 && loading) push({ kind: 'garage', w: 44 })
+    if (i === 0 && utility) push({ kind: 'utility', w: 24 })
     if (trees || i < buildings.length - 1) push({ kind: 'tree', w: 26 })
     if (park && i === Math.max(0, Math.floor(buildings.length / 2) - 1)) push({ kind: 'park', w: 120 })
   })
@@ -214,6 +245,7 @@ export function sceneOf(projects: Array<{ path: string[]; project: ProjectInput;
   if (a['site.floodplain'] === true) push({ kind: 'creek', w: 160 })
   if (a['site.waterfront'] === true || a['mp.shorelineWorks'] === true) push({ kind: 'lake', w: 180 })
   else if (a['site.regulatedArea'] === true) push({ kind: 'ravine', w: 180 })
+  if (a['site.greenbelt'] === true) push({ kind: 'greenbelt', w: 60 })
   const W = Math.max(980, x + 30)
   const street = streetOf(a)
   const uniform = (pick: (b: Building) => number | null) => {
@@ -225,5 +257,51 @@ export function sceneOf(projects: Array<{ path: string[]; project: ProjectInput;
   return {
     buildings, parts, W, street, tags: tagsOf(a, street), notes, uniformLimit: uniform((b) => b.limitStoreys), uniformAirLimit: uniform((b) => b.airLimitStoreys),
     over: buildings.filter((b) => b.kind !== 'lots' && controllingLimit(b) !== null && b.storeys > controllingLimit(b)!),
+    phases,
+    drivers: driversOf(buildings, parts, street, a, phases),
   }
+}
+
+/** Every drawn feature with the input that put it in the picture: the field-to-visual rules, as the user sees them. */
+function driversOf(buildings: Building[], parts: Part[], st: Street, a: Attributes, phases: number): Driver[] {
+  const any = (f: (b: Building) => boolean) => buildings.some(f)
+  const has = (k: Part['kind']) => parts.some((q) => q.kind === k)
+  const rows: Array<[boolean, string, string]> = [
+    [true, 'Building type, height and width', 'Program: components (rental, condo, office, industrial, lots), storeys and above-grade GCA'],
+    [any((b) => b.podium > 0 || b.retail), 'Podium and shopfronts', 'Program: podium storeys, or a retail component'],
+    [any((b) => b.retail), 'People, a bench and bins in front of shops', 'A retail component (illustrative street life)'],
+    [any((b) => b.limitStoreys !== null), 'Zoning height line', 'Zoning height limit (site map)'],
+    [any((b) => b.airLimitStoreys !== null), 'Aeronautical height line', 'Aeronautical height limit'],
+    [any((b) => b.transit === 'subway'), 'Subway entrance', 'Within 60 m of TTC infrastructure, or a Toronto major transit station area (site map)'],
+    [any((b) => b.transit === 'go'), 'GO platform and train', 'Transit integration, or a major transit station area outside Toronto'],
+    [st.rail, 'Rail track behind the buildings', 'Near a rail corridor'],
+    [st.tunnel, 'Subway tunnel under the street', 'Subway or transit infrastructure beneath or beside the site'],
+    [any((b) => b.heritage), 'Heritage building kept in front', 'Listed or designated heritage property (site map)'],
+    [any((b) => b.balconies), 'Balconies', 'Balconies'],
+    [any((b) => b.greenRoof), 'Green roof', 'Green roof area'],
+    [any((b) => b.solar), 'Solar panels', 'Solar PV'],
+    [any((b) => b.rooftopAmenity), 'Roof terrace', 'Rooftop terrace / amenity'],
+    [any((b) => b.pool), 'Pool badge', 'Pool'],
+    [any((b) => b.childcare), 'Playground', 'Childcare centre'],
+    [any((b) => b.bikeParking), 'Bicycle rack', 'Bicycle parking spaces'],
+    [phases > 0, `Phase badges (phase n of ${phases})`, 'The plan: buildings grouped in phases'],
+    [has('pops'), 'Plaza', 'Privately owned publicly accessible space'],
+    [has('garage'), 'Garage and loading door', 'Loading spaces, below-grade parking levels or a shared parking structure'],
+    [has('utility'), 'Utility box', 'Electrical vault, standby generator, district energy or a pumping station'],
+    [has('tree'), 'Street trees', 'Streetscape frontage, landscaping or protected trees (otherwise only between buildings)'],
+    [has('park'), 'Park', 'Parks to build, or parkland dedicated on site'],
+    [has('school'), 'Reserved school site', 'School sites reserved'],
+    [has('community'), 'Community centre', 'Community centre / library'],
+    [has('pond'), 'Stormwater pond', 'Stormwater management ponds'],
+    [has('creek'), 'Creek', 'Floodplain / special policy area'],
+    [has('lake'), 'Lake edge', 'Waterfront, or shoreline works'],
+    [has('ravine'), 'Ravine', 'Conservation-authority regulated area'],
+    [has('greenbelt'), 'Woodland', 'Inside the Greenbelt Area'],
+    [true, 'Lanes', `Frontage street class (${st.roadClass ?? 'unknown, so 2 lanes are drawn'})`],
+    [true, 'Sidewalks', typeof a['site.sidewalks'] === 'string' ? 'Sidewalks on the frontage street (site map)' : 'Sidewalks on the frontage street (unknown, so both are drawn)'],
+    [st.crossingM !== null, 'Crosswalk', 'Nearest signalled or marked crossing (site map)'],
+    [st.accesses > 0, 'Driveways', 'Vehicle entries/exits'],
+    [st.stopM !== null, 'Bus stop and shelter', 'Nearest TTC stop (site map)'],
+  ]
+  return rows.filter(([on]) => on).map(([, drawn, from]) => ({ drawn, from }))
 }

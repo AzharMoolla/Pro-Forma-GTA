@@ -690,10 +690,11 @@ export function amenityBadge(p:Palette){
   // A marker for an amenity the program confirms (here: a pool); placement is illustrative
   return badgeBase(p,path('M.6,-2.05 q.25,-.18 .5,0 q.25,.18 .5,0 M.6,-1.8 q.25,-.18 .5,0 q.25,.18 .5,0','none',p.water,.09)+path('M.85,-2.45 v.35 M1.35,-2.45 v.35 M.85,-2.35 h.5','none',p.ink,.05))
 }
-function phaseBadge(p:Palette){
-  // Phase or status: three segments, the first filled (phase 1 of 3); the number comes from the plan
+export function phaseBadge(p:Palette,n=1,of=3){
+  // Phase or status: one segment per phase, this phase's filled (phase n of "of"); the numbers come from the plan
   let inner=''
-  for(let i=0;i<3;i++){const a0=(-90+(i*120)+6)*Math.PI/180, a1=(-90+((i+1)*120)-6)*Math.PI/180, r=.5;inner+=path(`M${1.1+(r*Math.cos(a0))},${-1.95+(r*Math.sin(a0))} A${r},${r} 0 0 1 ${1.1+(r*Math.cos(a1))},${-1.95+(r*Math.sin(a1))}`,'none',i===0?p.limit:p.fine,.14)}
+  const k=Math.max(2,Math.min(8,of)), step=360/k
+  for(let i=0;i<k;i++){const a0=(-90+(i*step)+6)*Math.PI/180, a1=(-90+((i+1)*step)-6)*Math.PI/180, r=.5;inner+=path(`M${1.1+(r*Math.cos(a0))},${-1.95+(r*Math.sin(a0))} A${r},${r} 0 0 1 ${1.1+(r*Math.cos(a1))},${-1.95+(r*Math.sin(a1))}`,'none',i===n-1?p.limit:p.fine,.14)}
   return badgeBase(p,inner+circle(1.1,-1.95,.16,p.ink))
 }
 
