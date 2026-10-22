@@ -74,9 +74,27 @@ export interface Scene {
   phases: number
   /** What is drawn and the input that put it there, for the "what drives this picture" list */
   drivers: Driver[]
+  /** Policy cues, drawn on the pieces they concern or in the top ribbon */
+  cues: Cue[]
+  /** FSI of the buildings drawn (by-law GFA ÷ lot area, the engine's formula), null without both inputs */
+  fsi: number | null
 }
 
 export interface Driver { drawn: string; from: string }
+
+/**
+ * A policy that applies, said where it applies: on the piece it concerns (a building, the rail line, the ravine) or,
+ * for the whole site, in the ribbon along the top. Each one is a prompt to confirm, never a ruling.
+ */
+export interface Cue {
+  id: string
+  text: string
+  /** Hover text: what it means and what to check */
+  detail: string
+  at: { kind: 'plan' } | { kind: 'part'; part: Part['kind'] } | { kind: 'heritage'; building: string }
+  /** 'limit' when it caps or forbids something, 'info' when it adds a study, review or requirement */
+  tone: 'limit' | 'info'
+}
 
 export const scopedKey = (path: string[], id: string) => (path.length ? `${path.join('/')}|${id}` : id)
 
@@ -186,12 +204,8 @@ export function zoningNotes(a: Attributes): string[] {
   const exception = a['zoning.exception']
   return [
     typeof code === 'string' && `Zone ${code.replace(/\s+/g, ' ')}`,
-    num(a['zoning.fsiLimit']) > 0 && `FSI ≤ ${num(a['zoning.fsiLimit'])}`,
     num(a['zoning.lotCoverageMax']) > 0 && `coverage ≤ ${Math.round(num(a['zoning.lotCoverageMax']) * 100)}%`,
-    a['zoning.holding'] === true && 'holding (H)',
     typeof exception === 'string' && `exception ${exception}`,
-    a['site.heritage'] === true && 'heritage',
-    a['site.regulatedArea'] === true && 'conservation regulated',
   ].filter((x): x is string => typeof x === 'string')
 }
 
@@ -253,12 +267,17 @@ export function sceneOf(projects: Array<{ path: string[]; project: ProjectInput;
     return set.size === 1 ? [...set][0] ?? null : null
   }
   const notes = zoningNotes(a)
+  // FSI of what is drawn: by-law GFA over lot area, only where both are entered (the engine's FSI metric)
+  const programs = projects.map((q) => q.project.program).filter((g) => g && g.planningGfaSqft !== null && g.lotAreaSqft)
+  const fsi = programs.length ? programs.reduce((t, g) => t + g!.planningGfaSqft!, 0) / programs.reduce((t, g) => t + g!.lotAreaSqft!, 0) : null
   if (buildings.some((b) => b.nearAerodrome && b.airLimitStoreys === null)) notes.push('near an aerodrome: aeronautical height limit to check')
   return {
     buildings, parts, W, street, tags: tagsOf(a, street), notes, uniformLimit: uniform((b) => b.limitStoreys), uniformAirLimit: uniform((b) => b.airLimitStoreys),
     over: buildings.filter((b) => b.kind !== 'lots' && controllingLimit(b) !== null && b.storeys > controllingLimit(b)!),
     phases,
     drivers: driversOf(buildings, parts, street, a, phases),
+    cues: cuesOf(buildings, parts, a, fsi),
+    fsi,
   }
 }
 
@@ -272,6 +291,8 @@ function driversOf(buildings: Building[], parts: Part[], st: Street, a: Attribut
     [any((b) => b.retail), 'People, a bench and bins in front of shops', 'A retail component (illustrative street life)'],
     [any((b) => b.limitStoreys !== null), 'Zoning height line', 'Zoning height limit (site map)'],
     [any((b) => b.airLimitStoreys !== null), 'Aeronautical height line', 'Aeronautical height limit'],
+    [true, 'Height bar on the left edge', 'The lower of the zoning and aeronautical limits (says "limit not set" when neither is entered)'],
+    [true, 'Policy pills (on a piece, or in the top ribbon)', 'Heritage, rail corridor, transit review, transit station area, regulated area, floodplain, Greenbelt, holding (H), FSI, inclusionary zoning, secondary plan or site policy, highway, archaeology'],
     [any((b) => b.transit === 'subway'), 'Subway entrance', 'Within 60 m of TTC infrastructure, or a Toronto major transit station area (site map)'],
     [any((b) => b.transit === 'go'), 'GO platform and train', 'Transit integration, or a major transit station area outside Toronto'],
     [st.rail, 'Rail track behind the buildings', 'Near a rail corridor'],
@@ -304,4 +325,33 @@ function driversOf(buildings: Building[], parts: Part[], st: Street, a: Attribut
     [st.stopM !== null, 'Bus stop and shelter', 'Nearest TTC stop (site map)'],
   ]
   return rows.filter(([on]) => on).map(([, drawn, from]) => ({ drawn, from }))
+}
+
+function cuesOf(buildings: Building[], parts: Part[], a: Attributes, fsi: number | null): Cue[] {
+  const str = (id: string) => (typeof a[id] === 'string' && (a[id] as string).trim() ? (a[id] as string).trim() : null)
+  const has = (k: Part['kind']) => parts.some((q) => q.kind === k)
+  const plan = { kind: 'plan' } as const
+  const part = (k: Part['kind']) => ({ kind: 'part', part: k }) as const
+  const water = (['ravine', 'lake', 'creek'] as const).find(has)
+  const authority = str('site.conservationAuthority')
+  const fsiLimit = num(a['zoning.fsiLimit']) || null
+  const share = num(a['planning.affordableShare'])
+  const cues: Array<Cue | false | null | ''> = [
+    // On the pieces
+    ...buildings.filter((b) => b.heritage).map((b): Cue => ({ id: `heritage-${b.id}`, text: 'Heritage: conserve', detail: 'Listed or designated heritage property: a heritage impact assessment, and the heritage attributes conserved (a heritage permit for designated properties).', at: { kind: 'heritage', building: b.id }, tone: 'limit' })),
+    a['site.nearRailCorridor'] === true && { id: 'rail', text: 'Rail: setback, noise study', detail: 'Near a rail corridor: the railway guidelines (FCM/RAC 2013) call for a 30 m setback from a main line (15 m from a branch line), a safety berm or crash wall, and noise and vibration studies. Confirm with the railway.', at: has('station') ? part('station') : plan, tone: 'limit' },
+    (a['site.transitInfrastructureBelow'] === true || a['site.nearTtc60m'] === true) && { id: 'transit-review', text: 'Transit review', detail: 'Within 60 m of TTC infrastructure, or over a transit line: the transit agency reviews the design, and its structure and easements can limit foundations and shoring.', at: has('station') && a['site.transitInfrastructureBelow'] !== true ? part('station') : plan, tone: 'info' },
+    a['site.majorTransitStationArea'] === true && { id: 'mtsa', text: `${str('site.mtsaType') ?? 'Transit station area'}: minimum density`, detail: 'Major transit station area: the official plan sets a minimum density (people and jobs per hectare) and often limits parking. Check the delineated area and its policies.', at: has('station') ? part('station') : plan, tone: 'info' },
+    a['site.regulatedArea'] === true && { id: 'regulated', text: `Regulated${authority ? ` (${authority})` : ''}: permit, setback`, detail: 'Conservation-authority regulated area: a permit is needed to build, and buildings stay back from the hazard (slope, valley or shoreline). Confirm the regulation limit with the authority.', at: water ? part(water) : plan, tone: 'limit' },
+    a['site.floodplain'] === true && { id: 'floodplain', text: 'Floodplain: build above the flood line', detail: 'Floodplain or special policy area: development is limited or must be flood-proofed above the regulatory flood. Confirm the flood line with the conservation authority.', at: has('creek') ? part('creek') : plan, tone: 'limit' },
+    a['site.greenbelt'] === true && { id: 'greenbelt', text: 'Greenbelt: development limited', detail: 'Inside the Greenbelt Area: urban development is generally not permitted outside existing settlement areas. Check the Greenbelt Plan designation.', at: has('greenbelt') ? part('greenbelt') : plan, tone: 'limit' },
+    // The whole site
+    a['zoning.holding'] === true && { id: 'holding', text: 'Holding (H): lift first', detail: 'A holding symbol: the zoning permits the use only once the conditions are met and council lifts the (H), often servicing or studies.', at: plan, tone: 'limit' },
+    (fsi !== null || fsiLimit !== null) && { id: 'fsi', text: fsi !== null && fsiLimit !== null ? `FSI ${fsi.toFixed(1)} of ${fsiLimit}` : fsi !== null ? `FSI ${fsi.toFixed(1)}` : `FSI ≤ ${fsiLimit}`, detail: 'Floor space index: by-law gross floor area divided by lot area. Above the zoning maximum, a rezoning or minor variance is needed.', at: plan, tone: fsi !== null && fsiLimit !== null && fsi > fsiLimit ? 'limit' : 'info' },
+    a['planning.inclusionaryZoning'] === true && { id: 'iz', text: `Inclusionary zoning${share > 0 ? `: ${Math.round(share * 100)}% affordable` : ''}`, detail: 'Inclusionary zoning applies: a share of the floor area or units must be affordable, for a set period. The share and term come from the by-law for the area.', at: plan, tone: 'info' },
+    (str('site.secondaryPlan') || str('site.siteSpecificPolicy')) && { id: 'area-policy', text: str('site.secondaryPlan') ? `Secondary plan: ${str('site.secondaryPlan')}` : `Site policy ${str('site.siteSpecificPolicy')}`, detail: 'An area or site-specific policy adds to the official plan here (heights, uses, parks, streets). Read it before the zoning.', at: plan, tone: 'info' },
+    a['site.nearHighway'] === true && { id: 'highway', text: 'Highway: MTO permits', detail: 'Near a provincial highway: inside the MTO permit control area (typically 45 m from the highway limit, wider near interchanges), building and access need MTO permits and setbacks.', at: plan, tone: 'limit' },
+    a['site.archaeologicalPotential'] === true && { id: 'archaeology', text: 'Archaeological assessment', detail: 'Archaeological potential: a licensed archaeologist assesses the site before soil is disturbed (Stage 1, then 2 to 4 if needed).', at: plan, tone: 'info' },
+  ]
+  return cues.filter((c): c is Cue => typeof c === 'object' && c !== null)
 }

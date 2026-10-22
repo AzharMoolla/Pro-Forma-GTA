@@ -190,3 +190,32 @@ describe('streetscape: field-to-visual rules', () => {
     expect(count(render(scene, 'sketch', 'Phases'), 'data-feature="phase-badge"')).toBe(3)
   })
 })
+
+describe('streetscape: policy cues and the height bar', () => {
+  const one = (a: Attributes) => sceneOf([{ path: [], project: tinyProject() }], a)
+  it('no policy entered: only the FSI the program gives, and the height bar says the limit is not set', () => {
+    const scene = one({})
+    expect(scene.cues.map((c) => c.id)).toEqual(['fsi'])
+    const svg = render(scene, 'sketch', 'Bare')
+    expect(svg).toContain('data-feature="height-bar"')
+    expect(svg).toContain('limit not set')
+    expect(svg).not.toContain('data-feature="height-band"')
+  })
+  it('each policy is said once, on the piece it concerns or in the ribbon, not also in the notes', () => {
+    const a: Attributes = { 'site.heritage': true, 'site.nearRailCorridor': true, 'site.regulatedArea': true, 'zoning.holding': true, 'zoning.fsiLimit': 3, 'planning.inclusionaryZoning': true, 'planning.affordableShare': 0.1, 'site.greenbelt': true, 'zoning.heightLimitStoreys': 12 }
+    const scene = one(a)
+    const at = Object.fromEntries(scene.cues.map((c) => [c.id.replace(/-.*$/, ''), c.at.kind === 'part' ? c.at.part : c.at.kind]))
+    expect(at).toMatchObject({ heritage: 'heritage', rail: 'plan', regulated: 'ravine', holding: 'plan', fsi: 'plan', iz: 'plan', greenbelt: 'greenbelt' })
+    expect(scene.cues.find((c) => c.id === 'iz')!.text).toContain('10% affordable')
+    expect(scene.notes.join(' ')).not.toMatch(/holding|heritage|regulated|FSI/i)
+    const svg = render(scene, 'blueprint', 'Policy')
+    write('policy-blueprint', svg)
+    expect(count(svg, 'data-feature="cue"')).toBe(scene.cues.length)
+    expect(svg).toContain('data-feature="height-band"')
+  })
+  it('FSI over the limit is a limit cue; under it is information', () => {
+    const fsiOf = (gfa: number) => sceneOf([{ path: [], project: { ...tinyProject(), program: { ...tinyProject().program!, planningGfaSqft: gfa, lotAreaSqft: 10_000 } } }], { 'zoning.fsiLimit': 4 }).cues.find((c) => c.id === 'fsi')!
+    expect(fsiOf(50_000)).toMatchObject({ text: 'FSI 5.0 of 4', tone: 'limit' })
+    expect(fsiOf(30_000)).toMatchObject({ text: 'FSI 3.0 of 4', tone: 'info' })
+  })
+})

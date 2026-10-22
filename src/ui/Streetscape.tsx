@@ -1,11 +1,11 @@
-import { forwardRef, useEffect, useId, useMemo, useRef, useState } from 'react'
+import { forwardRef, useEffect, useId, useMemo, useRef, useState, type ReactElement } from 'react'
 import type { Attributes } from '../engine/catalogue'
 import type { Node, NodeResult } from '../engine/portfolio'
 import { Button, cx } from './components'
 import { projectsUnder } from './coverage'
 import { metricValue, money, num } from './format'
 import { buildingKey, GROUND_Y, KIT_MARGIN, kitArt, kitLayout, limitMetresOf, metresOf, px, py, type KitLayout } from './kitStreetscape'
-import { controllingLimit, sceneOf, type Building, type Scene } from './streetscapeScene'
+import { controllingLimit, sceneOf, type Building, type Cue, type Scene } from './streetscapeScene'
 import { getResult } from './tree'
 import { useWorkspace } from './workspace'
 
@@ -54,6 +54,90 @@ export function summaryOf(scene: Scene, style: ArtStyle, title: string, stats: A
     + (scene.uniformAirLimit ? ` Dotted line: airport height limit of about ${scene.uniformAirLimit} storeys.` : scene.buildings.some((b) => b.airLimitStoreys) ? ' Dotted lines: airport height limits.' : '')
   const over = scene.over.length ? ` ${scene.over.length} building${scene.over.length === 1 ? ' is' : 's are'} taller than the limit (hatched), so a rezoning is likely.` : limits ? ' Every building fits under its limit.' : ''
   return `${ART_STYLES.find((s) => s.id === style)!.label} streetscape of ${title}: ${scene.buildings.map(describe).join(', ')}.${limits}${over} ${stats.map(([k, v]) => `${k} ${v}`).join(', ')}.${scene.tags.length ? ` ${scene.tags.map((t) => `${t.title}: ${t.text}`).join('. ')}.` : ''}`
+}
+
+type Look = (typeof LOOKS)[ArtStyle]
+const pillWidth = (text: string, size: number) => (text.length * size * .52) + 18
+
+/**
+ * The height bar on the left edge: storeys from the ground up, with the controlling limit as a band (one limit, or
+ * the range when blocks differ). With no limit entered it says so, rather than implying there is none.
+ */
+function HeightBar({ scene, K, L }: { scene: Scene; K: KitLayout; L: Look }) {
+  const limits = scene.buildings.filter((b) => b.kind !== 'lots').map(controllingLimit).filter((v): v is number => v !== null)
+  const tallest = Math.max(...scene.buildings.map((b) => b.storeys))
+  const lo = limits.length ? Math.min(...limits) : null, hi = limits.length ? Math.max(...limits) : null
+  const top = Math.max(tallest, hi ?? 0)
+  const step = top > 40 ? 20 : top > 15 ? 10 : 5
+  const x = 18, y0 = GROUND_Y, y = (st: number) => GROUND_Y - (st * 3 * K.S)
+  return (
+    <g data-feature="height-bar" fontSize="9.5" fill={L.soft}>
+      <title>{lo === null ? 'No height limit entered: set the zoning height (Site & program) or check the zoning map.' : lo === hi ? `Controlling height limit: ${lo} storeys (the lower of zoning and airport limits).` : `Controlling height limits differ by block: ${lo} to ${hi} storeys.`}</title>
+      <line x1={x} x2={x} y1={y0} y2={y(top)} stroke={L.soft} strokeWidth={1} />
+      {lo !== null && <rect data-feature="height-band" x={x - 3} y={y(hi!)} width={6} height={y0 - y(hi!)} rx={2} fill={L.limit} fillOpacity={0.35} />}
+      {lo !== null && lo !== hi && <rect x={x - 3} y={y(lo)} width={6} height={y0 - y(lo)} rx={2} fill={L.limit} fillOpacity={0.5} />}
+      {Array.from({ length: Math.floor(top / step) + 1 }, (_, k) => k * step).map((st) => (
+        <g key={st}><line x1={x - 4} x2={x} y1={y(st)} y2={y(st)} stroke={L.soft} strokeWidth={1} />{st > 0 && <text x={x - 6} y={y(st) + 3} textAnchor="end">{st}</text>}</g>
+      ))}
+      {lo !== null
+        ? <g><line x1={x - 6} x2={x + 10} y1={y(lo)} y2={y(lo)} stroke={L.limit} strokeWidth={2} />{scene.uniformLimit === null && <text x={x + 4} y={y(hi!) - 6} fontWeight={700} fill={L.limit}>≤ {lo === hi ? lo : `${lo}–${hi}`} st</text>}</g>
+        : <text x={x + 4} y={y(top) - 6} fontWeight={600}>limit not set</text>}
+      <text x={x - 6} y={y0 + 12} textAnchor="end">st</text>
+    </g>
+  )
+}
+
+/** Policy cues: pills on the pieces they concern, and a ribbon along the top for the ones that cover the whole site. */
+function Cues({ scene, K, L, W }: { scene: Scene; K: KitLayout; L: Look; W: number }) {
+  const pill = (c: Cue, cx: number, cy: number, anchorY?: number) => {
+    const w = pillWidth(c.text, 10)
+    const x = Math.max(30, Math.min(W - w - 4, cx - (w / 2))) // clear of the height bar
+    const colour = c.tone === 'limit' ? L.limit : L.air
+    return (
+      <g key={c.id} data-feature="cue" data-cue={c.id}>
+        <title>{`${c.text}. ${c.detail}`}</title>
+        {anchorY !== undefined && <line x1={cx} x2={cx} y1={cy + 8} y2={anchorY} stroke={colour} strokeWidth={1} strokeDasharray="2 2" />}
+        <rect x={x} y={cy - 8} width={w} height={16} rx={8} fill={L.paper} fillOpacity={0.95} stroke={colour} strokeWidth={1} />
+        <circle cx={x + 8} cy={cy} r={2.6} fill={colour} />
+        <text x={x + 14} y={cy + 3.5} fontSize="10" fontWeight={600} fill={L.text}>{c.text}</text>
+      </g>
+    )
+  }
+  // Pieces: centred over the piece, stacked when two land on the same one
+  const used = new Map<string, number>()
+  const onParts = scene.cues.filter((c) => c.at.kind !== 'plan').map((c) => {
+    const q = c.at.kind === 'heritage'
+      ? K.placed.find((p) => p.part.kind === 'building' && p.part.b.id === (c.at as { building: string }).building)
+      : K.placed.find((p) => p.part.kind === (c.at as { part: string }).part)
+    if (!q) return null
+    const key = `${q.x}`
+    const n = used.get(key) ?? 0
+    used.set(key, n + 1)
+    const top = c.at.kind === 'heritage' ? 9 : q.top
+    const w = c.at.kind === 'heritage' ? 16.7 : q.w
+    const anchor = py(K, top)
+    const label = q.part.kind === 'station' ? 14 : 0 // above the station's name
+    return pill(c, px(K, q.x + (w / 2)), anchor - 22 - label - (n * 20), anchor - 2 - label)
+  })
+  // The whole site: one row under the disclaimer; what does not fit is counted
+  const ribbon = scene.cues.filter((c) => c.at.kind === 'plan')
+  let x = 30
+  const shown: ReactElement[] = []
+  ribbon.forEach((c, k) => {
+    const w = pillWidth(c.text, 10)
+    const rest = ribbon.length - k
+    if (x + w > W - (rest > 1 ? 70 : 16)) return
+    shown.push(pill(c, x + (w / 2), 40))
+    x += w + 6
+  })
+  const hidden = ribbon.length - shown.length
+  return (
+    <g data-feature="policy-cues">
+      {shown}
+      {hidden > 0 && <text x={x + 2} y={44} fontSize="10" fill={L.soft}><title>{ribbon.slice(shown.length).map((c) => c.text).join(' · ')}</title>+{hidden} more</text>}
+      {onParts}
+    </g>
+  )
 }
 
 /** Spotlight glow: warm window-light gold, the same in both styles. */
@@ -126,9 +210,9 @@ export const StreetscapeSvg = forwardRef<SVGSVGElement, SvgProps>(function Stree
         const y = uniformY(scene.uniformLimit, firstLimitMetres)!
         return (
           <g data-feature="limit-line">
-            <line x1={0} x2={W} y1={y} y2={y} stroke={L.limit} strokeWidth={2} strokeDasharray="10 6" />
-            <rect x={10} y={y - 21} width={300} height={17} rx={3} fill={L.bg} fillOpacity={0.9} />
-            <text x={16} y={y - 8} fontSize="11.5" fontWeight={700} fill={L.limit}>Zoning height {firstLimitMetres ? `${firstLimitMetres} m ≈ ` : '≈ '}{scene.uniformLimit} storeys{scene.over.length ? ` · ${scene.over.length} over` : ''}</text>
+            <line x1={-W} x2={2 * W} y1={y} y2={y} stroke={L.limit} strokeWidth={2} strokeDasharray="10 6" />
+            <rect x={30} y={y - 21} width={300} height={17} rx={3} fill={L.bg} fillOpacity={0.9} />
+            <text x={36} y={y - 8} fontSize="11.5" fontWeight={700} fill={L.limit}>Zoning height {firstLimitMetres ? `${firstLimitMetres} m ≈ ` : '≈ '}{scene.uniformLimit} storeys{scene.over.length ? ` · ${scene.over.length} over` : ''}</text>
           </g>
         )
       })()}
@@ -136,7 +220,7 @@ export const StreetscapeSvg = forwardRef<SVGSVGElement, SvgProps>(function Stree
         const y = uniformY(scene.uniformAirLimit, firstAirMetres)!
         return (
           <g data-feature="air-limit-line">
-            <line x1={0} x2={W} y1={y} y2={y} stroke={L.air} strokeWidth={2} strokeDasharray="3 4" />
+            <line x1={-W} x2={2 * W} y1={y} y2={y} stroke={L.air} strokeWidth={2} strokeDasharray="3 4" />
             <rect x={W - 330} y={y - 21} width={320} height={17} rx={3} fill={L.bg} fillOpacity={0.9} />
             <text x={W - 16} y={y - 8} textAnchor="end" fontSize="11.5" fontWeight={700} fill={L.air}>Airport height limit {firstAirMetres} m ≈ {scene.uniformAirLimit} storeys</text>
           </g>
@@ -169,6 +253,9 @@ export const StreetscapeSvg = forwardRef<SVGSVGElement, SvgProps>(function Stree
       {stations.map(({ part, x, w, top }) => (
         <text key={x} x={px(K, x + (w / 2))} y={py(K, top) - 6} textAnchor="middle" fontSize="10" fontWeight={600} fill={L.text}>{part.kind === 'station' && part.transit === 'subway' ? 'Subway entrance' : 'GO station'}</text>
       ))}
+
+      <HeightBar scene={scene} K={K} L={L} />
+      <Cues scene={scene} K={K} L={L} W={W} />
 
       {/* Right-of-way marker beside the street */}
       <g fontSize="10.5" fill={L.soft}>

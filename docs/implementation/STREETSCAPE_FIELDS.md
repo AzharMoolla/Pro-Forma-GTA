@@ -39,6 +39,30 @@ Every piece is illustrative. None of it is a surveyed layout, a building envelop
 | User | design.vehicleAccessPoints | Driveways (35), up to 3 |
 | Site map | site.nearestTransitStopM | Bus shelter and stop pole (39, 40) **new**, plus the bus |
 
+## Policy cues (2026-10-22)
+
+**Height bar.** It runs up the left edge in storeys. A band shows the controlling limit: the lower of the zoning and aeronautical limits, or their range when blocks differ. With neither entered it reads "limit not set" rather than nothing.
+
+**Policy pills.** Each pill sits on the piece it concerns. Hovering shows what it means and what to confirm.
+
+| Field | Pill | Where |
+|---|---|---|
+| site.heritage | Heritage: conserve | On the heritage building |
+| site.nearRailCorridor | Rail: setback, noise study (FCM/RAC 2013: 30 m main line, 15 m branch) | On the GO station, else in the ribbon |
+| site.nearTtc60m, site.transitInfrastructureBelow | Transit review | On the station, else in the ribbon |
+| site.majorTransitStationArea (+ site.mtsaType) | Transit station area: minimum density | On the station, else in the ribbon |
+| site.regulatedArea (+ site.conservationAuthority) | Regulated: permit, setback | On the ravine, lake or creek |
+| site.floodplain | Floodplain: build above the flood line | On the creek |
+| site.greenbelt | Greenbelt: development limited | On the woodland |
+| zoning.holding | Holding (H): lift first | Ribbon |
+| program planning GFA ÷ lot area, zoning.fsiLimit | FSI x of y (red when over) | Ribbon |
+| planning.inclusionaryZoning (+ affordableShare) | Inclusionary zoning: n% affordable | Ribbon |
+| site.secondaryPlan / site.siteSpecificPolicy | Secondary plan: name | Ribbon |
+| site.nearHighway | Highway: MTO permits (typically 45 m control area) | Ribbon |
+| site.archaeologicalPotential | Archaeological assessment | Ribbon |
+
+Heritage, holding, regulated area and FSI used to also appear in the notes under the picture. They now appear once, as pills.
+
 ## Listed as tags under the picture (not drawn)
 
 - **Street:** road class and right-of-way width.
@@ -49,7 +73,7 @@ Every piece is illustrative. None of it is a surveyed layout, a building envelop
 - **New roads and services:** lengths of the `mp.*` roads and pipes.
 - **Frontage:** the frontage length.
 - **Existing building on site** **new**, with its existing rental units.
-- **Zoning notes:** zone code, FSI, coverage, holding (H), exception, heritage and regulated area.
+- **Zoning notes:** zone code, coverage and exception.
 
 ## Deliberately not drawn
 
@@ -58,7 +82,7 @@ Every piece is illustrative. None of it is a surveyed layout, a building envelop
 | Costs, market, finance, tax, construction schedule | They change the numbers, not what the street looks like. |
 | demo.* (census) | They describe the people in the area, not buildings, so drawing them would imply facts nobody has. |
 | site.contamination, excessSoil, rockExcavation, highWaterTable, archaeologicalPotential | These are below-ground risks. Dewatering is listed as a tag. |
-| site.nearHighway, site.nearMajorFacility | There is no honest piece for them yet. A highway or a tank farm needs its own context component. |
+| site.nearMajorFacility | There is no honest piece for it yet; it needs its own context component. (A highway near the site now shows as a pill.) |
 | site.heritageDistrict | A district is an area, not this building. Only a listed or designated property (site.heritage) is drawn. |
 | program.fitness, concierge, lockers, petSpaDogRun, coworkingPartyRoom, wasteChuteCompactor | They are indoors. |
 | planning.publicArt, design.signage | There is no kit piece yet. A public-art piece would be a small add. |
