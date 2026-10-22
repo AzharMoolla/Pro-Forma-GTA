@@ -6,7 +6,10 @@ import { catalogue } from './data'
 import { money, num, pct } from './format'
 import { ChartFigure } from './Visuals'
 import { AffordabilityChart } from './chartViews'
+import { atLeast } from './store'
 import { useWorkspace } from './workspace'
+
+const SIMPLE_PEOPLE = ['demo.medianHouseholdIncome', 'demo.medianRenterIncome', 'demo.medianOwnerIncome', 'demo.incomeGrowth']
 import { GlossaryText, VarHint } from './Glossary'
 
 // People & affordability: who the homes are for, whether they can afford them over time, and what the new residents
@@ -18,7 +21,9 @@ const n = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : nul
 export function People() {
   const { state, dispatch, node } = useWorkspace()
   const a = state.projects[state.projectId]!.attributes
-  const vars = catalogue.variables.filter((v) => v.group === 'demographics')
+  // Simple asks only the incomes the 30% test runs on; Full detail adds the rest of the area's profile
+  const simple = !atLeast(state.mode, 'professional')
+  const vars = catalogue.variables.filter((v) => v.group === 'demographics' && (!simple || SIMPLE_PEOPLE.includes(v.id)))
   const projects = projectsUnder(node)
   const rental = projects.some(({ project }) => project.components.some((c) => c.kind === 'rental'))
   const income = rental ? n(a['demo.medianRenterIncome']) ?? n(a['demo.medianHouseholdIncome']) : n(a['demo.medianOwnerIncome']) ?? n(a['demo.medianHouseholdIncome'])

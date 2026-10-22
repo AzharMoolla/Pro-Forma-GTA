@@ -19,6 +19,7 @@ import { Verification } from './Verification'
 import { People } from './People'
 import { Report } from './Report'
 import { PrivacyPolicy, Terms } from './Legal'
+import { ASKED_ELSEWHERE, FROM_MODEL, GROUPS_ELSEWHERE, SIMPLE_QUESTIONS, fromModel } from './modelFacts'
 import { atLeast, type SectionId } from './store'
 import { getResult } from './tree'
 import { useWorkspace } from './workspace'
@@ -184,12 +185,53 @@ function Market() {
   )
 }
 
+const fmtDerived = (id: string, v: unknown) =>
+  typeof v === 'boolean' ? (v ? 'yes' : 'no') : typeof v === 'number' ? (/Rate|ltc|escalation/.test(id) ? pct(v) : id === 'site.areaHa' ? v.toFixed(2) : num(v)) : String(v)
+
 function Program() {
-  const { nodeResult, demo, state, dispatch } = useWorkspace()
+  const { nodeResult, demo, state, dispatch, draft } = useWorkspace()
   const attributes = state.projects[state.projectId]!.attributes
   const mapSources = readSources(attributes)
+  const simple = !atLeast(state.mode, 'professional')
+  const derived = fromModel(draft)
+  // Each question once: drop the ones another page asks; the model's own figures show read-only
+  const shown = catalogue.variables.filter((v) => !(v.id in ASKED_ELSEWHERE) && !(v.group in GROUPS_ELSEWHERE))
+  const simpleVars = SIMPLE_QUESTIONS.flatMap((id) => shown.filter((v) => v.id === id))
   const groups = new Map<string, typeof catalogue.variables>()
-  for (const v of catalogue.variables) groups.set(v.group, [...(groups.get(v.group) ?? []), v])
+  for (const v of shown) groups.set(v.group, [...(groups.get(v.group) ?? []), v])
+  const row = (v: (typeof catalogue.variables)[number]) => {
+    const value = attributes[v.id]
+    return (
+      <li key={v.id} className="flex items-center justify-between gap-3 text-sm">
+        <span className="min-w-0">
+          <GlossaryText text={v.label} />{v.unit && <span className="text-ink-mute"> ({v.unit})</span>} <VarHint v={v} />
+          {mapSources[v.id] && (mapSources[v.id]!.value === value
+            ? <> <Chip tone="accent" title={`${mapSources[v.id]!.layer} · retrieved ${mapSources[v.id]!.retrievedAt}`}>from map</Chip></>
+            : <> <Chip tone="warn" title={`Map said ${String(mapSources[v.id]!.value)} (${mapSources[v.id]!.layer})`}>changed from map</Chip></>)}
+        </span>
+        {v.id in derived ? (
+          <span className="num shrink-0 text-right">{fmtDerived(v.id, derived[v.id])} <Chip tone="neutral" title={`Read from the pro forma: ${FROM_MODEL[v.id]}. Change it there.`}>from the pro forma</Chip></span>
+        ) : v.type === 'boolean' ? (
+          <select aria-label={v.label} className="rounded border border-line-strong bg-surface px-1 py-1" value={value === true ? 'yes' : value === false ? 'no' : ''} onChange={(e) => dispatch({ type: 'attribute', id: v.id, value: e.target.value === '' ? null : e.target.value === 'yes' })}>
+            <option value="">unknown</option><option value="yes">yes</option><option value="no">no</option>
+          </select>
+        ) : v.type === 'enum' ? (
+          <select aria-label={v.label} className="rounded border border-line-strong bg-surface px-1 py-1" value={String(value ?? '')} onChange={(e) => dispatch({ type: 'attribute', id: v.id, value: e.target.value || null })}>
+            <option value="">not set</option>
+            {v.options!.map((o) => <option key={o} value={o}>{o}</option>)}
+          </select>
+        ) : v.type === 'number' ? (
+          <input aria-label={v.label} inputMode="decimal" placeholder="unknown" className="num min-h-9 w-28 shrink-0 rounded border border-line-strong bg-surface px-2 text-right" defaultValue={typeof value === 'number' ? String(value) : ''} key={String(value)}
+            onBlur={(e) => { const t = e.target.value.replace(/[,$\s]/g, ''); const n = t === '' ? null : Number(t); if (n !== null && !Number.isFinite(n)) { e.target.value = typeof value === 'number' ? String(value) : ''; return } if (n !== (typeof value === 'number' ? value : null)) dispatch({ type: 'attribute', id: v.id, value: n }) }}
+            onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }} />
+        ) : v.type === 'text' ? (
+          <input aria-label={v.label} className="min-h-9 w-44 shrink-0 rounded border border-line-strong bg-surface px-2" defaultValue={typeof value === 'string' ? value : ''} key={String(value)} onBlur={(e) => { const t = e.target.value.trim(); if (t !== (value ?? '')) dispatch({ type: 'attribute', id: v.id, value: t || null }) }} />
+        ) : (
+          <span className="text-xs text-ink-mute">table</span>
+        )}
+      </li>
+    )
+  }
   const ids = ['totalUnits', 'totalNsf', 'commercialNla', 'efficiency', 'fsi', 'costPerGcaSqft']
   return (
     <div className="flex flex-col gap-4">
@@ -203,50 +245,25 @@ function Program() {
         </Card>
       )}
       <Phasing />
-      <Card title={`Project variables (${catalogue.variables.length})`}>
+      <Card title={simple ? `Key questions (${simpleVars.length})` : `Project variables (${shown.length})`}>
         <p className="mb-3 text-sm text-ink-soft">
-          These switches decide which costs apply ({demo.projectType}). Change one and <strong>Sources &amp; audit</strong> immediately lists the costs it adds or removes, flagging any the model does not carry yet.
+          {simple
+            ? <>The questions that change the most costs; the site map answers several. Unknown stays unknown, and <strong>Sources &amp; audit</strong> lists what each one adds. Full detail has {shown.length - simpleVars.length} more.</>
+            : <>These switches decide which costs apply ({demo.projectType}). Change one and <strong>Sources &amp; audit</strong> immediately lists the costs it adds or removes, flagging any the model does not carry yet. Figures the pro forma already holds are shown, not asked again.</>}
         </p>
-        <div className="flex flex-col gap-2">
-          {[...groups.entries()].map(([group, vars]) => (
-            <details key={group} className="rounded border border-line" open={group === 'site'}>
-              <summary className="cursor-pointer px-3 py-2 text-sm font-medium capitalize">{group.replace('-', ' ')} ({vars.length})</summary>
-              <ul className="grid gap-x-6 gap-y-2 px-3 pb-3 sm:grid-cols-2">
-                {vars.map((v) => {
-                  const value = attributes[v.id]
-                  return (
-                    <li key={v.id} className="flex items-center justify-between gap-3 text-sm">
-                      <span className="min-w-0">
-                        <GlossaryText text={v.label} />{v.unit && <span className="text-ink-mute"> ({v.unit})</span>} <VarHint v={v} />
-                        {mapSources[v.id] && (mapSources[v.id]!.value === value
-                          ? <> <Chip tone="accent" title={`${mapSources[v.id]!.layer} · retrieved ${mapSources[v.id]!.retrievedAt}`}>from map</Chip></>
-                          : <> <Chip tone="warn" title={`Map said ${String(mapSources[v.id]!.value)} (${mapSources[v.id]!.layer})`}>changed from map</Chip></>)}
-                      </span>
-                      {v.type === 'boolean' ? (
-                        <select aria-label={v.label} className="rounded border border-line-strong bg-surface px-1 py-1" value={value === true ? 'yes' : value === false ? 'no' : ''} onChange={(e) => dispatch({ type: 'attribute', id: v.id, value: e.target.value === '' ? null : e.target.value === 'yes' })}>
-                          <option value="">unknown</option><option value="yes">yes</option><option value="no">no</option>
-                        </select>
-                      ) : v.type === 'enum' ? (
-                        <select aria-label={v.label} className="rounded border border-line-strong bg-surface px-1 py-1" value={String(value ?? '')} onChange={(e) => dispatch({ type: 'attribute', id: v.id, value: e.target.value || null })}>
-                          <option value="">not set</option>
-                          {v.options!.map((o) => <option key={o} value={o}>{o}</option>)}
-                        </select>
-                      ) : v.type === 'number' ? (
-                        <input aria-label={v.label} inputMode="decimal" placeholder="unknown" className="num min-h-9 w-28 shrink-0 rounded border border-line-strong bg-surface px-2 text-right" defaultValue={typeof value === 'number' ? String(value) : ''} key={String(value)}
-                          onBlur={(e) => { const t = e.target.value.replace(/[,$\s]/g, ''); const n = t === '' ? null : Number(t); if (n !== null && !Number.isFinite(n)) { e.target.value = typeof value === 'number' ? String(value) : ''; return } if (n !== (typeof value === 'number' ? value : null)) dispatch({ type: 'attribute', id: v.id, value: n }) }}
-                          onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }} />
-                      ) : v.type === 'text' ? (
-                        <input aria-label={v.label} className="min-h-9 w-44 shrink-0 rounded border border-line-strong bg-surface px-2" defaultValue={typeof value === 'string' ? value : ''} key={String(value)} onBlur={(e) => { const t = e.target.value.trim(); if (t !== (value ?? '')) dispatch({ type: 'attribute', id: v.id, value: t || null }) }} />
-                      ) : (
-                        <span className="text-xs text-ink-mute">table</span>
-                      )}
-                    </li>
-                  )
-                })}
-              </ul>
-            </details>
-          ))}
-        </div>
+        {simple ? (
+          <ul className="grid gap-x-6 gap-y-2 sm:grid-cols-2">{simpleVars.map(row)}</ul>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {[...groups.entries()].map(([group, vars]) => (
+              <details key={group} className="rounded border border-line" open={group === 'site'}>
+                <summary className="cursor-pointer px-3 py-2 text-sm font-medium capitalize">{group.replace('-', ' ')} ({vars.length})</summary>
+                <ul className="grid gap-x-6 gap-y-2 px-3 pb-3 sm:grid-cols-2">{vars.map(row)}</ul>
+              </details>
+            ))}
+          </div>
+        )}
+        <p className="mt-3 text-xs text-ink-mute">Asked once, on their own page: market rents, prices, cap rates and land (Revenue & operations, Cost & budget), and the area's census figures (People & affordability).</p>
       </Card>
     </div>
   )

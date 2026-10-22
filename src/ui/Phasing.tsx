@@ -4,7 +4,7 @@
 import { useState } from 'react'
 import { isPortfolio, type Node } from '../engine/portfolio'
 import { addPhase, isPhased, makePhased, moveBuilding, overlaps, rename, schedule, setOffset, stagger } from '../tracker/phasing'
-import { removeNode } from '../tracker/tracker'
+import { addBuilding, removeNode } from '../tracker/tracker'
 import { timeline } from './chartData'
 import { Gantt } from './chartViews'
 import { Button, Card, NumberField, TableWrap, cx, td, tdNum, th } from './components'
@@ -50,7 +50,10 @@ export function Phasing() {
         <p className="text-sm text-ink-soft">
           {isPortfolio(draft) ? 'These buildings are not grouped into phases yet.' : 'This is one building, built in one go.'} Larger sites are usually built in phases: each phase starts when the market, approvals and money allow, and that timing decides when costs, loans, sales and rents land.
         </p>
-        <Button className="mt-3" variant="primary" onClick={() => apply(() => ({ root: makePhased(draft), path: [] }))}>Set up phases</Button>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Button variant="primary" onClick={() => apply(() => ({ root: makePhased(draft), path: [] }))}>Set up phases</Button>
+          {!isPortfolio(draft) && <Button onClick={() => apply(() => addBuilding(draft, [], 12))}>Add a building like this one</Button>}
+        </div>
         {error && <p role="alert" className="mt-2 text-sm text-bad">{error}</p>}
       </Card>
     )
@@ -90,6 +93,7 @@ export function Phasing() {
                     </select>
                   )}
                   <button type="button" className="text-accent underline" onClick={() => dispatch({ type: 'path', path: r.path })}>Open</button>
+                  {!r.isPhase && <button type="button" className="text-accent underline" title="A copy in the same phase, starting at the same month" onClick={() => apply(() => addBuilding(draft, r.path, 0))}>Add one like it</button>}
                   <button type="button" className="text-ink-soft underline" onClick={() => { if (window.confirm(`Remove ${r.name} from the plan? This changes the draft only; locked scenarios keep it.`)) apply(() => ({ root: removeNode(draft, r.path) })) }}>Remove</button>
                 </span>
               </td>

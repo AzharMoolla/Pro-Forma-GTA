@@ -3,6 +3,7 @@ import type { CostLine } from '../engine/costs'
 import { isPortfolio, type Node } from '../engine/portfolio'
 import type { ProjectInput } from '../engine/project'
 import { catalogue } from './data'
+import { withModel } from './modelFacts'
 import type { NodePath } from './tree'
 
 /**
@@ -27,7 +28,8 @@ export function modelledIds(node: Node): Set<string> {
 export function coverage(projectType: string, attributes: Attributes, draft: Node, notes: Record<string, string>): CoverageEntry[] {
   const lines = modelledIds(draft)
   const lineIds = new Set(allLines(draft).map((l) => l.id))
-  return checklist(catalogue, projectType, attributes).stages.flatMap((s) =>
+  // Variables the model already answers (units, retail area, loan terms) come from the model, not a second answer
+  return checklist(catalogue, projectType, withModel(attributes, draft)).stages.flatMap((s) =>
     s.entries.map((e): CoverageEntry => {
       if (lines.has(e.item.id)) return { item: e.item, status: 'line', note: 'Cost line in the model' }
       const note = notes[e.item.id]

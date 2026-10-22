@@ -11,8 +11,7 @@ import { getNode } from './tree'
 import { isPortfolio, type Node } from '../engine/portfolio'
 import { feasibility, feasibilityFacts } from '../engine/stress'
 import { offSet } from '../engine/assumptions'
-import type { ProjectInput } from '../engine/project'
-import { addBuilding, buildTracker, lineFromActual, lineFromItem, removeNode, validateReceipt, type Receipt, type Task, type TaskStatus } from '../tracker/tracker'
+import { buildTracker, lineFromActual, lineFromItem, validateReceipt, type Receipt, type Task, type TaskStatus } from '../tracker/tracker'
 import { Button, Card, Chip, NumberField, SourceChip, cx } from './components'
 import { coverage, projectsUnder } from './coverage'
 import { catalogue, catalogueItem } from './data'
@@ -331,7 +330,6 @@ export function Progress() {
         <p className="mt-3 text-xs text-ink-mute">One task per catalogue item that applies here. Check items off as studies complete and bills arrive, record what was actually spent, attach the receipt, and push the actual into the model so that line becomes exact. Receipts are stored in your account when signed in, otherwise in this browser.</p>
       </Card>
 
-      <PlanChanges />
 
       <ol className="flex flex-col gap-2">
         {view.stages.map((s, idx) => {
@@ -498,38 +496,3 @@ function TaskRow({ task }: { task: Task }) {
   )
 }
 
-function PlanChanges() {
-  const { draft, state, dispatch, node } = useWorkspace()
-  const [offset, setOffset] = useState(12)
-  const [error, setError] = useState<string | null>(null)
-  const isBuilding = !isPortfolio(node)
-  const add = () => {
-    try {
-      const { root, path } = addBuilding(draft, state.path, offset)
-      setError(null)
-      dispatch({ type: 'replaceDraft', draft: root, path })
-    } catch (e) {
-      setError((e as Error).message)
-    }
-  }
-  const remove = () => {
-    if (!window.confirm(`Remove ${node.name} from the plan? This changes the draft only; locked scenarios keep it.`)) return
-    try {
-      dispatch({ type: 'replaceDraft', draft: removeNode(draft, state.path), path: state.path.slice(0, -1) })
-    } catch (e) {
-      setError((e as Error).message)
-    }
-  }
-  return (
-    <Card title="Plan changes">
-      <p className="mb-3 text-sm text-ink-soft">Plans change: add another building like this one, or drop one. Changes apply to the draft; lock a scenario first to keep the before-and-after.</p>
-      <div className="flex flex-wrap items-end gap-3">
-        <div className="w-36"><NumberField label="Starts later by" suffix="months" value={offset} onCommit={(v) => setOffset(Math.max(0, Math.round(v)))} /></div>
-        <Button variant="primary" onClick={add} disabled={!isBuilding}>Add a building like {isBuilding ? (node as ProjectInput).name.split(':')[0] : 'this'}</Button>
-        <Button onClick={remove} disabled={state.path.length === 0}>Remove this {isBuilding ? 'building' : 'phase'}</Button>
-      </div>
-      {!isBuilding && <p className="mt-2 text-xs text-ink-mute">Choose a building under Plan structure to duplicate it.</p>}
-      {error && <p role="alert" className="mt-2 text-sm text-bad">{error}</p>}
-    </Card>
-  )
-}

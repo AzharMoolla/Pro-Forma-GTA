@@ -115,8 +115,8 @@ test('tracker: close tasks, record an actual with a receipt, push it into the mo
 
 test('plan change: adding a building turns a single tower into a plan', async ({ page }) => {
   await fresh(page)
-  await openSection(page, 'Development tracker')
-  await page.getByRole('button', { name: /Add a building like/ }).click()
+  await openSection(page, 'Site & program')
+  await page.getByRole('button', { name: 'Add a building like this one' }).click()
   await expect(page.getByRole('navigation', { name: 'Workspace sections' }).getByText('Plan structure')).toBeVisible()
   await expect(page.getByRole('button', { name: /\(building 2\)/ })).toBeVisible()
 })
@@ -365,4 +365,17 @@ test('phasing: a single building can be set up in phases and given a second phas
   await expect(page.getByRole('heading', { name: /Phasing plan \(1 phase\)/ })).toBeVisible()
   await page.getByRole('button', { name: 'Add a phase' }).click()
   await expect(page.getByRole('heading', { name: /Phasing plan \(2 phases\)/ })).toBeVisible()
+})
+
+test('simple mode asks only the key questions; full detail shows the rest, with model figures read-only', async ({ page }) => {
+  await fresh(page)
+  await page.getByText('Simple', { exact: true }).click()
+  await openSection(page, 'Site & program')
+  await expect(page.getByRole('heading', { name: 'Key questions (13)' })).toBeVisible()
+  await expect(page.getByRole('combobox', { name: 'Pool' })).toHaveCount(0)
+  await page.getByText('Full detail', { exact: true }).click()
+  await expect(page.getByRole('heading', { name: /Project variables \(\d+\)/ })).toBeVisible()
+  await page.getByText(/^planning \(/).click()
+  await expect(page.getByRole('textbox', { name: 'Residential units' })).toHaveCount(0) // asked in the unit mix, shown here read-only
+  await expect(page.getByText('from the pro forma').first()).toBeVisible()
 })
