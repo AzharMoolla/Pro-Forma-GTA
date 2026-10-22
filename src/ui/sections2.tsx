@@ -168,12 +168,18 @@ export function Finance() {
         {p.debt.refinance && (
           <>
             <h3 className="mt-4 mb-2 text-sm font-semibold">Refinance at stabilization</h3>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-6">
               <NumberField label="Month" value={p.debt.refinance.month} onCommit={(v) => setRefi({ month: Math.round(v) })} />
               <NumberField label="Rate" scale={100} suffix="%/yr" value={p.debt.refinance.annualRate} onCommit={(v) => setRefi({ annualRate: v })} />
               <NumberField label="LTV" scale={100} suffix="%" value={p.debt.refinance.ltv} onCommit={(v) => setRefi({ ltv: v })} />
               <NumberField label="DSCR" suffix="×" value={p.debt.refinance.dscr} onCommit={(v) => setRefi({ dscr: v })} />
               <NumberField label="Fees incl. insurance" scale={100} suffix="%" value={p.debt.refinance.feeFraction} onCommit={(v) => setRefi({ feeFraction: v })} />
+              <label className="flex flex-col gap-1 text-xs text-ink-soft">Rate compounds
+                <select className="min-h-9 rounded border border-line-strong bg-surface px-2 text-sm text-ink" value={p.debt.refinance.compounding ?? 'monthly'} onChange={(e) => setRefi({ compounding: e.target.value as 'monthly' | 'semiAnnual' })}>
+                  <option value="semiAnnual">Semi-annually (Canadian fixed mortgage)</option>
+                  <option value="monthly">Monthly (rate ÷ 12)</option>
+                </select>
+              </label>
             </div>
           </>
         )}

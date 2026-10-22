@@ -2,7 +2,7 @@
 // Pure: no IO, no clock, no randomness.
 
 import { lineTotals, scheduleLine, validateCostLines, type Band, type CostLine } from './costs'
-import { annualizeMonthly, annuityPayment, irr, monthlyFromEffectiveAnnual, monthlyFromNominalAnnual, npv, sizeLoan, type LoanSizing } from './finance'
+import { annualizeMonthly, annuityPayment, irr, monthlyFromEffectiveAnnual, monthlyFromNominalAnnual, monthlyLoanRate, npv, sizeLoan, type Compounding, type LoanSizing } from './finance'
 import { roundCents, sumCents } from './money'
 
 export const ENGINE_VERSION = '0.3.0' // 0.3.0: unstabilized valuation, unsold condo disposition, matching profit-on-cost bases, gross equity multiple, unique-IRR rule
@@ -89,7 +89,8 @@ export interface DebtTerms {
   amortizationYears: number
   sweepAfterCompletion?: boolean // repay the construction loan from cash before distributing (typical for condo)
   presaleThreshold?: number // fraction of condo units sold before construction start
-  refinance?: { month: number; annualRate: number; amortizationYears: number; dscr: number; ltv: number; feeFraction: number }
+  /** compounding: how the quoted rate compounds; omitted = monthly (rate ÷ 12). Canadian fixed-rate mortgages: 'semiAnnual'. */
+  refinance?: { month: number; annualRate: number; amortizationYears: number; dscr: number; ltv: number; feeFraction: number; compounding?: Compounding }
 }
 
 export interface ProjectInput {
@@ -200,6 +201,7 @@ export function validateProject(p: ProjectInput): string[] {
     if (!(r.dscr > 0)) errors.push('refinance.dscr must be > 0')
     if (!(r.ltv >= 0 && r.ltv <= 1)) errors.push('refinance.ltv must be in [0, 1]')
     if (!(r.feeFraction >= 0 && r.feeFraction < 1)) errors.push('refinance.feeFraction must be in [0, 1)')
+    if (r.compounding !== undefined && r.compounding !== 'monthly' && r.compounding !== 'semiAnnual') errors.push('refinance.compounding must be monthly or semiAnnual')
   }
 
   const ids = new Set<string>()
@@ -477,7 +479,7 @@ export function runProject(p: ProjectInput): ProjectResult {
     const openingDebt = debt
     const interest = roundCents(openingDebt * rate) // C9
     const permOpening = perm
-    const permRate = refi ? monthlyFromNominalAnnual(refi.annualRate) : 0
+    const permRate = refi ? monthlyLoanRate(refi.annualRate, refi.compounding) : 0
     const permInterest = roundCents(permOpening * permRate)
     const permPrincipal = permOpening > 0 ? Math.min(permOpening, roundCents(permPayment - permInterest)) : 0
 
@@ -518,7 +520,7 @@ export function runProject(p: ProjectInput): ProjectResult {
         noiAnnual: sumCents(incomeFlows.map((f) => f.forwardProjectedNoi!(m))), // lenders size on income the asset will earn
         value: valueAt(m),
         cost: Number.POSITIVE_INFINITY, // permanent lenders size on DSCR and LTV
-        annualRate: refi.annualRate, amortizationYears: refi.amortizationYears, dscr: refi.dscr, ltv: refi.ltv, ltc: 1,
+        annualRate: refi.annualRate, amortizationYears: refi.amortizationYears, dscr: refi.dscr, ltv: refi.ltv, ltc: 1, compounding: refi.compounding,
       })
       permFunded = roundCents(refinanceSizing.amount)
       refinanceFee = roundCents(permFunded * refi.feeFraction)

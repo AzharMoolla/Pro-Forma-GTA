@@ -30,7 +30,7 @@ describe('readiness', () => {
     expect(r.model.complete).toBe(true)
     expect(r.scope.counts.gap).toBeGreaterThan(0)
     expect(r.scope.complete).toBe(true) // gaps are named, nothing is unaccounted
-    expect(r.sources).toMatchObject({ lines: mockA.costLines.length, sourced: 0, reviewed: 0 })
+    expect(r.sources).toMatchObject({ lines: mockA.costLines.length, sourced: 3, reviewed: 0 }) // the three Toronto DC lines cite the City schedule; nobody has reviewed them yet
   })
 
   it('counts sourced, reviewed, old and undated lines; synthetic is never "sourced"', () => {

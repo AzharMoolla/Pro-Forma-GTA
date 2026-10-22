@@ -97,7 +97,7 @@ function rentalBlock(id: string, name: string, scale: number, retailSqft: number
     }],
     debt: {
       annualRate: 0.065, ltc: 0.75, ltv: 0.65, dscr: 1.1, amortizationYears: 50,
-      refinance: { month: 58, annualRate: 0.0425, amortizationYears: 50, dscr: 1.1, ltv: 0.85, feeFraction: 0.03 },
+      refinance: { month: 58, annualRate: 0.0425, amortizationYears: 50, dscr: 1.1, ltv: 0.85, feeFraction: 0.03, compounding: 'semiAnnual' },
     },
     exit: { sellingCostFraction: 0.015 },
     discountRate: 0.075,

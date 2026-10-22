@@ -10,7 +10,7 @@ describe('assumptions register', () => {
   it('lists growth, rule-of-thumb lines, conventions and analysis settings', () => {
     const list = listAssumptions(mockA, new Set())
     const ids = list.map((a) => a.id)
-    expect(ids).toEqual(expect.arrayContaining(['escalation', 'rentGrowth', 'opexInflation', 'line:construction-contingency', 'line:parkland-cil', 'conv-funding', 'an-downside']))
+    expect(ids).toEqual(expect.arrayContaining(['escalation', 'rentGrowth', 'opexInflation', 'line:construction-contingency', 'line:parkland-cil', 'line:dc-reduction-program', 'conv-funding', 'conv-compounding', 'an-downside']))
     expect(list.every((a) => a.on)).toBe(true)
     expect(list.find((a) => a.id === 'line:toronto-mltt')!.toVerify).toBe(true)
     // Quotes and plain lump sums are not rule-of-thumb lines
@@ -53,5 +53,14 @@ describe('assumptions register', () => {
     const off = applyAssumptions(plan, new Set(['escalation'])) as Extract<Node, { children: unknown }>
     expect(off.costEscalation).toBe(0)
     expect(off.children.every((c) => (c.node as ProjectInput).costEscalation === 0)).toBe(true)
+  })
+})
+
+describe('Toronto DC Reduction Program as a switchable assumption', () => {
+  it('switching it off charges the full schedule', () => {
+    const on = runNode(mockA).metrics.totalDevelopmentCost!.value!
+    const off = runNode(applyAssumptions(mockA, new Set(['line:dc-reduction-program']))).metrics.totalDevelopmentCost!.value!
+    expect(off - on).toBeGreaterThan(7_376_122) // the discount, plus interest on it
+    expect(off - on).toBeLessThan(7_376_122 * 1.2)
   })
 })

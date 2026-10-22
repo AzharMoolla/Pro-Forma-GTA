@@ -720,15 +720,42 @@
       {
         "id": "dc-city-toronto",
         "catalogueId": "dc-city-toronto",
-        "label": "Toronto rental DCs with DC Reduction Program (affordable exempt)",
+        "label": "Toronto rental DCs (2025-06-26 schedule; affordable units exempt)",
         "driver": {
           "kind": "lumpSum",
-          "amount": 7429690
+          "amount": 14805812
         },
         "timing": {
           "kind": "constructionStart"
         },
-        "estimateClass": "exact"
+        "estimateClass": "exact",
+        "source": {
+          "kind": "schedule",
+          "ref": "City of Toronto DC rates, rental, effective 2025-06-26 (By-law 1137-2022 as amended)",
+          "valueDate": "2025-06-26",
+          "retrievedAt": "2026-10-22",
+          "note": "225 one-bed/bachelor × $33,497 + 113 two-bed × $48,299 + 40 three-bed × $45,280; 42 affordable units exempt"
+        }
+      },
+      {
+        "id": "dc-reduction-program",
+        "catalogueId": "dc-city-toronto",
+        "label": "Toronto DC Reduction Program discount (assumed: conditional on the Ontario agreement)",
+        "driver": {
+          "kind": "lumpSum",
+          "amount": -7376122.2
+        },
+        "timing": {
+          "kind": "constructionStart"
+        },
+        "estimateClass": "exact",
+        "source": {
+          "kind": "schedule",
+          "ref": "Toronto DC Reduction Program, Council 2026.CC43.9: −40% one-bed or smaller, −60% two-bed or larger",
+          "valueDate": "2026-06-23",
+          "retrievedAt": "2026-10-22",
+          "note": "Conditional on the Transfer Payment Agreement with Ontario"
+        }
       },
       {
         "id": "edc",
@@ -747,16 +774,23 @@
       {
         "id": "dc-non-residential",
         "catalogueId": "dc-non-residential",
-        "label": "Non-residential DC on retail (allowance)",
+        "label": "Non-residential DC on ground-floor retail ($805.64/m², 2025-06-26 schedule)",
         "driver": {
           "kind": "perArea",
-          "rate": 250,
+          "rate": 805.64,
           "area": 2323
         },
         "timing": {
           "kind": "constructionStart"
         },
-        "estimateClass": "D"
+        "estimateClass": "B",
+        "source": {
+          "kind": "schedule",
+          "ref": "City of Toronto non-residential DC, effective 2025-06-26: $805.64/m² of ground-floor GFA only",
+          "valueDate": "2025-06-26",
+          "retrievedAt": "2026-10-22",
+          "note": "Assumes all 2,323 m² of retail is at grade; verify against the plans"
+        }
       },
       {
         "id": "building-permit",
@@ -1854,7 +1888,8 @@
         "amortizationYears": 50,
         "dscr": 1.1,
         "ltv": 0.95,
-        "feeFraction": 0.035
+        "feeFraction": 0.035,
+        "compounding": "semiAnnual"
       }
     },
     "exit": {

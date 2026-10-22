@@ -4,10 +4,10 @@
 // behind "core housing need"). Rental cost = rent; ownership cost = mortgage payment + condo fee + property tax.
 // Projected year by year with rents (or carrying costs) and incomes growing at their own rates. Unknown → no answer.
 
-import { annuityPayment } from './finance'
+import { annuityPayment, monthlyLoanRate } from './finance'
 
 /** Canadian fixed-rate mortgages compound semi-annually (Interest Act): monthly rate = (1 + r/2)^(1/6) − 1. */
-export const canadianMortgageMonthlyRate = (nominal: number) => ((1 + (nominal / 2)) ** (1 / 6)) - 1
+export const canadianMortgageMonthlyRate = (nominal: number) => monthlyLoanRate(nominal, 'semiAnnual')
 import type { ProjectInput } from './project'
 
 export const AFFORDABLE_SHARE = 0.3

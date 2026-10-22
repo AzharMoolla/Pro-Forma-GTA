@@ -4,6 +4,16 @@ export function monthlyFromNominalAnnual(annualRate: number): number {
   return annualRate / 12 // C4: lending rates are nominal annual
 }
 
+/**
+ * How a quoted annual loan rate compounds. Floating construction loans accrue monthly on rate ÷ 12; Canadian fixed-rate
+ * mortgages quote the rate compounded semi-annually (Interest Act s.6), so the monthly rate is (1 + r/2)^(1/6) − 1.
+ */
+export type Compounding = 'monthly' | 'semiAnnual'
+
+export function monthlyLoanRate(annualRate: number, compounding: Compounding = 'monthly'): number {
+  return compounding === 'semiAnnual' ? ((1 + (annualRate / 2)) ** (1 / 6)) - 1 : monthlyFromNominalAnnual(annualRate)
+}
+
 export function monthlyFromEffectiveAnnual(annualRate: number): number {
   return ((1 + annualRate) ** (1 / 12)) - 1 // C4: discount rates are effective annual
 }
@@ -109,6 +119,7 @@ export function sizeLoan(input: {
   dscr: number
   ltv: number
   ltc: number
+  compounding?: Compounding
 }): LoanSizing {
   const warnings: string[] = []
   let dscrCapacity = 0
@@ -117,7 +128,7 @@ export function sizeLoan(input: {
     const maxMonthlyDebtService = input.noiAnnual / input.dscr / 12
     dscrCapacity = annuityPresentValue(
       maxMonthlyDebtService,
-      monthlyFromNominalAnnual(input.annualRate),
+      monthlyLoanRate(input.annualRate, input.compounding),
       input.amortizationYears * 12,
     )
   }

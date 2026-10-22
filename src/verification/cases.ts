@@ -13,6 +13,7 @@ import { toProject } from '../engine/rental'
 import { solve, stress } from '../engine/stress'
 import { hstTiming, ontarioLtt } from '../engine/tax'
 import { canadianMortgageMonthlyRate } from '../engine/affordability'
+import { torontoRentalDc, type ApartmentCounts } from '../engine/charges'
 
 export interface Case {
   id: string
@@ -53,6 +54,12 @@ export const tiny = (): ProjectInput => ({
 
 const mockA = mockAJson.input as unknown as ProjectInput
 const lineTotal = (p: ProjectInput, id: string) => lineTotals(p.costLines).get(id) ?? null
+/** Mock A's market rental units by DC category (ids ending in _affordable are exempt). */
+function mockACounts(): ApartmentCounts {
+  const rental = mockA.components.find((c) => c.kind === 'rental')
+  const n = (re: RegExp) => (rental?.kind === 'rental' ? rental.unitMix.filter((u) => re.test(u.id) && !u.id.endsWith('_affordable')).reduce((s, u) => s + u.count, 0) : 0)
+  return { oneBedOrBachelor: n(/^(studio|one_bed)/), twoBed: n(/^two_bed/), threeBedPlus: n(/^three_bed/) }
+}
 
 export const CASES: Case[] = [
   // ---- arithmetic
@@ -60,6 +67,7 @@ export const CASES: Case[] = [
   { id: 'V-02', kind: 'math', title: 'IRR, annualized', inputs: 'Flows −100 then +110 one month later', expected: 2.138428, derivation: 'Monthly IRR 10%; (1.10)^12 − 1 = 2.138428', actual: () => { const r = irr([-100, 110]).rate; return r === null ? null : annualizeMonthly(r) }, tolerance: 1e-6, unit: 'rate' },
   { id: 'V-03', kind: 'math', title: 'IRR refused when not unique', inputs: 'Flows −100, +230, −132 (roots at 10% and 20%)', expected: 1, derivation: 'Two sign changes and two roots: C15 says show none (1 = unavailable)', actual: () => (irr([-100, 230, -132]).rate === null ? 1 : 0), tolerance: 0, unit: 'ratio' },
   { id: 'V-04', kind: 'math', title: 'DSCR loan size', inputs: 'NOI $120,000/yr, DSCR 1.25, 5% nominal, 25 years', expected: 1_368_480.38, derivation: 'Max payment 120,000 ÷ 1.25 ÷ 12 = 8,000/month; PV over 300 months at 5%/12 = 1,368,480.38', actual: () => sizeLoan({ noiAnnual: 120_000, value: 1e12, cost: 1e12, annualRate: 0.05, amortizationYears: 25, dscr: 1.25, ltv: 1, ltc: 1 }).amount, tolerance: 0.01, unit: 'CAD' },
+  { id: 'V-17', kind: 'math', title: 'DSCR loan size, semi-annual compounding', inputs: 'NOI $120,000/yr, DSCR 1.25, 5% compounded semi-annually, 25 years', expected: 1_375_504.03, derivation: 'Monthly rate (1.025)^(1/6) − 1 = 0.4124%; PV of 8,000/month over 300 months = 1,375,504.03 (0.5% more than monthly compounding, V-04)', actual: () => sizeLoan({ noiAnnual: 120_000, value: 1e12, cost: 1e12, annualRate: 0.05, amortizationYears: 25, dscr: 1.25, ltv: 1, ltc: 1, compounding: 'semiAnnual' }).amount, tolerance: 0.01, unit: 'CAD' },
   { id: 'V-05', kind: 'math', title: 'Canadian mortgage monthly rate', inputs: '5% compounded semi-annually (Interest Act)', expected: 0.004123915, derivation: '(1 + 0.05/2)^(1/6) − 1', actual: () => canadianMortgageMonthlyRate(0.05), tolerance: 1e-9, unit: 'rate' },
   // ---- the engine on a project small enough to do by hand
   { id: 'V-06', kind: 'math', title: 'Exit value by direct capitalization', inputs: 'Tiny: 2 × $1,000/month, no vacancy or opex, 6% cap', expected: 400_000, derivation: '24,000 NOI ÷ 0.06', actual: () => runProject(tiny()).metrics.exitValue!.value, tolerance: 0.01, unit: 'CAD' },
@@ -72,6 +80,10 @@ export const CASES: Case[] = [
   { id: 'V-12', kind: 'fact', title: 'Mock A provincial LTT line matches the statute', inputs: 'Mock A land $62M', expected: ontarioLtt(62_000_000), derivation: 'Same statute applied to the land line', actual: () => lineTotal(mockA, 'ontario-ltt'), tolerance: 1, unit: 'CAD' },
   { id: 'V-13', kind: 'fact', title: 'Parkland cash-in-lieu within the Planning Act cap', inputs: 'Mock A, site ≤ 5 ha', expected: 0.1, derivation: 'Planning Act s.42 (Bill 23): ≤ 10% of land value for sites ≤ 5 ha. Actual = charge ÷ land', actual: () => { const l = lineTotal(mockA, 'land-price'); const c = lineTotal(mockA, 'parkland-cil'); return l && c !== null ? c / l : null }, tolerance: 1e-9, unit: 'ratio' },
   { id: 'V-14', kind: 'fact', title: 'Community Benefits Charge within the cap', inputs: 'Mock A', expected: 0.04, derivation: 'Planning Act s.37: ≤ 4% of land value. Actual = charge ÷ land', actual: () => { const l = lineTotal(mockA, 'land-price'); const c = lineTotal(mockA, 'cbc'); return l && c !== null ? c / l : null }, tolerance: 1e-9, unit: 'ratio' },
+  { id: 'V-18', kind: 'fact', title: 'Mock A rental DCs match the City schedule', inputs: '225 one-bed/bachelor, 113 two-bed, 40 three-bed market rental units (42 affordable exempt)', expected: 14_805_812, derivation: 'City of Toronto rental DC rates effective 2025-06-26: $33,497, $48,299, $45,280 per unit', actual: () => lineTotal(mockA, 'dc-city-toronto'), tolerance: 0.5, unit: 'CAD' },
+  { id: 'V-19', kind: 'fact', title: 'DC Reduction Program discount', inputs: 'Same units; −40% one-bed or smaller, −60% two-bed or larger', expected: -7_376_122.2, derivation: '−(0.4 × 7,536,825 + 0.6 × 7,268,987); net DCs $7,429,689.80', actual: () => lineTotal(mockA, 'dc-reduction-program'), tolerance: 0.5, unit: 'CAD' },
+  { id: 'V-21', kind: 'math', title: 'DC schedule arithmetic', inputs: 'Mock A unit counts through the schedule function', expected: 7_429_689.8, derivation: 'Gross 14,805,812 less the 7,376,122.20 discount', actual: () => { const d = torontoRentalDc(mockACounts()); return d.gross + d.dcrpDiscount }, tolerance: 0.01, unit: 'CAD' },
+  { id: 'V-20', kind: 'fact', title: 'Non-residential DC on ground-floor retail', inputs: '2,323 m² of retail at grade', expected: 1_871_501.72, derivation: '$805.64/m² (2025-06-26 schedule, ground floor only) × 2,323', actual: () => lineTotal(mockA, 'dc-non-residential'), tolerance: 0.01, unit: 'CAD' },
   // ---- behaviour: solved values hit their targets, switches do what they say
   { id: 'V-15', kind: 'behaviour', title: 'Residual land value hits the target', inputs: 'Tiny, profit on cost 15%', expected: 0.15, derivation: 'Solve for land, re-run, read profit on cost', actual: () => { const s = solve(tiny(), 'land', 'profitOnCost', 0.15); return s.multiplier === null ? null : runNode(stress(tiny(), { land: s.multiplier })).metrics.profitOnCost!.value }, tolerance: 1e-4, unit: 'rate' },
   { id: 'V-16', kind: 'behaviour', title: 'Switching off escalation prices at today\'s cost', inputs: 'Mock A, escalation off', expected: 0, derivation: 'Escalated lines total = their entered amounts when escalation is 0 (actual = difference)', actual: () => { const off = applyAssumptions(mockA, new Set(['escalation'])) as ProjectInput; const r = runProject(off); const ids = off.costLines.filter((l) => l.escalate).map((l) => l.id); const spent = r.ledger.reduce((s, row) => s + ids.reduce((t, id) => t + (row.costs[id] ?? 0), 0), 0); return spent - ids.reduce((s, id) => s + (lineTotal(off, id) ?? 0), 0) }, tolerance: 1, unit: 'CAD' },
