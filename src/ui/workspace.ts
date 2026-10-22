@@ -8,7 +8,10 @@ export interface Workspace {
   state: State
   dispatch: Dispatch<Action>
   demo: DemoProject
+  /** The stored draft: what edits and locked scenarios use. */
   draft: Node
+  /** The draft as the model runs it, with switched-off assumptions applied. Every calculation uses this. */
+  model: Node
   /** null when the draft is invalid; `error` explains why. */
   result: NodeResult | null
   error: string | null

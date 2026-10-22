@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { isPortfolio, runNode, type Node, type NodeResult } from '../engine/portfolio'
 import { ENGINE_VERSION, type Component, type ProjectInput } from '../engine/project'
+import { modelOf } from '../engine/assumptions'
 import type { Simulation, TornadoBar } from '../engine/uncertainty'
 import { createSnapshot, diffInputs, lock, verify, type Snapshot } from '../scenario/snapshot'
 import { saveScenario } from '../cloud/cloud'
@@ -295,7 +296,7 @@ export function Returns() {
 // ---------------------------------------------------------------- scenarios
 
 export function Scenarios() {
-  const { state, dispatch, draft, demo, cloud } = useWorkspace()
+  const { state, dispatch, draft, result, demo, cloud } = useWorkspace()
   const project = state.projects[state.projectId]!
   const [saveError, setSaveError] = useState<string | null>(null)
   const [label, setLabel] = useState('')
@@ -331,8 +332,8 @@ export function Scenarios() {
   }
 
   const compared = project.scenarios.filter((s) => selected.includes(s.id))
-  const results = useMemo(() => compared.map((s) => ({ s, r: safeRun(s.input) })), [compared])
-  const draftResult = useMemo(() => safeRun(draft), [draft])
+  const results = useMemo(() => compared.map((s) => ({ s, r: safeRun(modelOf(s.input, s.attributes)) })), [compared])
+  const draftResult = result
   const rows = ['totalUnits', 'totalDevelopmentCost', 'totalRevenue', 'profit', 'profitOnCost', 'yieldOnCost', 'unleveredIrr', 'leveredIrr', 'unleveredNpv', 'equityContributed']
 
   return (

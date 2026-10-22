@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from 'react'
 import { isPortfolio, runNode, type Node } from '../engine/portfolio'
+import { modelOf, offSet } from '../engine/assumptions'
 import { Button, Chip, cx } from './components'
 import { ProjectMenu } from './ProjectMenu'
 import { demoProjects } from './data'
@@ -47,14 +48,15 @@ export function App() {
     return { ...template, id: state.projectId, name: current.meta.name, projectType: current.meta.projectType, reference: current.meta.reference, notes: current.meta.notes, coverage: current.meta.coverage }
   }, [state.projectId, current.meta])
   const draft = current.draft
+  const model = useMemo(() => modelOf(draft, current.attributes), [draft, current.attributes])
 
   const { result, error } = useMemo(() => {
     try {
-      return { result: runNode(draft), error: null }
+      return { result: runNode(model), error: null }
     } catch (e) {
       return { result: null, error: (e as Error).message }
     }
-  }, [draft])
+  }, [model])
 
   const path = useMemo(() => {
     try {
@@ -64,9 +66,9 @@ export function App() {
       return []
     }
   }, [draft, state.path])
-  const node = getNode(draft, path)
+  const node = getNode(model, path)
   const nodeResult = result ? getResult(result, path) : null
-  const ws: Workspace = { state: { ...state, path }, dispatch, demo, draft, result, error, node, nodeResult, cloud: cloudState }
+  const ws: Workspace = { state: { ...state, path }, dispatch, demo, draft, model, result, error, node, nodeResult, cloud: cloudState }
   const tree = isPortfolio(draft) ? flatten(draft) : []
   const visible = SECTIONS.filter((s) => atLeast(state.mode, s.minMode))
   const section = visible.some((s) => s.id === state.section) || state.section === 'privacy' || state.section === 'terms' ? state.section : 'overview'
@@ -119,6 +121,7 @@ export function App() {
             <Account state={cloudState} />
             <Chip tone="warn" title="All demo figures are synthetic placeholders, not market evidence">Synthetic demo</Chip>
             <Chip tone="neutral">{parent ? `Draft from scenario ${parent}` : 'Unsaved draft'}</Chip>
+            {offSet(current.attributes).size > 0 && <button type="button" onClick={() => dispatch({ type: 'section', id: 'assumptions' })}><Chip tone="warn">{offSet(current.attributes).size} assumption{offSet(current.attributes).size === 1 ? '' : 's'} off</Chip></button>}
             {error ? <Chip tone="bad">Input error</Chip> : <ReadinessChips onOpen={() => dispatch({ type: 'section', id: 'audit' })} />}
           </div>
         </div>

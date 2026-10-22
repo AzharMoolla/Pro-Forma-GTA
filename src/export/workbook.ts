@@ -5,6 +5,7 @@ import type { Attributes, Catalogue } from '../engine/catalogue'
 import { lineTotals, type CostLine } from '../engine/costs'
 import type { Insight } from '../engine/insights'
 import type { Feasibility } from '../engine/stress'
+import type { Assumption } from '../engine/assumptions'
 import { isPortfolio, type Node, type NodeResult } from '../engine/portfolio'
 import { CONVENTION_VERSION, ENGINE_VERSION } from '../engine/project'
 import type { TrackerView } from '../tracker/tracker'
@@ -28,6 +29,7 @@ export interface WorkbookInput {
   synthetic: boolean
   sensitivity?: { metric: string; rows: number[]; cols: number[]; cells: Array<Array<number | null>> }
   feasibility?: Feasibility
+  assumptions?: Assumption[]
 }
 
 /** Every leaf of an object as [path, value], arrays of objects with ids keyed by id. */
@@ -157,6 +159,12 @@ export function workbookSheets(w: WorkbookInput): Sheet[] {
   }
 
   const sheets = [summary, inputs, costs, ledger, site, checklist, tracker, analysis, scenarios]
+  if (w.assumptions) {
+    sheets.push({ name: 'Assumptions', rows: [
+      ['Group', 'Assumption', 'On', 'Can switch off', 'Value', 'Basis', 'Effect', 'To verify'],
+      ...w.assumptions.map((a): Cell[] => [a.group, a.label, a.on ? 'on' : 'OFF', a.toggle ? 'yes' : 'no', a.value, a.basis, a.effect, a.toVerify ? 'yes' : '']),
+    ] })
+  }
   if (w.feasibility) {
     const f = w.feasibility
     const m = (r: Feasibility['downside'][number], id: string) => r.result?.metrics[id]?.value ?? null

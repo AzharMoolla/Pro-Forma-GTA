@@ -9,6 +9,7 @@ import { catalogue, dataContext, variableInfo } from './data'
 import { metricValue, money } from './format'
 import { readinessLabels, useReadiness } from './sections2'
 import { useAnalysis, useTrackerView } from './sections3'
+import { listAssumptions, offSet } from '../engine/assumptions'
 import { readSources } from './SiteMap'
 import { StreetscapeSvg } from './Streetscape'
 import { sceneOf } from './streetscapeScene'
@@ -21,7 +22,7 @@ const SITE_VARS = ['site.address', 'site.municipality', 'site.region', 'site.war
 
 /** Report & export: an Excel workbook with every input, line, ledger row and source, and a printable report (PDF). */
 export function Report() {
-  const { demo, draft, result, state, node, nodeResult } = useWorkspace()
+  const { demo, draft, model, result, state, node, nodeResult } = useWorkspace()
   const project = state.projects[state.projectId]!
   const ready = useReadiness()
   const labels = readinessLabels(ready)
@@ -32,6 +33,8 @@ export function Report() {
   const analysis = useAnalysis()
   const insights = analysis?.insights ?? []
   const feas = analysis?.feasibility
+  const assumptions = useMemo(() => listAssumptions(draft, offSet(project.attributes)), [draft, project.attributes])
+  const offCount = assumptions.filter((a) => !a.on).length
   const entries = useMemo(() => coverage(demo.projectType, project.attributes, draft, demo.coverage), [demo, project.attributes, draft])
   const sources = readSources(project.attributes)
   const scene = useMemo(() => {
@@ -49,7 +52,7 @@ export function Report() {
       projectName: demo.name, projectType: demo.projectType, draft, result, attributes: project.attributes, catalogue,
       coverage: entries, readiness: { model: labels.model.text, scope: labels.scope.text, sources: labels.sources.text },
       insights, tracker, scenarios: project.scenarios, draftParentId: project.draftParentId, dataContext, exportedAt, synthetic,
-      sensitivity: { metric: 'Profit on cost', ...sensitivityGrid(draft, 'profitOnCost') }, feasibility: feas,
+      sensitivity: { metric: 'Profit on cost', ...sensitivityGrid(model, 'profitOnCost') }, feasibility: feas, assumptions,
     }))
     const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }))
     Object.assign(document.createElement('a'), { href: url, download: `${fileBase}.xlsx` }).click()
@@ -105,6 +108,16 @@ export function Report() {
           <ul className="flex flex-col gap-1 text-sm">
             {insights.map((i) => <li key={i.id} className="break-inside-avoid"><strong>{i.severity === 'concern' ? '▲ Concern' : i.severity === 'watch' ? '! Watch' : i.severity === 'good' ? '✓ Strength' : 'i Note'}: {i.title}.</strong> <span className="text-ink-soft">{i.detail}</span>{i.source && <span className="text-xs text-ink-mute"> Source: {i.source}.</span>}</li>)}
           </ul>
+        </section>
+
+        <section className="break-inside-avoid">
+          <h3 className="mb-2 text-base font-semibold">Assumptions</h3>
+          <p className="mb-2 text-sm text-ink-soft">{offCount ? `${offCount} assumption${offCount === 1 ? ' is' : 's are'} switched off and excluded from these results. ` : 'Every assumption below is on. '}The full register, with each basis, is in the workbook's Assumptions sheet.</p>
+          <TableWrap caption="Assumptions that can be switched off">
+            <thead><tr>{['Assumption', 'Value', 'State'].map((h) => <th key={h} scope="col" className={th}>{h}</th>)}</tr></thead>
+            <tbody>{assumptions.filter((a) => a.toggle).map((a) => <tr key={a.id}><td className={td}>{a.label}{a.toVerify ? ' (to verify)' : ''}</td><td className={`${td} num`}>{a.value}</td><td className={td}>{a.on ? 'on' : <strong>OFF</strong>}</td></tr>)}</tbody>
+          </TableWrap>
+          <p className="mt-1 text-xs text-ink-mute">Always on: {assumptions.filter((a) => a.group === 'convention').map((a) => `${a.label.toLowerCase()} (${a.value})`).join('; ')}.</p>
         </section>
 
         {feas && (

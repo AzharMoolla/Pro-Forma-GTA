@@ -1,6 +1,7 @@
 import { useId, useMemo, useRef, useState, type ReactNode } from 'react'
 import { analyze, costItems } from '../engine/insights'
 import { isPortfolio, runNode, type NodeResult } from '../engine/portfolio'
+import { modelOf } from '../engine/assumptions'
 import { equityByYear, fundingByYear, sensitivityGrid, timeline, toCsv, type Series, type StackedRow } from './chartData'
 import { Button, Card, TableWrap, td, tdNum, th } from './components'
 import { catalogueItem } from './data'
@@ -227,7 +228,7 @@ function ScenarioBars({ names, metrics }: { names: string[]; metrics: Array<{ la
 }
 
 export function Visuals() {
-  const { node, nodeResult, state, draft } = useWorkspace()
+  const { node, nodeResult, state, model } = useWorkspace()
   const uid = useId()
   const { view: tracker } = useTrackerView()
   const project = state.projects[state.projectId]!
@@ -238,9 +239,9 @@ export function Visuals() {
   const grid = useMemo(() => sensitivityGrid(node, metric), [node, metric])
   const bars = useMemo(() => timeline(node), [node])
   const scenarios = useMemo(() => {
-    const run = (n: typeof draft): NodeResult | null => { try { return runNode(n) } catch { return null } }
-    return [...project.scenarios.slice(-5).map((s) => ({ name: s.label, r: run(s.input) })), { name: 'Current draft', r: run(draft) }]
-  }, [project.scenarios, draft])
+    const run = (n: typeof model): NodeResult | null => { try { return runNode(n) } catch { return null } }
+    return [...project.scenarios.slice(-5).map((s) => ({ name: s.label, r: run(modelOf(s.input, s.attributes)) })), { name: 'Current draft', r: run(model) }]
+  }, [project.scenarios, model])
   if (!nodeResult) return null
 
   const pctFmt = (v: number) => pct(v, 1)

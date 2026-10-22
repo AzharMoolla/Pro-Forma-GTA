@@ -10,6 +10,7 @@ import { buildingOf, scoped } from './streetscapeScene'
 import { getNode } from './tree'
 import { isPortfolio, type Node } from '../engine/portfolio'
 import { feasibility, feasibilityFacts } from '../engine/stress'
+import { offSet } from '../engine/assumptions'
 import type { ProjectInput } from '../engine/project'
 import { addBuilding, buildTracker, lineFromActual, lineFromItem, removeNode, validateReceipt, type Receipt, type Task, type TaskStatus } from '../tracker/tracker'
 import { Button, Card, Chip, NumberField, SourceChip, cx } from './components'
@@ -247,6 +248,9 @@ export function DecisionSummary() {
   return (
     <Card title="Decision summary" actions={<Chip tone="neutral" title="Rules of thumb comparing this project's own numbers and mapped site facts. Not market benchmarks or a zoning opinion.">screening</Chip>}>
       <p className={cx('mb-3 rounded-md border p-2.5 text-sm font-medium', verdict.tone === 'good' ? 'border-good bg-good-soft text-good' : verdict.tone === 'warn' ? 'border-warn bg-warn-soft text-warn' : 'border-bad bg-bad-soft text-bad')}>{verdict.text}</p>
+      {offSet(project.attributes).size > 0 && (
+        <p className="mb-3 text-sm text-warn">These results leave out {offSet(project.attributes).size} assumption{offSet(project.attributes).size === 1 ? '' : 's'} you switched off. <button type="button" className="text-accent underline" onClick={go({ type: 'section', id: 'assumptions' })}>Review assumptions</button></p>
+      )}
       <div className="grid gap-4 lg:grid-cols-[minmax(0,7fr)_minmax(0,4fr)]">
         <div id="observations">
           <h3 className="mb-2 text-sm font-semibold">What stands out</h3>

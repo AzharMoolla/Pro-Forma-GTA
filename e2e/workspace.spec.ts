@@ -1,7 +1,7 @@
 import { AxeBuilder } from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
 
-const sections = ['Overview', 'Site map', 'Market evidence', 'People & affordability', 'Site & program', 'Cost & budget', 'Revenue & operations', 'Finance & ledger', 'Returns & range', 'Feasibility & stress', 'Charts', 'Scenarios', 'Sources & audit', 'Report & export']
+const sections = ['Overview', 'Site map', 'Market evidence', 'People & affordability', 'Site & program', 'Cost & budget', 'Revenue & operations', 'Finance & ledger', 'Returns & range', 'Feasibility & stress', 'Assumptions', 'Charts', 'Scenarios', 'Sources & audit', 'Report & export']
 
 async function fresh(page: Page) {
   await page.goto('/')
@@ -296,4 +296,22 @@ test('funding gap and combined downside reach the decision summary and the repor
   await expect(report.getByRole('heading', { name: 'Funding and downside' })).toBeVisible()
   await expect(report.getByRole('row', { name: /^All together/ })).toBeVisible()
   await expect(report.getByText(/Funding gap of \$/)).toBeVisible()
+})
+
+test('assumptions: switching one off changes results, shows everywhere, and turns back on', async ({ page }) => {
+  await fresh(page)
+  const poc = page.getByRole('button', { name: /^Profit on cost: / })
+  const before = await poc.textContent()
+  await openSection(page, 'Assumptions')
+  await page.getByRole('switch', { name: /Construction contingency/ }).uncheck()
+  await expect(page.getByText('1 switched off')).toBeVisible()
+  await expect(poc).not.toHaveText(before!)
+  await expect(page.getByRole('button', { name: '1 assumption off' })).toBeVisible()
+  await openSection(page, 'Overview')
+  await expect(page.getByText(/leave out 1 assumption you switched off/)).toBeVisible()
+  await openSection(page, 'Report & export')
+  await expect(page.getByRole('article', { name: 'Report' }).getByRole('row', { name: /Construction contingency.*OFF/ })).toBeVisible()
+  await openSection(page, 'Assumptions')
+  await page.getByRole('button', { name: 'Turn all back on' }).click()
+  await expect(poc).toHaveText(before!)
 })

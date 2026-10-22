@@ -13,6 +13,7 @@ import { readSources, SiteMap } from './SiteMap'
 import { Streetscape } from './Streetscape'
 import { Visuals } from './Visuals'
 import { Feasibility } from './Feasibility'
+import { Assumptions } from './Assumptions'
 import { People } from './People'
 import { Report } from './Report'
 import { PrivacyPolicy, Terms } from './Legal'
@@ -26,6 +27,7 @@ export function Sections({ section }: { section: SectionId }) {
     case 'map': return <SiteMap />
     case 'charts': return <Visuals />
     case 'feasibility': return <Feasibility />
+    case 'assumptions': return <Assumptions />
     case 'people': return <People />
     case 'report': return <Report />
     case 'privacy': return <PrivacyPolicy />
