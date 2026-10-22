@@ -43,12 +43,21 @@ function pane(x:number,y:number,w:number,h:number,p:Palette,mullion=true,sill=tr
 }
 
 function building(p:Palette,height=40,podium=false){
+  if(!podium) return tower(p,height,false)
+  // Mixed use: the tower sits on the podium, set back 1.2 m behind its front face, so the podium roof reads as a
+  // terrace in front of it. The setback lifts the tower by its projection, so the tower is shortened to keep the
+  // overall height. The green roof sits on the tower's own roof, no wider than it.
+  const sb=1.2, lift=sb*RISE, h=height-lift, crowned=h>=18
+  const roof=`<g transform="translate(${crowned?1.4:0})">${greenRoof(p,crowned?12.2:15,-h)}</g>`
+  return `<g transform="translate(${sb} ${-lift})">${tower(p,h,true)}${roof}</g><g transform="translate(-.8)">${podiumBase(p,'retail')}</g>`
+}
+function tower(p:Palette,height:number,podium:boolean){
   const w=15, depth=1.7, base=podium?5.5:3.1
   const crown=height>=18 ? 3 : 0 // top storey set back: an amenity floor and roof terrace, so towers read as towers
   const bodyTop=-height+crown
   const floors=Math.max(1,Math.floor((height-crown-base)/3))
   // Envelope first: the scale check measures this rectangle
-  let s=rect(0,-height,w,height,'none','none',0,'data-envelope="height"')+groundShadow(w,depth,p)
+  let s=rect(0,-height,w,height,'none','none',0,'data-envelope="height"')+(podium?'':groundShadow(w,depth,p))
   s+=sideWall(p,w,0,bodyTop,depth)
   s+=rect(0,bodyTop,w,height-crown,p.wall,'none',0)+wash(0,bodyTop,w,height-crown,p)+rect(0,bodyTop,w,height-crown,'url(#PANEL)','none',0)
   s+=rect(0,bodyTop,w,height-crown,p.wall,'none',0,'filter="url(#GRAIN)" opacity=".045"')
@@ -77,11 +86,8 @@ function building(p:Palette,height=40,podium=false){
   s+=rect(.5,-base+.35,14,base-.35,p.shade,p.ink,LW.detail)
   for(let i=0;i<7;i++)s+=pane(.66+(i*1.95),-base+.55,1.72,base-.75,p,false)
   s+=rect(6.55,-2.55,1.8,2.55,p.glass,p.ink,LW.edge)+line(7.45,-2.5,7.45,0,p.ink,LW.detail)+circle(7.62,-1.25,.045,p.ink)
-  if(podium){
-    s+=`<g transform="translate(-.8)">${podiumBase(p,'retail')}</g>`
-    s+=greenRoof(p,15,-height-.4)
-  }else s+=shade(5.6,-2.55,3.75,.3,p,.3)+path('M5.6,-2.9 h3.75 l.35,.35 H5.25Z',p.roof,p.ink,LW.edge)+rect(.65,-.55,1.35,.55,p.wall,p.ink,LW.detail)+path('M.8,-.55 q.2,-.65 .35,0 q.2,-.8 .4,0','none',p.green,.07)
-  return s+line(-.3,0,w+depth+.3,0,p.ink,LW.outline)
+  if(!podium)s+=shade(5.6,-2.55,3.75,.3,p,.3)+path('M5.6,-2.9 h3.75 l.35,.35 H5.25Z',p.roof,p.ink,LW.edge)+rect(.65,-.55,1.35,.55,p.wall,p.ink,LW.detail)+path('M.8,-.55 q.2,-.65 .35,0 q.2,-.8 .4,0','none',p.green,.07)
+  return podium ? s : s+line(-.3,0,w+depth+.3,0,p.ink,LW.outline)
 }
 
 function greenRoof(p:Palette,w:number,y:number){
