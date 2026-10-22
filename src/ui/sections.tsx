@@ -11,6 +11,8 @@ import { Audit, Finance, Returns, Revenue, Scenarios } from './sections2'
 import { Analysis, Progress } from './sections3'
 import { readSources, SiteMap } from './SiteMap'
 import { Streetscape } from './Streetscape'
+import { Visuals } from './Visuals'
+import { Report } from './Report'
 import { atLeast, type SectionId } from './store'
 import { getResult } from './tree'
 import { useWorkspace } from './workspace'
@@ -19,6 +21,8 @@ export function Sections({ section }: { section: SectionId }) {
   switch (section) {
     case 'overview': return <Overview />
     case 'map': return <SiteMap />
+    case 'charts': return <Visuals />
+    case 'report': return <Report />
     case 'progress': return <Progress />
     case 'market': return <Market />
     case 'program': return <Program />

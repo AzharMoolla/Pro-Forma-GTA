@@ -7,7 +7,7 @@ import { demoProjects } from './data'
 import { updateNode, type NodePath } from './tree'
 
 export type Mode = 'quick' | 'professional' | 'institutional'
-export type SectionId = 'overview' | 'map' | 'progress' | 'market' | 'program' | 'costs' | 'revenue' | 'finance' | 'returns' | 'scenarios' | 'audit'
+export type SectionId = 'overview' | 'map' | 'charts' | 'report' | 'progress' | 'market' | 'program' | 'costs' | 'revenue' | 'finance' | 'returns' | 'scenarios' | 'audit'
 
 export const SECTIONS: Array<{ id: SectionId; label: string; minMode: Mode }> = [
   { id: 'overview', label: 'Overview', minMode: 'quick' },
@@ -19,8 +19,10 @@ export const SECTIONS: Array<{ id: SectionId; label: string; minMode: Mode }> = 
   { id: 'revenue', label: 'Revenue & operations', minMode: 'quick' },
   { id: 'finance', label: 'Finance & ledger', minMode: 'professional' },
   { id: 'returns', label: 'Returns & range', minMode: 'quick' },
+  { id: 'charts', label: 'Charts', minMode: 'quick' },
   { id: 'scenarios', label: 'Scenarios', minMode: 'professional' },
   { id: 'audit', label: 'Sources & audit', minMode: 'quick' },
+  { id: 'report', label: 'Report & export', minMode: 'quick' },
 ]
 
 const rank: Record<Mode, number> = { quick: 0, professional: 1, institutional: 2 }

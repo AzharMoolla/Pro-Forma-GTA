@@ -98,6 +98,8 @@ export interface Distribution {
   mean: number | null
   base: number | null
   unavailable: number // draws where the metric had no value (e.g. IRR with no sign change)
+  valid: number // draws with a result; percentiles are conditional on these
+  shareBelowZero: number | null // share of valid draws below zero, under the model's own band assumptions
 }
 
 export interface Simulation {
@@ -139,6 +141,8 @@ export function simulate(node: Node, options: { draws: number; seed: number; met
       mean: has ? sorted.reduce((s, v) => s + v, 0) / sorted.length : null,
       base: base.metrics[id]?.value ?? null,
       unavailable: unavailable[id]!,
+      valid: sorted.length,
+      shareBelowZero: has ? sorted.filter((v) => v < 0).length / sorted.length : null,
     }
   }
   return { draws: options.draws, seed: options.seed, metrics }

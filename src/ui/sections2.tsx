@@ -259,13 +259,24 @@ export function Returns() {
             {sim.status === 'done' && (
               <div className="mt-3 flex flex-col gap-4">
                 <TableWrap caption="Monte Carlo percentiles">
-                  <thead><tr>{['Metric', 'P10', 'P50', 'P90', 'Base'].map((h, i) => <th key={h} scope="col" className={cx(th, i > 0 && 'text-right')}>{h}</th>)}</tr></thead>
+                  <thead><tr>{['Metric', 'P10', 'P50', 'P90', 'Base', 'Adverse end', 'Below zero', 'Valid draws'].map((h, i) => <th key={h} scope="col" className={cx(th, i > 0 && 'text-right')}>{h}</th>)}</tr></thead>
                   <tbody>{Object.entries(sim.sim.metrics).map(([id, d]) => {
                     const m = nodeResult.metrics[id]!
                     const f = (v: number | null) => metricValue({ unit: m.unit, value: v })
-                    return <tr key={id}><td className={td}>{m.label}</td><td className={tdNum}>{f(d.p10)}</td><td className={tdNum}>{f(d.p50)}</td><td className={tdNum}>{f(d.p90)}</td><td className={tdNum}>{f(d.base)}</td></tr>
+                    const costLike = id === 'totalDevelopmentCost'
+                    return (
+                      <tr key={id}>
+                        <td className={td}>{m.label}</td><td className={tdNum}>{f(d.p10)}</td><td className={tdNum}>{f(d.p50)}</td><td className={tdNum}>{f(d.p90)}</td><td className={tdNum}>{f(d.base)}</td>
+                        <td className={`${td} text-right text-xs`}>{costLike ? 'P90 (higher cost)' : 'P10 (lower return)'}</td>
+                        <td className={tdNum}>{costLike || d.shareBelowZero === null ? '—' : pct(d.shareBelowZero, 0)}</td>
+                        <td className={tdNum}>{d.valid}/{sim.sim.draws}{d.unavailable ? <span className="block text-xs text-warn">{d.unavailable} unavailable</span> : null}</td>
+                      </tr>
+                    )
                   })}</tbody>
                 </TableWrap>
+                <p className="text-xs text-ink-soft">
+                  Read with care: the bands are modelling assumptions by estimate class, not calibrated confidence intervals, and each line is drawn independently, so shared risks (construction inflation, rents, rates, cap rates) are not yet linked and the spread is probably narrower than reality. "Below zero" is the share of valid draws under these assumptions, not a market probability. Percentiles exclude unavailable draws (for example, no IRR).
+                </p>
                 {atLeast(state.mode, 'institutional') ? (
                   <div>
                     <h3 className="mb-2 text-sm font-semibold">What moves profit most</h3>

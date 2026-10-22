@@ -59,7 +59,7 @@ export function App() {
   return (
     <WorkspaceContext.Provider value={ws}>
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-10 focus:rounded focus:bg-surface focus:p-2">Skip to content</a>
-      <header className="border-b border-line bg-surface">
+      <header className="border-b border-line bg-surface print:hidden">
         <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-x-6 gap-y-3 px-4 py-3">
           <div>
             <p className="text-xs tracking-wide text-ink-mute uppercase">GTA development pro forma</p>
@@ -99,7 +99,7 @@ export function App() {
 
       {nodeResult && (
         <div className="border-b border-line bg-surface">
-          <ul className="mx-auto grid max-w-[1600px] grid-cols-2 gap-px bg-line sm:grid-cols-4 xl:grid-cols-8" aria-label={`Headline results for ${node.name}`}>
+          <ul className="mx-auto grid max-w-[1600px] grid-cols-2 gap-px bg-line sm:grid-cols-4 xl:grid-cols-8 print:hidden" aria-label={`Headline results for ${node.name}`}>
             {KPIS.map((id) => nodeResult.metrics[id]).filter((m) => m !== undefined).map((m) => (
               <li key={m.id} className={cx('flex flex-col bg-surface', state.inspect?.kind === 'metric' && state.inspect.id === m.id && 'bg-accent-soft')}>
                 <span className="px-4 pt-3 text-xs text-ink-soft"><MetricLabel id={m.id} label={m.label} /></span>
@@ -119,8 +119,8 @@ export function App() {
       )}
 
       {/* The site map takes the full width: no inspector column, no max width */}
-      <div className={cx('mx-auto grid gap-4 px-4 py-4 lg:grid-cols-[220px_minmax(0,1fr)]', section === 'map' ? 'xl:grid-cols-[200px_minmax(0,1fr)]' : 'max-w-[1600px] xl:grid-cols-[200px_minmax(0,1fr)_340px]')}>
-        <nav aria-label="Workspace sections" className="flex min-w-0 flex-col gap-4">
+      <div className={cx('mx-auto grid gap-4 px-4 py-4 lg:grid-cols-[220px_minmax(0,1fr)] print:block print:p-0', section === 'map' ? 'xl:grid-cols-[200px_minmax(0,1fr)]' : 'max-w-[1600px] xl:grid-cols-[200px_minmax(0,1fr)_340px]')}>
+        <nav aria-label="Workspace sections" className="flex min-w-0 flex-col gap-4 print:hidden">
           <ul className="flex gap-1 overflow-x-auto lg:flex-col">
             {visible.map((s) => (
               <li key={s.id}>
@@ -169,7 +169,7 @@ export function App() {
         </main>
 
         {section !== 'map' && (
-          <aside aria-label="Inspector" className="min-w-0 lg:col-start-2 xl:col-start-3 xl:row-start-1">
+          <aside aria-label="Inspector" className="min-w-0 lg:col-start-2 xl:col-start-3 xl:row-start-1 print:hidden">
             <Inspector />
           </aside>
         )}

@@ -55,6 +55,35 @@ export interface Insight {
   title: string
   detail: string
   drivers: string[] // the lines or metrics behind it
+  action?: 'model-rezoning' // something the workspace can do about it
+  source?: string // where a site fact came from (layer and date)
+}
+
+/** One building's mapped limits and proposal, for the site checks. Built by the UI from (scoped) project variables. */
+export interface SiteBuilding {
+  name: string
+  storeys: number
+  limitStoreys: number | null
+  limitMetres: number | null
+  airLimitStoreys: number | null
+  fsi: number | null // proposed, by-law GFA ÷ lot area
+}
+
+/** Site facts from the map (or entered), for the zoning and site checks. All optional: unknown means no check. */
+export interface SiteFacts {
+  buildings: SiteBuilding[]
+  fsiLimit: number | null
+  zbaPlanned: boolean // planning.zba
+  holding: boolean
+  exception: string | null
+  heritage: boolean
+  heritageDistrict: string | null
+  regulatedArea: boolean
+  greenbelt: boolean
+  nearAerodrome: boolean
+  protectedStationArea: boolean // Toronto PMTSA (inclusionary zoning area)
+  residential: boolean
+  source: (variable: string) => string | undefined
 }
 
 export interface Analysis { buckets: Bucket[]; insights: Insight[]; total: number }
@@ -66,6 +95,41 @@ export interface AnalysisInput {
   range?: { p10Profit: number | null; p50Profit: number | null }
   unaccountedItems?: number
   buildableSqft?: number | null // by-law GFA (or above-grade GCA) for land $/buildable ft²
+  site?: SiteFacts
+}
+
+/** Zoning and site checks: where the proposal sits against mapped limits and policy areas. */
+export function siteInsights(site: SiteFacts): Insight[] {
+  const out: Insight[] = []
+  const names = (bs: SiteBuilding[]) => (bs.length === 1 ? bs[0]!.name : `${bs.length} buildings (${bs.slice(0, 3).map((b) => b.name).join(', ')}${bs.length > 3 ? ', …' : ''})`)
+  const overHeight = site.buildings.filter((b) => b.limitStoreys !== null && b.storeys > b.limitStoreys)
+  if (overHeight.length) {
+    const worst = overHeight.reduce((a, b) => (b.storeys - b.limitStoreys! > a.storeys - a.limitStoreys! ? b : a))
+    const by = `${worst.storeys} storeys against a mapped limit of about ${worst.limitStoreys}${worst.limitMetres ? ` (${worst.limitMetres} m)` : ''}`
+    out.push(site.zbaPlanned
+      ? { id: 'height-rezoning-assumed', severity: 'watch', title: `${names(overHeight)} over the zoning height: rezoning assumed`, detail: `${by}. The project variables say a zoning by-law amendment is planned. Check its fees, studies and the extra months are in the model; an appeal to the Ontario Land Tribunal adds more.`, drivers: [], action: 'model-rezoning', source: site.source('zoning.heightLimitStoreys') }
+      : { id: 'height-over', severity: 'concern', title: `${names(overHeight)} over the zoning height`, detail: `${by}. As drawn this needs a zoning by-law amendment (or a minor variance for a small overage), which the model does not include yet: fees, studies and 12–24+ months of carry.`, drivers: [], action: 'model-rezoning', source: site.source('zoning.heightLimitStoreys') })
+  }
+  const overAir = site.buildings.filter((b) => b.airLimitStoreys !== null && b.storeys > b.airLimitStoreys)
+  if (overAir.length) {
+    out.push({ id: 'airport-over', severity: 'concern', title: `${names(overAir)} above the airport height limit`, detail: 'Airport Zoning Regulations are federal: a city rezoning cannot raise them. The building (and its cranes) must stay below the surface, or the design changes. NAV CANADA and Transport Canada reviews apply regardless.', drivers: [], source: site.source('site.aeronauticalLimitM') })
+  } else if (site.nearAerodrome && site.buildings.some((b) => b.airLimitStoreys === null)) {
+    out.push({ id: 'airport-check', severity: 'watch', title: 'Near an aerodrome: airport height limit not checked', detail: 'Within the 6 nautical mile screen. Check the Airport Zoning Regulation plan for this airport and enter the limit above ground (surface elevation minus site elevation), then file with NAV CANADA for the building and cranes.', drivers: [], source: site.source('site.nearAerodrome') })
+  }
+  if (site.fsiLimit !== null) {
+    const overFsi = site.buildings.filter((b) => b.fsi !== null && b.fsi > site.fsiLimit! + 1e-9)
+    if (overFsi.length) {
+      const b = overFsi[0]!
+      out.push({ id: 'fsi-over', severity: site.zbaPlanned ? 'watch' : 'concern', title: `Density ${b.fsi!.toFixed(2)} FSI against ${site.fsiLimit} as-of-right`, detail: `${names(overFsi)} exceed${overFsi.length === 1 ? 's' : ''} the mapped maximum FSI. Additional density needs a rezoning; in Toronto it may also bring community benefits charges and parkland on the extra GFA.`, drivers: ['fsi'], action: 'model-rezoning', source: site.source('zoning.fsiLimit') })
+    }
+  }
+  if (site.holding) out.push({ id: 'holding', severity: 'watch', title: 'Holding (H) symbol on the zoning', detail: 'The permissions only take effect once the holding symbol is lifted, usually after conditions such as servicing or agreements are met. Plan for the application and the time before a building permit.', drivers: [], source: site.source('zoning.holding') })
+  if (site.exception) out.push({ id: 'exception', severity: 'info', title: `Site-specific zoning exception ${site.exception}`, detail: 'Exceptions can add or remove permissions (height, density, uses, setbacks). Read the exception text before relying on the base zone.', drivers: [], source: site.source('zoning.exception') })
+  if (site.greenbelt) out.push({ id: 'greenbelt', severity: 'concern', title: 'Inside the Greenbelt', detail: 'Urban development is generally not permitted in the Protected Countryside; settlement areas and existing permissions are limited. Confirm the designation before modelling anything else.', drivers: [], source: site.source('site.greenbelt') })
+  if (site.heritage) out.push({ id: 'heritage', severity: 'watch', title: `Heritage${site.heritageDistrict ? `: ${site.heritageDistrict}` : ''}`, detail: 'Expect a heritage impact assessment, a heritage permit and design constraints on the base building; conservation work and longer review are common costs.', drivers: [], source: site.source('site.heritage') })
+  if (site.regulatedArea) out.push({ id: 'regulated', severity: 'watch', title: 'Conservation authority regulated area', detail: 'A permit from the conservation authority may be needed (valley, floodplain, wetland or shoreline). The mapped limit is a screen; the authority confirms.', drivers: [], source: site.source('site.regulatedArea') })
+  if (site.protectedStationArea && site.residential) out.push({ id: 'iz', severity: 'info', title: 'Protected major transit station area', detail: "Toronto's inclusionary zoning applies in these areas once in force; implementation is paused until 2027-07-01. Check whether this application's timing would bring affordable-unit requirements.", drivers: [], source: site.source('site.mtsaType') })
+  return out
 }
 
 const pct = (v: number) => `${(v * 100).toFixed(0)}%`
@@ -207,6 +271,7 @@ export function analyze(input: AnalysisInput): Analysis {
     if (p50Profit !== null && p50Profit < 0) add({ id: 'range-loss-likely', severity: 'concern', title: 'Likely outcome is a loss', detail: `The median simulated profit is ${M(p50Profit)}. Upward-skewed cost bands pull the likely result below the base case.`, drivers: ['profit'] })
     else if (p10Profit !== null && p10Profit < 0) add({ id: 'range-loss-tail', severity: 'watch', title: 'At least a 1-in-10 chance of a loss', detail: `The P10 profit is ${M(p10Profit)}. Narrowing the widest cost bands reduces this.`, drivers: ['profit'] })
   }
+  if (input.site) insights.push(...siteInsights(input.site))
   if (input.unaccountedItems) {
     add({ id: 'unaccounted', severity: 'watch', title: `${input.unaccountedItems} applicable cost items are not in the model`, detail: 'The checklist says these apply to this project. Totals are understated until they are estimated or marked as covered.', drivers: [] })
   }

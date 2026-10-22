@@ -1,10 +1,18 @@
 import { useMemo, useState } from 'react'
-import { analyze, costItems, type Severity } from '../engine/insights'
+import { analyze, costItems, type Insight, type Severity, type SiteFacts } from '../engine/insights'
+import type { Attributes } from '../engine/catalogue'
+import { applyRezoning, hasRezoning, REZONING_DEFAULTS } from '../scenario/rezoning'
+import { createSnapshot, lock } from '../scenario/snapshot'
+import { saveScenario } from '../cloud/cloud'
+import { dataContext } from './data'
+import { readSources } from './SiteMap'
+import { buildingOf, scoped } from './streetscapeScene'
+import { getNode } from './tree'
 import { isPortfolio, type Node } from '../engine/portfolio'
 import type { ProjectInput } from '../engine/project'
 import { addBuilding, buildTracker, lineFromActual, lineFromItem, removeNode, validateReceipt, type Receipt, type Task, type TaskStatus } from '../tracker/tracker'
 import { Button, Card, Chip, NumberField, SourceChip, cx } from './components'
-import { coverage } from './coverage'
+import { coverage, projectsUnder } from './coverage'
 import { catalogue, catalogueItem } from './data'
 import { money, pct } from './format'
 import { deleteReceipt, getReceipt, putReceipt, sha256File } from './receipts'
@@ -27,6 +35,73 @@ function scopeType(node: Node, rootType: string, isRoot: boolean): string {
 
 // ---------------------------------------------------------------- analysis
 
+/** Site facts for the selected node: each building's (scoped) limits against its proposal, plus site-wide flags. */
+export function siteFactsFor(node: Node, path: string[], a: Attributes): SiteFacts {
+  const at = (id: string) => scoped(a, path, id)
+  const sources = readSources(a)
+  const buildings = projectsUnder(node).map(({ path: rel, project }) => {
+    const b = buildingOf(project, [...path, ...rel], a)
+    const prog = project.program
+    return { name: project.name, storeys: b.kind === 'lots' ? 0 : b.storeys, limitStoreys: b.limitStoreys, limitMetres: b.limitMetres, airLimitStoreys: b.airLimitStoreys, fsi: prog?.planningGfaSqft && prog.lotAreaSqft ? prog.planningGfaSqft / prog.lotAreaSqft : null }
+  })
+  const residential = projectsUnder(node).some(({ project }) => project.components.some((c) => c.kind === 'rental' || c.kind === 'condo'))
+  return {
+    buildings,
+    fsiLimit: typeof at('zoning.fsiLimit') === 'number' ? (at('zoning.fsiLimit') as number) : null,
+    zbaPlanned: at('planning.zba') === true,
+    holding: at('zoning.holding') === true,
+    exception: typeof at('zoning.exception') === 'string' ? (at('zoning.exception') as string) : null,
+    heritage: at('site.heritage') === true,
+    heritageDistrict: typeof at('site.heritageDistrict') === 'string' ? (at('site.heritageDistrict') as string) : null,
+    regulatedArea: at('site.regulatedArea') === true,
+    greenbelt: at('site.greenbelt') === true,
+    nearAerodrome: at('site.nearAerodrome') === true,
+    protectedStationArea: at('site.municipality') === 'toronto' && /protected/i.test(String(at('site.mtsaType') ?? '')),
+    residential,
+    source: (id) => {
+      const s = sources[id] ?? Object.entries(sources).find(([k]) => k.endsWith(`|${id}`))?.[1]
+      return s ? `${s.layer} · ${s.retrievedAt}` : undefined
+    },
+  }
+}
+
+/** Lock the as-of-right draft as a scenario, then add the rezoning's time and costs to the over-limit buildings. */
+function ModelRezoning({ insight }: { insight: Insight }) {
+  const { state, dispatch, draft, cloud } = useWorkspace()
+  const project = state.projects[state.projectId]!
+  const [months, setMonths] = useState(REZONING_DEFAULTS.months)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const selected = getNode(draft, state.path)
+  const targets = projectsUnder(selected).filter(({ project: p }) => !hasRezoning(p))
+  if (!targets.length) return <p className="mt-2 text-xs text-ink-soft">The rezoning is already in this draft (see the "Rezoning" cost lines and the longer pre-construction period).</p>
+  const run = async () => {
+    setBusy(true)
+    try {
+      const snapshot = lock(await createSnapshot({ input: draft, attributes: project.attributes, context: dataContext, label: 'As-of-right', note: `Locked automatically before modelling the rezoning: ${insight.title}`, createdAt: new Date().toISOString(), parentId: project.draftParentId, sequence: project.scenarios.length + 1 }))
+      if (cloud.projectId) await saveScenario(cloud.projectId, snapshot)
+      dispatch({ type: 'addSnapshot', snapshot })
+      const paths = targets.map(({ path }) => [...state.path, ...path])
+      dispatch({ type: 'edit', path: [], update: (root) => applyRezoning(root, paths, { ...REZONING_DEFAULTS, months }) })
+      dispatch({ type: 'attribute', id: 'planning.zba', value: true })
+      setError(null)
+    } catch (e) {
+      setError((e as Error).message)
+    }
+    setBusy(false)
+  }
+  return (
+    <div className="mt-2 flex flex-wrap items-end gap-2 border-t border-line pt-2">
+      <div className="w-36"><NumberField label="Months added" suffix="mo" value={months} onCommit={(v) => setMonths(Math.max(0, Math.round(v)))} /></div>
+      <Button onClick={() => void run()} disabled={busy}>Lock as-of-right and model the rezoning</Button>
+      <p className="w-full text-xs text-ink-soft">
+        Adds {months} months before construction (carrying costs run longer), a zoning by-law amendment fee if none is in the model, and {money(REZONING_DEFAULTS.studies)} of extra studies, all as class D assumptions to replace. The as-of-right draft is kept as a locked scenario to compare against. Returns can rise as well as fall with a delay when rents grow faster than costs escalate: check the escalation assumption.
+      </p>
+      {error && <p role="alert" className="text-sm text-bad">{error}</p>}
+    </div>
+  )
+}
+
 const SEVERITY: Record<Severity, { label: string; icon: string; tone: 'good' | 'neutral' | 'warn' | 'bad' }> = {
   concern: { label: 'Concern', icon: '▲', tone: 'bad' },
   watch: { label: 'Watch', icon: '!', tone: 'warn' },
@@ -41,8 +116,8 @@ export function Analysis() {
     if (!nodeResult) return null
     const unaccounted = state.path.length ? 0 : coverage(demo.projectType, attributes, draft, demo.coverage).filter((e) => e.status === 'unaccounted').length
     const prog = isPortfolio(node) ? undefined : node.program
-    return analyze({ items: costItems(node, nodeResult, stageOf), metrics: nodeResult.metrics, isMasterPlan: isPortfolio(node), unaccountedItems: unaccounted, buildableSqft: prog ? (prog.planningGfaSqft ?? prog.gcaAboveSqft) : null })
-  }, [node, nodeResult, demo, attributes, draft, state.path.length])
+    return analyze({ items: costItems(node, nodeResult, stageOf), metrics: nodeResult.metrics, isMasterPlan: isPortfolio(node), unaccountedItems: unaccounted, buildableSqft: prog ? (prog.planningGfaSqft ?? prog.gcaAboveSqft) : null, site: siteFactsFor(node, state.path, attributes) })
+  }, [node, nodeResult, demo, attributes, draft, state.path])
   if (!analysis) return null
   const max = Math.max(...analysis.buckets.map((b) => b.share))
 
@@ -86,11 +161,13 @@ export function Analysis() {
                   </p>
                   <p className="mt-1 text-ink-soft">{i.detail}</p>
                   {i.drivers.length > 0 && i.drivers[0]!.includes('$') && <p className="mt-1 text-xs text-ink-soft">Driven by: {i.drivers.join(' · ')}</p>}
+                  {i.source && <p className="mt-1 text-xs text-ink-soft">Source: {i.source} (screening data; check the by-law and plans)</p>}
+                  {i.action === 'model-rezoning' && analysis.insights.find((x) => x.action === 'model-rezoning') === i && <ModelRezoning insight={i} />}
                 </li>
               )
             })}
           </ul>
-          <p className="mt-3 text-xs text-ink-mute">Observations compare this project's own numbers (shares of cost, yield vs exit cap, levered vs unlevered). They are prompts to look closer, not an assessment of viability.</p>
+          <p className="mt-3 text-xs text-ink-mute">Observations compare this project's own numbers (shares of cost, yield vs exit cap, levered vs unlevered) and its mapped site facts (zoning, airport, heritage, conservation). They are prompts to look closer, not an assessment of viability or a zoning opinion.</p>
         </div>
       </div>
     </Card>
@@ -101,13 +178,12 @@ export function Analysis() {
 
 const STATUS_LABEL: Record<TaskStatus, string> = { todo: 'To do', 'in-progress': 'In progress', done: 'Done', 'not-applicable': 'Not applicable' }
 
-export function Progress() {
-  const ws = useWorkspace()
-  const { node, nodeResult, demo, state } = ws
+/** The tracker for the selected node: tasks by stage with budgets, actuals and forecasts. Shared with Charts. */
+export function useTrackerView() {
+  const { node, nodeResult, demo, state } = useWorkspace()
   const project = state.projects[state.projectId]!
   const scope = state.path
   const type = scopeType(node, demo.projectType, scope.length === 0)
-
   const view = useMemo(() => {
     const entries = coverage(type, project.attributes, node, scope.length === 0 ? demo.coverage : {})
     const budgets = new Map<string, number>()
@@ -119,6 +195,12 @@ export function Progress() {
     }
     return buildTracker({ scope, stages: catalogue.stages, entries, budgets, state: project.tracker })
   }, [type, project.attributes, project.tracker, node, nodeResult, scope, demo.coverage])
+  return { view, type }
+}
+
+export function Progress() {
+  const { node } = useWorkspace()
+  const { view, type } = useTrackerView()
 
   const [open, setOpen] = useState<string | null>(null)
   const openStage = open ?? view.current

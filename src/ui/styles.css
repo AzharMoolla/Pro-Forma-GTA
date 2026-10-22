@@ -21,6 +21,8 @@
   --good-soft: #dfeedf;
   --chart-in: #007c99;
   --chart-out: #ba4f2e;
+  --chart-3: #6b5bb0;
+  --chart-4: #8a6d00;
   color-scheme: light;
 }
 
@@ -45,6 +47,8 @@
     --good-soft: #1c3323;
     --chart-in: #24a0b6;
     --chart-out: #db6e48;
+    --chart-3: #8a78d6;
+    --chart-4: #b38f1d;
     color-scheme: dark;
   }
 }
@@ -69,6 +73,8 @@
   --good-soft: #1c3323;
   --chart-in: #24a0b6;
   --chart-out: #db6e48;
+  --chart-3: #8a78d6;
+  --chart-4: #b38f1d;
   color-scheme: dark;
 }
 
@@ -116,4 +122,17 @@ body {
     transition: none !important;
     animation: none !important;
   }
+}
+
+/* Print (Report & export → Save as PDF): always the light palette, no app chrome */
+@media print {
+  :root, :root[data-theme='dark'] {
+    --page: #ffffff; --surface: #ffffff; --sunken: #f3f1ec; --ink: #1c2629; --ink-soft: #45535a; --ink-mute: #5b676c;
+    --border: #ddd8ce; --border-strong: #857f74; --accent: #0b5f70; --accent-soft: #dcebee; --on-accent: #ffffff;
+    --warn: #7f5300; --warn-soft: #f6ebd3; --bad: #a03a1e; --bad-soft: #f7e1da; --good: #2c673c; --good-soft: #dfeedf;
+    --chart-in: #007c99; --chart-out: #ba4f2e; --chart-3: #6b5bb0; --chart-4: #8a6d00;
+    color-scheme: light;
+  }
+  body { background: #ffffff; }
+  .report section { break-inside: avoid-page; }
 }

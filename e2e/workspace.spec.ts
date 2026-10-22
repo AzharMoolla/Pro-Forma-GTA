@@ -1,7 +1,7 @@
 import { AxeBuilder } from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
 
-const sections = ['Overview', 'Site map', 'Market evidence', 'Site & program', 'Cost & budget', 'Revenue & operations', 'Finance & ledger', 'Returns & range', 'Scenarios', 'Sources & audit']
+const sections = ['Overview', 'Site map', 'Market evidence', 'Site & program', 'Cost & budget', 'Revenue & operations', 'Finance & ledger', 'Returns & range', 'Charts', 'Scenarios', 'Sources & audit', 'Report & export']
 
 async function fresh(page: Page) {
   await page.goto('/')
@@ -150,4 +150,27 @@ test('readiness: record a source on a cost line, review it, and the header count
   expect(violations.map((v) => `${v.id} (${v.nodes.length})`)).toEqual([])
   await header.click()
   await expect(page.getByRole('heading', { name: 'Readiness: three separate questions' })).toBeVisible()
+})
+
+test('report: the Excel workbook downloads; charts switch to tables', async ({ page }) => {
+  await fresh(page)
+  await openSection(page, 'Report & export')
+  const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Download Excel workbook (.xlsx)' }).click()])
+  expect(download.suggestedFilename()).toMatch(/\.xlsx$/)
+  const bytes = await (await download.createReadStream()).toArray()
+  expect(Buffer.concat(bytes).subarray(0, 2).toString()).toBe('PK') // a zip package
+  await expect(page.getByRole('heading', { name: 'Key results' })).toBeVisible()
+  await openSection(page, 'Charts')
+  const card = page.locator('section', { has: page.getByRole('heading', { name: 'What makes it expensive' }) })
+  await card.getByRole('button', { name: 'Table' }).click()
+  await expect(card.getByRole('table')).toBeVisible()
+})
+
+test('analysis: zoning checks, and modelling the rezoning locks the as-of-right case', async ({ page }) => {
+  await fresh(page)
+  await expect(page.getByText(/over the zoning height/).first()).toBeVisible()
+  const before = await page.getByRole('button', { name: /^Total development cost: / }).getAttribute('aria-label')
+  await page.getByRole('button', { name: 'Lock as-of-right and model the rezoning' }).click()
+  await expect(page.getByText(/Draft from scenario/)).toBeVisible()
+  await expect(page.getByRole('button', { name: /^Total development cost: / })).not.toHaveAttribute('aria-label', before!)
 })
