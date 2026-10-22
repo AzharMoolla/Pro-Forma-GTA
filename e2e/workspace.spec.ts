@@ -135,8 +135,11 @@ test('account: signed-out state is honest and the sign-in form is accessible', a
 
 test('readiness: record a source on a cost line, review it, and the header counts it', async ({ page }) => {
   await fresh(page)
+  const status = page.locator('header summary') // the status menu holds the readiness details
   const header = page.getByRole('button', { name: /Open sources and audit/ })
+  await status.click()
   await expect(header).toHaveAccessibleName(/Model: calculates.*Sources: 0\/\d+ reviewed/)
+  await status.click()
   await openSection(page, 'Cost & budget')
   await page.locator('main').getByRole('button', { name: 'Survey', exact: true }).click()
   const form = page.getByRole('form', { name: 'Source of this figure' })
@@ -147,6 +150,7 @@ test('readiness: record a source on a cost line, review it, and the header count
   await form.getByLabel('Reviewed by').fill('cost consultant')
   await form.getByRole('button', { name: 'Mark reviewed' }).click()
   await expect(form.getByText(/Reviewed by cost consultant on \d{4}-\d{2}-\d{2}/)).toBeVisible()
+  await status.click()
   await expect(header).toHaveAccessibleName(/Sources: 1\/\d+ reviewed/)
   const { violations } = await new AxeBuilder({ page: page as never }).include('form[aria-label="Source of this figure"]').withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze()
   expect(violations.map((v) => `${v.id} (${v.nodes.length})`)).toEqual([])
@@ -174,8 +178,9 @@ test('analysis: zoning checks, and modelling the rezoning locks the as-of-right 
   await page.locator('#observations summary', { hasText: /over the zoning height/ }).click()
   const before = await page.getByRole('button', { name: /^Total development cost: / }).getAttribute('aria-label')
   await page.getByRole('button', { name: 'Lock the current draft and model the rezoning' }).click()
-  await expect(page.getByText(/Draft from scenario/)).toBeVisible()
   await expect(page.getByRole('button', { name: /^Total development cost: / })).not.toHaveAttribute('aria-label', before!)
+  await page.locator('header summary').click()
+  await expect(page.locator('header').getByText(/Draft from scenario/)).toBeVisible()
 })
 
 test('projects: create, rename, duplicate, export, import and delete', async ({ page }) => {
@@ -307,7 +312,9 @@ test('assumptions: switching one off changes results, shows everywhere, and turn
   await page.getByRole('switch', { name: /Construction contingency/ }).uncheck()
   await expect(page.getByText('1 switched off')).toBeVisible()
   await expect(poc).not.toHaveText(before!)
-  await expect(page.getByRole('button', { name: '1 assumption off' })).toBeVisible()
+  await page.locator('header summary').click()
+  await expect(page.locator('header').getByText('1 assumption off')).toBeVisible()
+  await page.locator('header summary').click()
   await openSection(page, 'Overview')
   await expect(page.getByText(/leave out 1 assumption you switched off/)).toBeVisible()
   await openSection(page, 'Report & export')

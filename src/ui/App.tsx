@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { isPortfolio, runNode, type Node } from '../engine/portfolio'
 import { modelOf, offSet } from '../engine/assumptions'
 import { Button, Chip, cx } from './components'
@@ -11,7 +11,7 @@ import { useCloud } from './useCloud'
 import { MetricLabel } from './Glossary'
 import { Sections } from './sections'
 import { readinessLabels, useReadiness } from './sections2'
-import { atLeast, SECTIONS, useStore, type Mode } from './store'
+import { atLeast, GROUPS, MODE_LABEL, SECTIONS, useStore, type Mode, type SectionId } from './store'
 import { flatten, getNode, getResult } from './tree'
 import { WorkspaceContext, type Workspace } from './workspace'
 
@@ -27,14 +27,74 @@ const tenureOf = (n: Node): keyof typeof KPIS => {
   return kinds.has('condo') && !kinds.has('rental') ? 'condo' : 'rental'
 }
 
-function ReadinessChips({ onOpen }: { onOpen: () => void }) {
+/** Project status in one place: a summary that opens to the details, each with where to act on it. */
+function StatusMenu({ synthetic, draftLabel, off, error, go }: { synthetic: boolean; draftLabel: string; off: number; error: boolean; go: (id: 'audit' | 'assumptions') => void }) {
   const l = readinessLabels(useReadiness())
+  const items = [
+    { tone: 'neutral' as const, text: draftLabel },
+    ...(synthetic ? [{ tone: 'warn' as const, text: 'Synthetic demo figures' }] : []),
+    ...(off ? [{ tone: 'warn' as const, text: `${off} assumption${off === 1 ? '' : 's'} off`, to: 'assumptions' as const }] : []),
+    ...(error ? [{ tone: 'bad' as const, text: 'Input error' }] : [l.model, l.scope, l.sources].map((x) => ({ ...x, to: 'audit' as const }))),
+  ]
+  const attention = items.filter((i) => i.tone === 'warn' || i.tone === 'bad').length
   return (
-    <button type="button" onClick={onOpen} className="flex min-h-10 flex-wrap items-center gap-1 rounded-md hover:bg-sunken" aria-label={`${l.model.text}. ${l.scope.text}. ${l.sources.text}. Open sources and audit`}>
-      <Chip tone={l.model.tone}>{l.model.text}</Chip>
-      <Chip tone={l.scope.tone}>{l.scope.text}</Chip>
-      <Chip tone={l.sources.tone}>{l.sources.text}</Chip>
-    </button>
+    <details className="relative">
+      <summary className="flex min-h-9 cursor-pointer list-none items-center gap-2 rounded-md border border-line px-3 text-sm hover:bg-sunken">
+        <span aria-hidden className={cx('size-2 rounded-full', error ? 'bg-bad' : attention ? 'bg-warn' : 'bg-good')} />
+        {attention ? `${attention} to review` : 'Ready'}<span aria-hidden className="text-ink-mute">▾</span>
+      </summary>
+      <div className="absolute right-0 z-20 mt-1 flex w-72 flex-col gap-2 rounded-lg border border-line bg-surface p-3 shadow-lg">
+        <ul className="flex flex-col gap-1.5">{items.map((i) => <li key={i.text}><Chip tone={i.tone}>{i.text}</Chip></li>)}</ul>
+        {!error && <button type="button" onClick={() => go('audit')} className="text-left text-sm text-accent underline" aria-label={`${l.model.text}. ${l.scope.text}. ${l.sources.text}. Open sources and audit`}>Open sources and audit</button>}
+        {off > 0 && <button type="button" onClick={() => go('assumptions')} className="text-left text-sm text-accent underline">Review assumptions</button>}
+      </div>
+    </details>
+  )
+}
+
+/** Sections in highlighted groups that collapse; the group holding the open section stays open. */
+function SectionNav({ visible, section, go }: { visible: typeof SECTIONS; section: string; go: (id: SectionId) => void }) {
+  const [closed, setClosed] = useState<Set<string>>(() => {
+    try { return new Set(JSON.parse(localStorage.getItem('plangta.nav.closed') ?? '[]') as string[]) } catch { return new Set() }
+  })
+  const toggle = (id: string) => setClosed((c) => {
+    const next = new Set(c)
+    if (next.has(id)) next.delete(id)
+    else next.add(id)
+    try { localStorage.setItem('plangta.nav.closed', JSON.stringify([...next])) } catch { /* storage unavailable: still works this session */ }
+    return next
+  })
+  const item = (sec: (typeof SECTIONS)[number]) => (
+    <li key={sec.id}>
+      <button type="button" aria-current={section === sec.id ? 'page' : undefined} onClick={() => go(sec.id)}
+        className={cx('min-h-9 w-full rounded-md px-3 text-left text-sm whitespace-nowrap', section === sec.id ? 'bg-accent-soft font-medium text-accent' : 'text-ink-soft hover:bg-sunken')}>
+        {sec.label}
+      </button>
+    </li>
+  )
+  return (
+    <>
+      {/* Phones: one scrolling row */}
+      <ul className="flex gap-1 overflow-x-auto lg:hidden">{visible.map(item)}</ul>
+      <div className="hidden flex-col gap-2 lg:flex">
+        <ul>{visible.filter((x) => !x.group).map(item)}</ul>
+        {GROUPS.map((g) => {
+          const secs = visible.filter((x) => x.group === g.id)
+          if (!secs.length) return null
+          const current = secs.some((x) => x.id === section)
+          const open = current || !closed.has(g.id)
+          return (
+            <section key={g.id} className={cx('rounded-lg border p-1', current ? 'border-accent bg-accent-soft/40' : 'border-line bg-sunken/50')}>
+              <button type="button" aria-expanded={open} onClick={() => !current && toggle(g.id)} disabled={current} title={current ? 'Holds the open section' : undefined}
+                className="flex min-h-8 w-full items-center justify-between rounded px-2 text-left text-[11px] font-semibold tracking-wide text-ink-mute uppercase hover:text-ink disabled:cursor-default disabled:hover:text-ink-mute">
+                {g.label}<span aria-hidden>{open ? '−' : '+'}</span>
+              </button>
+              {open && <ul className="flex flex-col">{secs.map(item)}</ul>}
+            </section>
+          )
+        })}
+      </div>
+    </>
   )
 }
 
@@ -108,26 +168,22 @@ export function App() {
               {Object.entries(state.projects).map(([id, p]) => <option key={id} value={id}>{p.meta.name}</option>)}
             </select>
           </div>
-          <fieldset className="flex items-center gap-1 text-sm">
+        </div>
+        <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-3 px-4 pb-2">
+          <fieldset className="flex items-center gap-1 rounded-lg bg-sunken p-0.5 text-sm">
             <legend className="sr-only">Detail level</legend>
-            {(['quick', 'professional', 'institutional'] as Mode[]).map((m) => (
-              <label key={m} className={cx('cursor-pointer rounded-md px-3 py-2 capitalize', state.mode === m ? 'bg-accent text-on-accent' : 'text-ink-soft hover:bg-sunken')}>
+            {(['quick', 'professional'] as Mode[]).map((m) => (
+              <label key={m} className={cx('cursor-pointer rounded-md px-3 py-1.5', state.mode === m ? 'bg-surface font-medium text-ink shadow-sm' : 'text-ink-soft hover:text-ink')}>
                 <input type="radio" name="mode" value={m} checked={state.mode === m} onChange={() => dispatch({ type: 'mode', mode: m })} className="sr-only" />
-                {m}
+                {MODE_LABEL[m]}
               </label>
             ))}
           </fieldset>
-          <div className="ml-auto flex flex-wrap items-center gap-2 text-sm" aria-live="polite">
+          <div className="ml-auto flex flex-wrap items-center gap-2" aria-live="polite">
             <Account state={cloudState} />
-            <Chip tone="warn" title="All demo figures are synthetic placeholders, not market evidence">Synthetic demo</Chip>
-            <Chip tone="neutral">{parent ? `Draft from scenario ${parent}` : 'Unsaved draft'}</Chip>
-            {offSet(current.attributes).size > 0 && <button type="button" onClick={() => dispatch({ type: 'section', id: 'assumptions' })}><Chip tone="warn">{offSet(current.attributes).size} assumption{offSet(current.attributes).size === 1 ? '' : 's'} off</Chip></button>}
-            {error ? <Chip tone="bad">Input error</Chip> : <ReadinessChips onOpen={() => dispatch({ type: 'section', id: 'audit' })} />}
+            <StatusMenu synthetic draftLabel={parent ? `Draft from scenario ${parent}` : 'Unsaved draft'} off={offSet(current.attributes).size} error={!!error} go={(id) => dispatch({ type: 'section', id })} />
           </div>
         </div>
-        <p className="mx-auto max-w-[1600px] px-4 pb-2 text-xs text-ink-mute">
-          One engine for every mode: the detail level changes which inputs and analyses you see, never the math. Not financial, tax, lending or legal advice.
-        </p>
       </header>
 
       {cloudState.askImport && (
@@ -139,7 +195,7 @@ export function App() {
           </div>
         </div>
       )}
-      {nodeResult && (
+      {nodeResult && SECTIONS.find((x) => x.id === section)?.kpis && (
         <div className="border-b border-line bg-surface">
           <ul className="mx-auto grid max-w-[1600px] grid-cols-2 gap-px bg-line sm:grid-cols-4 xl:grid-cols-8 print:hidden" aria-label={`Headline results for ${node.name}`}>
             {KPIS[tenureOf(node)].map((id) => nodeResult.metrics[id]).filter((m) => m !== undefined).map((m) => (
@@ -163,20 +219,7 @@ export function App() {
       {/* The site map takes the full width: no inspector column, no max width */}
       <div className={cx('mx-auto grid gap-4 px-4 py-4 lg:grid-cols-[220px_minmax(0,1fr)] print:block print:p-0', section === 'map' ? 'xl:grid-cols-[200px_minmax(0,1fr)]' : showInspector ? 'max-w-[1600px] xl:grid-cols-[200px_minmax(0,1fr)_340px]' : 'max-w-[1600px] xl:grid-cols-[200px_minmax(0,1fr)]')}>
         <nav aria-label="Workspace sections" className="flex min-w-0 flex-col gap-4 print:hidden">
-          <ul className="flex gap-1 overflow-x-auto lg:flex-col">
-            {visible.map((s) => (
-              <li key={s.id}>
-                <button
-                  type="button"
-                  aria-current={section === s.id ? 'page' : undefined}
-                  onClick={() => dispatch({ type: 'section', id: s.id })}
-                  className={cx('min-h-10 w-full rounded-md px-3 text-left text-sm whitespace-nowrap', section === s.id ? 'bg-accent-soft font-medium text-accent' : 'text-ink-soft hover:bg-sunken')}
-                >
-                  {s.label}
-                </button>
-              </li>
-            ))}
-          </ul>
+          <SectionNav visible={visible} section={section} go={(id) => dispatch({ type: 'section', id })} />
           {tree.length > 0 && (
             <div>
               <h2 className="mb-1 px-3 text-xs font-medium tracking-wide text-ink-mute uppercase">Plan structure</h2>
@@ -217,12 +260,13 @@ export function App() {
         )}
       </div>
       <footer className="mx-auto max-w-[1600px] px-4 pb-6 text-xs text-ink-mute print:hidden">
+        <p className="mb-1">Not financial, tax, lending, legal or planning advice.</p>
         <details>
           <summary className="cursor-pointer">Privacy and data</summary>
           <div className="mt-2 flex max-w-3xl flex-col gap-1">
             <p>Without an account, your work stays in this browser only. With an account, your projects, scenarios, project variables, tracker notes and amounts, and receipt files are stored in Supabase (Canada Central) and are visible only to your account.</p>
             <p>The site is served by Cloudflare, which sees standard request information such as your IP address. There is no analytics, advertising or tracking. Map searches run against data held by this service, not a third-party geocoder.</p>
-            <p>Demo projects use synthetic figures. Nothing here is financial, tax, lending, legal or planning advice. Source code and data notes: github.com/AzharMoolla/Pro-Forma-GTA.</p>
+            <p>Demo projects use synthetic figures. One engine at every detail level: the level changes what you see, never the math. Source code and data notes: github.com/AzharMoolla/Pro-Forma-GTA.</p>
             <p><a className="text-accent underline" href="#privacy">Privacy policy</a> · <a className="text-accent underline" href="#terms">Terms of use</a></p>
           </div>
         </details>

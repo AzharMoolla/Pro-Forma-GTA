@@ -6,6 +6,7 @@ import { REZONING_DEFAULTS } from '../scenario/rezoning'
 import { Button, Card, Chip, TableWrap, td, th } from './components'
 import { money, pct } from './format'
 import { useWorkspace } from './workspace'
+import { GlossaryText } from './Glossary'
 
 // Assumptions register: what the model assumes rather than being told, each with its value, basis and effect, and how
 // much it moves profit on cost. Growth rates and rule-of-thumb costs can be switched off.
@@ -72,7 +73,7 @@ export function Assumptions() {
           <Card key={g.id} title={`${g.title} (${items.length})`}>
             <p className="mb-2 text-sm text-ink-soft">{g.about}</p>
             <TableWrap caption={g.title}>
-              <thead><tr>{[...(g.id === 'growth' || g.id === 'rule' ? ['On'] : []), 'Assumption', 'Value', 'Basis and effect', ...(g.id === 'growth' || g.id === 'rule' ? ['Moves profit on cost'] : [])].map((h) => <th key={h} scope="col" className={h === 'Moves profit on cost' ? `${th} text-right` : th}>{h}</th>)}</tr></thead>
+              <thead><tr>{[...(g.id === 'growth' || g.id === 'rule' ? ['On'] : []), 'Assumption', 'Value', 'Basis and effect', ...(g.id === 'growth' || g.id === 'rule' ? ['Moves profit on cost'] : [])].map((h) => <th key={h} scope="col" className={h === 'Moves profit on cost' ? `${th} text-right` : th}><GlossaryText text={h} /></th>)}</tr></thead>
               <tbody>{items.map((a) => <Row key={a.id} a={a} effect={impact.each.get(a.id)} onToggle={set} />)}</tbody>
             </TableWrap>
           </Card>
@@ -96,7 +97,7 @@ function Row({ a, effect, onToggle }: { a: Assumption; effect: number | null | u
         </td>
       )}
       <td className={td}>
-        <span className="font-medium">{a.label}</span>
+        <span className="font-medium"><GlossaryText text={a.label} /></span>
         {a.toVerify && <> <Chip tone="warn">to verify</Chip></>}
         {!a.on && <> <Chip tone="warn">off</Chip></>}
       </td>

@@ -1,5 +1,5 @@
 {
-  "asOf": "2026-10-21",
+  "asOf": "2026-10-22",
   "note": "Definitions are written for this tool. Formulas use explicit brackets (BEDMAS) and match the standard definitions cited; where a convention varies between sources, the note says which one the engine uses.",
   "terms": [
     {
@@ -43,7 +43,10 @@
       "formula": "Yield on cost = stabilized NOI ÷ TDC",
       "note": "The engine uses untrended NOI (today's rents), the more conservative convention.",
       "source": "PropertyMetrics: Yield on Cost",
-      "url": "https://propertymetrics.com/blog/yield-on-cost/"
+      "url": "https://propertymetrics.com/blog/yield-on-cost/",
+      "aliases": [
+        "yield on cost"
+      ]
     },
     {
       "id": "cap",
@@ -54,7 +57,11 @@
       "definition": "The income return an investor accepts when buying a stabilized property. Dividing NOI by a cap rate gives value.",
       "formula": "Cap rate = NOI ÷ market value  ⇔  value = NOI ÷ cap rate",
       "source": "Investopedia: Capitalization Rate",
-      "url": "https://www.investopedia.com/terms/c/capitalizationrate.asp"
+      "url": "https://www.investopedia.com/terms/c/capitalizationrate.asp",
+      "aliases": [
+        "cap rate",
+        "exit cap"
+      ]
     },
     {
       "id": "spread",
@@ -98,7 +105,10 @@
       "definition": "How many times NOI covers the year's loan payments (interest and principal). Lenders set a minimum.",
       "formula": "DSCR = NOI ÷ annual debt service; maximum loan = PV of (NOI ÷ DSCR) over the amortization",
       "source": "Investopedia: DSCR",
-      "url": "https://www.investopedia.com/terms/d/dscr.asp"
+      "url": "https://www.investopedia.com/terms/d/dscr.asp",
+      "aliases": [
+        "debt service coverage"
+      ]
     },
     {
       "id": "ltv",
@@ -107,7 +117,10 @@
       "definition": "The loan as a share of the property's appraised value.",
       "formula": "LTV = loan ÷ value",
       "source": "Investopedia: Loan-to-Value",
-      "url": "https://www.investopedia.com/terms/l/loantovalue.asp"
+      "url": "https://www.investopedia.com/terms/l/loantovalue.asp",
+      "aliases": [
+        "loan-to-value"
+      ]
     },
     {
       "id": "ltc",
@@ -117,7 +130,10 @@
         "peakDebt"
       ],
       "definition": "The construction loan as a share of total project cost. Construction lenders cap it; equity funds the rest first.",
-      "formula": "LTC = loan ÷ TDC; equity required = (1 − LTC) × budget"
+      "formula": "LTC = loan ÷ TDC; equity required = (1 − LTC) × budget",
+      "aliases": [
+        "loan-to-cost"
+      ]
     },
     {
       "id": "equity-multiple",
@@ -127,7 +143,10 @@
       ],
       "definition": "How many dollars investors get back for each dollar they put in, over the whole hold.",
       "formula": "Equity multiple = Σ(equity distributions) ÷ Σ(equity contributions)",
-      "note": "Gross basis: calls and distributions are summed separately, and at master-plan level one block’s distributions are not assumed to fund another block’s calls."
+      "note": "Gross basis: calls and distributions are summed separately, and at master-plan level one block’s distributions are not assumed to fund another block’s calls.",
+      "aliases": [
+        "equity multiple"
+      ]
     },
     {
       "id": "poc",
@@ -141,7 +160,10 @@
       "formula": "Profit on cost = (total revenue − TDC) ÷ TDC, where TDC includes capitalized construction interest",
       "note": "Developers commonly look for roughly 15–20% on condo projects; under 5% is generally unviable (Brandon Donnelly).",
       "source": "Brandon Donnelly: Demystifying the development pro forma",
-      "url": "https://brandondonnelly.com/demystifying-the-development-pro-forma/"
+      "url": "https://brandondonnelly.com/demystifying-the-development-pro-forma/",
+      "aliases": [
+        "profit on cost"
+      ]
     },
     {
       "id": "land-to-revenue",
@@ -163,7 +185,10 @@
       "id": "rlv",
       "term": "Residual land value",
       "definition": "The most you could pay for land and still hit your target return, after every other cost and the required profit come out of the project's value.",
-      "formula": "Residual land value = value − (all non-land costs + target profit), solved iteratively when financing depends on land"
+      "formula": "Residual land value = value − (all non-land costs + target profit), solved iteratively when financing depends on land",
+      "aliases": [
+        "residual land value"
+      ]
     },
     {
       "id": "pmt",
@@ -236,7 +261,10 @@
     {
       "id": "parkland",
       "term": "Parkland dedication / cash-in-lieu",
-      "definition": "Land for parks or a payment instead, capped by site size under the Planning Act."
+      "definition": "Land for parks or a payment instead, capped by site size under the Planning Act.",
+      "aliases": [
+        "parkland"
+      ]
     },
     {
       "id": "ltt",
@@ -285,7 +313,10 @@
       "term": "Estimate class (D / C / B / A)",
       "definition": "How developed a cost estimate is. Class D is concept-level with the widest range; Class A is pre-tender with the narrowest.",
       "formula": "Default ranges: D −30/+50%, C −20/+30%, B −15/+20%, A −5/+10%",
-      "source": "Alberta Infrastructure, after ASTM E2516-11 and CIQS"
+      "source": "Alberta Infrastructure, after ASTM E2516-11 and CIQS",
+      "aliases": [
+        "estimate class"
+      ]
     },
     {
       "id": "pvalues",
@@ -323,7 +354,10 @@
       "id": "absorption",
       "term": "Absorption",
       "definition": "How fast units lease or sell: the share of available units taken up in a period.",
-      "formula": "Absorption = units leased or sold in period ÷ units available"
+      "formula": "Absorption = units leased or sold in period ÷ units available",
+      "aliases": [
+        "absorption"
+      ]
     },
     {
       "id": "property-tax-levy",
@@ -343,6 +377,238 @@
       "acronym": "LVC / TIF",
       "term": "Land value capture / tax increment financing",
       "definition": "Tools that recover part of the land-value increase created by public investment: development charges, CBCs, special assessments, transfer of development rights. TIF borrows against future property-tax growth in an area; it redirects revenue rather than creating it."
+    },
+    {
+      "id": "zba",
+      "acronym": "ZBA",
+      "term": "Zoning by-law amendment",
+      "aliases": [
+        "rezoning"
+      ],
+      "definition": "An application to change what the zoning by-law allows on a site (height, density, uses). Needed when a proposal exceeds the as-of-right limits.",
+      "note": "The statutory decision period is 90 days, but complex Toronto applications typically take 12–24 months, longer with appeals.",
+      "source": "Planning Act s.34"
+    },
+    {
+      "id": "opa",
+      "acronym": "OPA",
+      "term": "Official plan amendment",
+      "definition": "A change to the municipality's official plan, needed when a proposal conflicts with its land-use designation or policies. Often filed with a ZBA.",
+      "source": "Planning Act s.17, s.22"
+    },
+    {
+      "id": "spa",
+      "acronym": "SPA",
+      "term": "Site plan approval",
+      "aliases": [
+        "site plan"
+      ],
+      "definition": "Municipal approval of the detailed layout: building placement, access, landscaping, servicing and grading. Comes after zoning and before a building permit.",
+      "source": "Planning Act s.41"
+    },
+    {
+      "id": "mtsa",
+      "acronym": "MTSA / PMTSA",
+      "term": "(Protected) major transit station area",
+      "aliases": [
+        "station area"
+      ],
+      "definition": "The area around a rapid-transit station (roughly 500–800 m) where the official plan sets minimum densities. A protected MTSA lets the City use inclusionary zoning and limits appeals on density.",
+      "source": "Planning Act s.16(15); Provincial Planning Statement 2024"
+    },
+    {
+      "id": "iz",
+      "acronym": "IZ",
+      "term": "Inclusionary zoning",
+      "definition": "A by-law requiring a share of new units in certain areas to be affordable. Toronto's IZ applies in protected MTSAs; its implementation was paused to 2027-07-01.",
+      "source": "City of Toronto Inclusionary Zoning"
+    },
+    {
+      "id": "azr",
+      "acronym": "AZR",
+      "term": "Airport zoning regulations",
+      "aliases": [
+        "aeronautical height limit",
+        "airport limit"
+      ],
+      "definition": "Federal height limits around airports (for example Toronto Pearson and Billy Bishop). They cap building and crane heights regardless of municipal zoning, so a rezoning cannot raise them.",
+      "source": "Aeronautics Act; Transport Canada"
+    },
+    {
+      "id": "mltt",
+      "acronym": "MLTT",
+      "term": "Municipal land transfer tax (Toronto)",
+      "definition": "Toronto's own land transfer tax, charged on top of Ontario's. It matches the provincial brackets for most property; graduated luxury rates apply to high-value homes from 2026-04-01.",
+      "source": "Toronto Municipal Code ch. 760"
+    },
+    {
+      "id": "itc",
+      "acronym": "ITC",
+      "term": "Input tax credit",
+      "aliases": [
+        "input tax credits"
+      ],
+      "definition": "HST a registered business paid on costs and claims back when it files. For a rental builder the claim usually arrives one filing period later, so HST costs cash in the meantime.",
+      "source": "Excise Tax Act s.169"
+    },
+    {
+      "id": "self-supply",
+      "term": "HST self-supply",
+      "aliases": [
+        "self-supply"
+      ],
+      "definition": "When a builder first rents out a new residential building, the law treats it as selling the building to itself at fair market value, so HST is owed on that value, less any rental rebate.",
+      "source": "Excise Tax Act s.191"
+    },
+    {
+      "id": "pbrh",
+      "acronym": "PBRH",
+      "term": "Purpose-built rental housing rebate",
+      "aliases": [
+        "rental rebate"
+      ],
+      "definition": "Federal rebate of 100% of the 5% GST on qualifying new rental buildings (4+ units or 10+ rooms, 90% long-term rental) started 2023-09-14 to 2030; Ontario offers matching relief on its 8% part.",
+      "source": "Excise Tax Act s.256.2; Canada Revenue Agency"
+    },
+    {
+      "id": "dcrp",
+      "acronym": "DCRP",
+      "term": "Toronto DC Reduction Program",
+      "definition": "Cuts Toronto development charges by 40% for units with one bedroom or less and 60% for two or more, for at least three years, funded by Canada and Ontario.",
+      "note": "Conditional on the Ontario Transfer Payment Agreement, so the model shows it as a switchable assumption.",
+      "source": "Toronto City Council 2026.CC43.9"
+    },
+    {
+      "id": "mli",
+      "term": "CMHC MLI Select",
+      "aliases": [
+        "MLI Select"
+      ],
+      "definition": "CMHC mortgage insurance for multi-unit rental that rewards affordability, energy and accessibility points with higher loan-to-value (up to 95%), longer amortization (up to 50 years) and a lower DSCR.",
+      "source": "CMHC MLI Select"
+    },
+    {
+      "id": "tgs",
+      "acronym": "TGS",
+      "term": "Toronto Green Standard",
+      "definition": "Toronto's sustainable design requirements for new development (energy, emissions, green roofs, stormwater). Tier 1 is mandatory; higher tiers earn a DC refund.",
+      "source": "City of Toronto"
+    },
+    {
+      "id": "rsc",
+      "acronym": "RSC",
+      "term": "Record of Site Condition",
+      "definition": "A filing with Ontario's environment ministry confirming a site meets soil and groundwater standards, required before a change to a more sensitive use such as residential.",
+      "source": "O. Reg. 153/04"
+    },
+    {
+      "id": "row",
+      "acronym": "ROW",
+      "term": "Right-of-way",
+      "definition": "The public land between property lines that holds the road, sidewalks and utilities. Planned widths in the official plan can require a setback or a land conveyance."
+    },
+    {
+      "id": "swm",
+      "acronym": "SWM",
+      "term": "Stormwater management",
+      "definition": "Measures that hold back and clean rainwater on site (tanks, green roofs) so new development doesn't overload sewers."
+    },
+    {
+      "id": "nla",
+      "acronym": "NLA",
+      "term": "Net leasable area",
+      "definition": "The floor area a commercial tenant pays rent on, excluding common areas, structure and shafts."
+    },
+    {
+      "id": "lease-up",
+      "term": "Lease-up and stabilization",
+      "aliases": [
+        "lease-up",
+        "stabilization",
+        "stabilized"
+      ],
+      "definition": "Lease-up is the period after completion while units fill. A building is stabilized once occupancy reaches its long-run level; lenders and buyers value it on stabilized income."
+    },
+    {
+      "id": "escalation",
+      "term": "Cost escalation",
+      "aliases": [
+        "escalation"
+      ],
+      "definition": "Expected growth in construction costs between today and the month the money is spent. Costs are entered in today's dollars and escalated to the month they are paid."
+    },
+    {
+      "id": "contingency",
+      "term": "Contingency",
+      "aliases": [
+        "contingency",
+        "contingencies"
+      ],
+      "definition": "An allowance for costs not yet identified. Design contingency covers an unfinished design; construction contingency covers surprises on site. It shrinks as the estimate class improves."
+    },
+    {
+      "id": "capitalized-interest",
+      "term": "Capitalized interest",
+      "aliases": [
+        "capitalized interest"
+      ],
+      "definition": "Construction loan interest added to the loan balance instead of paid in cash, because the project has no income yet. It is part of total development cost."
+    },
+    {
+      "id": "funding-gap",
+      "term": "Funding gap",
+      "aliases": [
+        "funding gap"
+      ],
+      "definition": "Money the plan needs that no source covers: loan above what a lender commits, construction balance a refinance doesn't repay, or loans the sale doesn't repay. It must come from more equity or other financing."
+    },
+    {
+      "id": "break-even",
+      "term": "Break-even",
+      "aliases": [
+        "break-even"
+      ],
+      "definition": "The value of one input (rents, costs) at which the project makes zero profit, found by re-running the model until profit on cost is 0%."
+    },
+    {
+      "id": "fmv",
+      "acronym": "FMV",
+      "term": "Fair market value",
+      "definition": "What a willing buyer would pay a willing seller. For HST self-supply on a new rental, the model estimates it as stabilized NOI ÷ exit cap rate."
+    },
+    {
+      "id": "refinance",
+      "term": "Refinance",
+      "aliases": [
+        "refinance"
+      ],
+      "definition": "Replacing the construction loan with a long-term mortgage once the building earns stable income. Sized on the lower of value × LTV and what the income supports at the DSCR."
+    },
+    {
+      "id": "compounding",
+      "term": "Semi-annual compounding",
+      "aliases": [
+        "semi-annual",
+        "compounded semi-annually"
+      ],
+      "definition": "Canadian fixed-rate mortgages quote an annual rate compounded twice a year. The monthly rate is (1 + rate ÷ 2)^(1/6) − 1, a little lower than rate ÷ 12.",
+      "source": "Interest Act s.6"
+    },
+    {
+      "id": "lim-at",
+      "acronym": "LIM-AT",
+      "term": "Low-income measure, after tax",
+      "definition": "Statistics Canada's main low-income line: a household is low-income if its after-tax income is under half the national median, adjusted for household size.",
+      "source": "Statistics Canada"
+    },
+    {
+      "id": "core-need",
+      "term": "Core housing need",
+      "aliases": [
+        "core housing need"
+      ],
+      "definition": "A household is in core housing need if its home is unaffordable (30%+ of income), too small or in poor repair, and it couldn't afford a suitable local home.",
+      "source": "CMHC"
     }
   ]
 }

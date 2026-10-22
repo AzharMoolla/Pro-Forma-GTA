@@ -6,7 +6,7 @@ import type { Simulation, TornadoBar } from '../engine/uncertainty'
 import { createSnapshot, diffInputs, lock, verify, type Snapshot } from '../scenario/snapshot'
 import { saveScenario } from '../cloud/cloud'
 import { Tornado } from './chartViews'
-import { MetricLabel } from './Glossary'
+import { MetricLabel, GlossaryText } from './Glossary'
 import { Button, Card, Chip, NumberField, SourceChip, TableWrap, cx, td, tdNum, th } from './components'
 import { coverage, readiness, SOURCE_MAX_AGE_MONTHS, type CoverageStatus, type Readiness } from './coverage'
 import { dataContext, findings, findingsCovered, stageLabel } from './data'
@@ -45,7 +45,7 @@ export function Revenue() {
           {c.kind === 'rental' && (
             <div className="flex flex-col gap-4">
               <TableWrap caption={`${c.id} unit mix`}>
-                <thead><tr>{['Unit type', 'Units', 'Rent / month', 'Vacancy %'].map((h, i) => <th key={h} scope="col" className={cx(th, i > 0 && 'text-right')}>{h}</th>)}</tr></thead>
+                <thead><tr>{['Unit type', 'Units', 'Rent / month', 'Vacancy %'].map((h, i) => <th key={h} scope="col" className={cx(th, i > 0 && 'text-right')}><GlossaryText text={h} /></th>)}</tr></thead>
                 <tbody>{c.unitMix.map((u) => {
                   const setU = (patch: Partial<typeof u>) => edit(c.id, (x) => (x.kind === 'rental' ? { ...x, unitMix: x.unitMix.map((y) => (y.id === u.id ? { ...y, ...patch } : y)) } : x))
                   return (
@@ -71,7 +71,7 @@ export function Revenue() {
           {c.kind === 'condo' && (
             <div className="flex flex-col gap-4">
               <TableWrap caption={`${c.id} units`}>
-                <thead><tr>{['Unit type', 'Units', 'Net ft²', '$ / ft²'].map((h, i) => <th key={h} scope="col" className={cx(th, i > 0 && 'text-right')}>{h}</th>)}</tr></thead>
+                <thead><tr>{['Unit type', 'Units', 'Net ft²', '$ / ft²'].map((h, i) => <th key={h} scope="col" className={cx(th, i > 0 && 'text-right')}><GlossaryText text={h} /></th>)}</tr></thead>
                 <tbody>{c.units.map((u) => {
                   const setU = (patch: Partial<typeof u>) => edit(c.id, (x) => (x.kind === 'condo' ? { ...x, units: x.units.map((y) => (y.id === u.id ? { ...y, ...patch } : y)) } : x))
                   return (
@@ -190,7 +190,7 @@ export function Finance() {
           <table className="w-full border-collapse text-xs">
             <caption className="sr-only">Monthly ledger for {p.name}</caption>
             <thead className="sticky top-0 bg-surface">
-              <tr>{['Month', 'Phase', 'Costs', 'NOI', 'Sales', 'Equity in', 'Debt draw', 'Interest', 'Loan balance', 'Perm balance', 'To equity', 'Equity CF'].map((h, i) => <th key={h} scope="col" className={cx(th, i > 1 && 'text-right')}>{h}</th>)}</tr>
+              <tr>{['Month', 'Phase', 'Costs', 'NOI', 'Sales', 'Equity in', 'Debt draw', 'Interest', 'Loan balance', 'Perm balance', 'To equity', 'Equity CF'].map((h, i) => <th key={h} scope="col" className={cx(th, i > 1 && 'text-right')}><GlossaryText text={h} /></th>)}</tr>
             </thead>
             <tbody>
               {ledger.map((r) => (
@@ -266,7 +266,7 @@ export function Returns() {
             {sim.status === 'done' && (
               <div className="mt-3 flex flex-col gap-4">
                 <TableWrap caption="Monte Carlo percentiles">
-                  <thead><tr>{['Metric', 'P10', 'P50', 'P90', 'Base', 'Adverse end', 'Below zero', 'Valid draws'].map((h, i) => <th key={h} scope="col" className={cx(th, i > 0 && 'text-right')}>{h}</th>)}</tr></thead>
+                  <thead><tr>{['Metric', 'P10', 'P50', 'P90', 'Base', 'Adverse end', 'Below zero', 'Valid draws'].map((h, i) => <th key={h} scope="col" className={cx(th, i > 0 && 'text-right')}><GlossaryText text={h} /></th>)}</tr></thead>
                   <tbody>{Object.entries(sim.sim.metrics).map(([id, d]) => {
                     const m = nodeResult.metrics[id]!
                     const f = (v: number | null) => metricValue({ unit: m.unit, value: v })
@@ -284,12 +284,12 @@ export function Returns() {
                 <p className="text-xs text-ink-soft">
                   Read with care: the bands are modelling assumptions by estimate class, not calibrated confidence intervals, and each line is drawn independently, so shared risks (construction inflation, rents, rates, cap rates) are not yet linked and the spread is probably narrower than reality. "Below zero" is the share of valid draws under these assumptions, not a market probability. Percentiles exclude unavailable draws (for example, no IRR).
                 </p>
-                {atLeast(state.mode, 'institutional') ? (
+                {showRange ? (
                   <div>
                     <h3 className="mb-2 text-sm font-semibold">What moves profit most</h3>
                     <Tornado base={sim.tornado.base ?? 0} rows={sim.tornado.bars.slice(0, 12)} format={(v) => money(v)} />
                   </div>
-                ) : <p className="text-xs text-ink-mute">Switch to Institutional to see which drivers move profit most.</p>}
+                ) : <p className="text-xs text-ink-mute">Switch to Full detail to see which drivers move profit most.</p>}
               </div>
             )}
           </div>
@@ -361,7 +361,7 @@ export function Scenarios() {
       <Card title={`Scenarios (${project.scenarios.length})`} actions={<Button onClick={() => dispatch({ type: 'resetDraft' })}>Reset draft to {demo.name.split(':')[0]}</Button>}>
         {project.scenarios.length === 0 ? <p className="text-sm text-ink-soft">No locked scenarios yet. Edit inputs, then lock the draft above to compare versions side by side.</p> : (
           <TableWrap caption="Locked scenarios">
-            <thead><tr>{['Compare', 'Name', 'Purpose', 'Parent', 'Hash', 'Integrity', ''].map((h) => <th key={h} scope="col" className={th}>{h}</th>)}</tr></thead>
+            <thead><tr>{['Compare', 'Name', 'Purpose', 'Parent', 'Hash', 'Integrity', ''].map((h) => <th key={h} scope="col" className={th}><GlossaryText text={h} /></th>)}</tr></thead>
             <tbody>{project.scenarios.map((s) => (
               <tr key={s.id}>
                 <td className={td}><input type="checkbox" aria-label={`Compare ${s.label}`} className="size-5 accent-[var(--accent)]" checked={selected.includes(s.id)} onChange={(e) => setSelected((x) => (e.target.checked ? [...x, s.id].slice(-3) : x.filter((y) => y !== s.id)))} /></td>
@@ -514,7 +514,7 @@ export function Audit() {
         </fieldset>
         {shown.length === 0 ? <p className="text-sm text-good">Nothing in this group: every applicable item is accounted for.</p> : (
           <TableWrap caption="Checklist coverage">
-            <thead><tr>{['Item', 'Stage', 'Status', 'Source', 'Where it is'].map((h) => <th key={h} scope="col" className={th}>{h}</th>)}</tr></thead>
+            <thead><tr>{['Item', 'Stage', 'Status', 'Source', 'Where it is'].map((h) => <th key={h} scope="col" className={th}><GlossaryText text={h} /></th>)}</tr></thead>
             <tbody>{shown.map((e) => (
               <tr key={e.item.id}>
                 <td className={td}>{e.item.label}</td>
@@ -530,7 +530,7 @@ export function Audit() {
       <Card title={`Issue log: legacy workbook audit (${findings.length})`}>
         <p className="mb-2 text-sm text-ink-soft">Findings from the static audit of the five reference workbooks. The engine re-derives these formulas rather than copying them; covered items have a regression test or rule.</p>
         <TableWrap caption="Audit findings">
-          <thead><tr>{['ID', 'Priority', 'Type', 'Finding', 'Engine status'].map((h) => <th key={h} scope="col" className={th}>{h}</th>)}</tr></thead>
+          <thead><tr>{['ID', 'Priority', 'Type', 'Finding', 'Engine status'].map((h) => <th key={h} scope="col" className={th}><GlossaryText text={h} /></th>)}</tr></thead>
           <tbody>{findings.map((f) => (
             <tr key={f.id}>
               <td className={`${td} num`}>{f.id}</td>

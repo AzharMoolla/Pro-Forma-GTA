@@ -21,6 +21,7 @@ import { PrivacyPolicy, Terms } from './Legal'
 import { atLeast, type SectionId } from './store'
 import { getResult } from './tree'
 import { useWorkspace } from './workspace'
+import { GlossaryText, VarHint } from './Glossary'
 
 export function Sections({ section }: { section: SectionId }) {
   switch (section) {
@@ -110,7 +111,7 @@ function Overview() {
       {isPortfolio(node) && (
         <Card title="Phases and blocks">
           <TableWrap caption="Children of this level">
-            <thead><tr>{['Name', 'Starts', 'Units', 'Total cost', 'Profit', 'Profit on cost', 'Levered IRR'].map((h, i) => <th key={h} scope="col" className={cx(th, i > 0 && 'text-right')}>{h}</th>)}</tr></thead>
+            <thead><tr>{['Name', 'Starts', 'Units', 'Total cost', 'Profit', 'Profit on cost', 'Levered IRR'].map((h, i) => <th key={h} scope="col" className={cx(th, i > 0 && 'text-right')}><GlossaryText text={h} /></th>)}</tr></thead>
             <tbody>
               {node.children.map((c) => {
                 const r = getResult(nodeResult, [c.node.id])
@@ -151,7 +152,7 @@ function Market() {
             {project.components.map((c) => {
               if (c.kind === 'rental') return (
                 <TableWrap key={c.id} caption={`${c.id} rents`}>
-                  <thead><tr>{['Unit type', 'Units', 'Net ft²', 'Rent / month', 'Rent / ft²', 'Vacancy'].map((h, i) => <th key={h} scope="col" className={cx(th, i > 0 && 'text-right')}>{h}</th>)}</tr></thead>
+                  <thead><tr>{['Unit type', 'Units', 'Net ft²', 'Rent / month', 'Rent / ft²', 'Vacancy'].map((h, i) => <th key={h} scope="col" className={cx(th, i > 0 && 'text-right')}><GlossaryText text={h} /></th>)}</tr></thead>
                   <tbody>{c.unitMix.map((u) => (
                     <tr key={u.id}>
                       <td className={td}>{u.id.replaceAll('_', ' ')}{u.id.includes('affordable') && <> <Chip tone="accent">affordable</Chip></>}</td>
@@ -163,7 +164,7 @@ function Market() {
               )
               if (c.kind === 'condo') return (
                 <TableWrap key={c.id} caption={`${c.id} pricing`}>
-                  <thead><tr>{['Unit type', 'Units', 'Net ft²', '$ / ft²', 'Avg price'].map((h, i) => <th key={h} scope="col" className={cx(th, i > 0 && 'text-right')}>{h}</th>)}</tr></thead>
+                  <thead><tr>{['Unit type', 'Units', 'Net ft²', '$ / ft²', 'Avg price'].map((h, i) => <th key={h} scope="col" className={cx(th, i > 0 && 'text-right')}><GlossaryText text={h} /></th>)}</tr></thead>
                   <tbody>{c.units.map((u) => (
                     <tr key={u.id}><td className={td}>{u.id}</td><td className={tdNum}>{u.count}</td><td className={tdNum}>{u.netSqftPerUnit}</td><td className={tdNum}>${u.pricePerSqft}</td><td className={tdNum}>{money(u.netSqftPerUnit * u.pricePerSqft)}</td></tr>
                   ))}</tbody>
@@ -214,7 +215,7 @@ function Program() {
                   return (
                     <li key={v.id} className="flex items-center justify-between gap-3 text-sm">
                       <span className="min-w-0">
-                        {v.label}{v.unit && <span className="text-ink-mute"> ({v.unit})</span>}
+                        <GlossaryText text={v.label} />{v.unit && <span className="text-ink-mute"> ({v.unit})</span>} <VarHint v={v} />
                         {mapSources[v.id] && (mapSources[v.id]!.value === value
                           ? <> <Chip tone="accent" title={`${mapSources[v.id]!.layer} · retrieved ${mapSources[v.id]!.retrievedAt}`}>from map</Chip></>
                           : <> <Chip tone="warn" title={`Map said ${String(mapSources[v.id]!.value)} (${mapSources[v.id]!.layer})`}>changed from map</Chip></>)}

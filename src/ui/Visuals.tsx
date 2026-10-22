@@ -9,6 +9,7 @@ import { metricValue, money, pct } from './format'
 import { useTrackerView } from './sections3'
 import { Gantt, HeatmapChart, ScenarioBars, StackedBars, Waterfall } from './chartViews'
 import { useWorkspace } from './workspace'
+import { GlossaryText } from './Glossary'
 
 // Charts: named views over the same results as the tables. Every chart has a table view and CSV/SVG downloads, and
 // colour is never the only cue (labels, legends, tables).
@@ -129,7 +130,7 @@ export function Visuals() {
         about="Every cost dollar by bucket, building up to the total (including all interest paid, so it can exceed total development cost, which counts only capitalized interest)."
         csv={toCsv(['Bucket', 'Amount', 'Share'], buckets.map((b) => [b.label, Math.round(b.total), Number(b.share.toFixed(4))]))}
         file={`${node.id}-costs`}
-        table={<TableWrap caption="Costs by bucket"><thead><tr>{['Bucket', 'Amount', 'Share'].map((h) => <th key={h} scope="col" className={th}>{h}</th>)}</tr></thead><tbody>{buckets.map((b) => <tr key={b.id}><td className={td}>{b.label}</td><td className={tdNum}>{money(b.total, false)}</td><td className={tdNum}>{pct(b.share, 1)}</td></tr>)}</tbody></TableWrap>}
+        table={<TableWrap caption="Costs by bucket"><thead><tr>{['Bucket', 'Amount', 'Share'].map((h) => <th key={h} scope="col" className={th}><GlossaryText text={h} /></th>)}</tr></thead><tbody>{buckets.map((b) => <tr key={b.id}><td className={td}>{b.label}</td><td className={tdNum}>{money(b.total, false)}</td><td className={tdNum}>{pct(b.share, 1)}</td></tr>)}</tbody></TableWrap>}
       >
         <Waterfall steps={buckets.map((b) => ({ label: b.label, value: b.total }))} />
       </ChartFigure>
@@ -156,7 +157,7 @@ export function Visuals() {
         about="Pre-construction (including any rezoning), construction, lease-up or closings, and operations to exit, per building. Phases start at their offsets in the plan."
         csv={toCsv(['Building', 'Starts month', ...['Pre-construction and approvals', 'Construction', 'Lease-up or closings', 'Operations to exit']], bars.map((b) => [b.name, b.start, ...['pre', 'build', 'lease', 'hold'].map((id) => b.segments.find((s) => s.id === id)?.months ?? 0)]))}
         file={`${node.id}-timeline`}
-        table={<TableWrap caption="Schedule"><thead><tr>{['Building', 'Starts', 'Pre-construction', 'Construction', 'Lease-up / closings', 'Operations'].map((h) => <th key={h} scope="col" className={th}>{h}</th>)}</tr></thead><tbody>{bars.map((b, i) => <tr key={`${b.name}-${i}`}><td className={td}>{b.name}</td><td className={tdNum}>{b.start}</td>{['pre', 'build', 'lease', 'hold'].map((id) => <td key={id} className={tdNum}>{b.segments.find((s) => s.id === id)?.months ?? 0} mo</td>)}</tr>)}</tbody></TableWrap>}
+        table={<TableWrap caption="Schedule"><thead><tr>{['Building', 'Starts', 'Pre-construction', 'Construction', 'Lease-up / closings', 'Operations'].map((h) => <th key={h} scope="col" className={th}><GlossaryText text={h} /></th>)}</tr></thead><tbody>{bars.map((b, i) => <tr key={`${b.name}-${i}`}><td className={td}>{b.name}</td><td className={tdNum}>{b.start}</td>{['pre', 'build', 'lease', 'hold'].map((id) => <td key={id} className={tdNum}>{b.segments.find((s) => s.id === id)?.months ?? 0} mo</td>)}</tr>)}</tbody></TableWrap>}
       >
         <Gantt bars={bars} />
       </ChartFigure>
@@ -176,7 +177,7 @@ export function Visuals() {
         about="From the development tracker. Spent counts only recorded actuals; forecast at completion uses the actual for finished tasks and the larger of budget and spend for open ones. Unknown values are counted, not treated as zero."
         csv={toCsv(['Stage', 'Budget', 'Spent (known)', 'Spent unknown', 'Forecast (known)', 'Forecast unknown'], stages.map((s) => [s.label, Math.round(s.budget), Math.round(s.actual.known), s.actual.unknown, Math.round(s.forecast.known), s.forecast.unknown]))}
         file={`${node.id}-budget`}
-        table={<TableWrap caption="Budget by stage"><thead><tr>{['Stage', 'Budget', 'Spent', 'Forecast'].map((h) => <th key={h} scope="col" className={th}>{h}</th>)}</tr></thead><tbody>{stages.map((s) => <tr key={s.id}><td className={td}>{s.label}</td><td className={tdNum}>{money(s.budget, false)}</td><td className={tdNum}>{money(s.actual.known, false)}{s.actual.unknown ? ` + ${s.actual.unknown} unknown` : ''}</td><td className={tdNum}>{money(s.forecast.known, false)}{s.forecast.unknown ? ` + ${s.forecast.unknown} unknown` : ''}</td></tr>)}</tbody></TableWrap>}
+        table={<TableWrap caption="Budget by stage"><thead><tr>{['Stage', 'Budget', 'Spent', 'Forecast'].map((h) => <th key={h} scope="col" className={th}><GlossaryText text={h} /></th>)}</tr></thead><tbody>{stages.map((s) => <tr key={s.id}><td className={td}>{s.label}</td><td className={tdNum}>{money(s.budget, false)}</td><td className={tdNum}>{money(s.actual.known, false)}{s.actual.unknown ? ` + ${s.actual.unknown} unknown` : ''}</td><td className={tdNum}>{money(s.forecast.known, false)}{s.forecast.unknown ? ` + ${s.forecast.unknown} unknown` : ''}</td></tr>)}</tbody></TableWrap>}
       >
         {stages.length === 0 ? <p className="text-sm text-ink-soft">No budget in the tracker for this selection.</p> : (
           <>

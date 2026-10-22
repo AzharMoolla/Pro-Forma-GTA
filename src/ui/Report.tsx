@@ -16,6 +16,7 @@ import { sceneOf } from './streetscapeScene'
 import { getResult } from './tree'
 import { IndigenousCard } from './Indigenous'
 import { useWorkspace } from './workspace'
+import { GlossaryText } from './Glossary'
 
 const KEY_METRICS = ['totalUnits', 'totalDevelopmentCost', 'totalRevenue', 'profit', 'profitOnCost', 'profitOnCostBeforeFinancing', 'yieldOnCost', 'unleveredIrr', 'leveredIrr', 'equityMultiple', 'equityContributed', 'peakDebt']
 const SITE_VARS = ['site.address', 'site.municipality', 'site.region', 'site.ward', 'site.treaty', 'zoning.code', 'zoning.heightLimitM', 'zoning.heightLimitStoreys', 'zoning.fsiLimit', 'zoning.exception', 'zoning.holding', 'site.secondaryPlan', 'site.mtsaType', 'site.heritage', 'site.regulatedArea', 'site.greenbelt', 'site.nearAerodrome', 'site.aeronauticalLimitM', 'site.frontageRoadClass', 'site.nearestTransitStop', 'planning.zba']
@@ -87,7 +88,7 @@ export function Report() {
         <section>
           <h3 className="mb-2 text-base font-semibold">Key results</h3>
           <TableWrap caption="Key results">
-            <thead><tr>{['Metric', 'Value', 'Basis'].map((h) => <th key={h} scope="col" className={th}>{h}</th>)}</tr></thead>
+            <thead><tr>{['Metric', 'Value', 'Basis'].map((h) => <th key={h} scope="col" className={th}><GlossaryText text={h} /></th>)}</tr></thead>
             <tbody>{KEY_METRICS.map((id) => m[id]).filter((x) => x !== undefined).map((x) => (
               <tr key={x.id}><td className={td}>{x.label}</td><td className={tdNum}>{metricValue(x)}</td><td className={`${td} text-xs text-ink-soft`}>{x.missing.length ? `withheld: ${x.missing.length} unknown` : x.basis}</td></tr>
             ))}</tbody>
@@ -114,7 +115,7 @@ export function Report() {
           <h3 className="mb-2 text-base font-semibold">Assumptions</h3>
           <p className="mb-2 text-sm text-ink-soft">{offCount ? `${offCount} assumption${offCount === 1 ? ' is' : 's are'} switched off and excluded from these results. ` : 'Every assumption below is on. '}The full register, with each basis, is in the workbook's Assumptions sheet.</p>
           <TableWrap caption="Assumptions that can be switched off">
-            <thead><tr>{['Assumption', 'Value', 'State'].map((h) => <th key={h} scope="col" className={th}>{h}</th>)}</tr></thead>
+            <thead><tr>{['Assumption', 'Value', 'State'].map((h) => <th key={h} scope="col" className={th}><GlossaryText text={h} /></th>)}</tr></thead>
             <tbody>{assumptions.filter((a) => a.toggle).map((a) => <tr key={a.id}><td className={td}>{a.label}{a.toVerify ? ' (to verify)' : ''}</td><td className={`${td} num`}>{a.value}</td><td className={td}>{a.on ? 'on' : <strong>OFF</strong>}</td></tr>)}</tbody>
           </TableWrap>
           <p className="mt-1 text-xs text-ink-mute">Always on: {assumptions.filter((a) => a.group === 'convention').map((a) => `${a.label.toLowerCase()} (${a.value})`).join('; ')}.</p>
@@ -130,7 +131,7 @@ export function Report() {
               </p>
             )}
             <TableWrap caption="Combined downside">
-              <thead><tr>{['Scenario', 'Profit on cost', 'Levered IRR', 'Unlevered profit', 'Funding gap'].map((h, i) => <th key={h} scope="col" className={i ? `${th} text-right` : th}>{h}</th>)}</tr></thead>
+              <thead><tr>{['Scenario', 'Profit on cost', 'Levered IRR', 'Unlevered profit', 'Funding gap'].map((h, i) => <th key={h} scope="col" className={i ? `${th} text-right` : th}><GlossaryText text={h} /></th>)}</tr></thead>
               <tbody>{feas.downside.map((r) => {
                 const v = (id: string) => r.result?.metrics[id] ?? undefined
                 return <tr key={r.id}><td className={td}>{r.label}</td><td className={tdNum}>{metricValue(v('profitOnCost'))}</td><td className={tdNum}>{metricValue(v('leveredIrr'))}</td><td className={tdNum}>{metricValue(v('profit'))}</td><td className={tdNum}>{r.fundingGap === null ? 'per building' : r.fundingGap > 0 ? money(r.fundingGap) : 'none'}</td></tr>
@@ -143,7 +144,7 @@ export function Report() {
         <section>
           <h3 className="mb-2 text-base font-semibold">Site and policy</h3>
           <TableWrap caption="Site and policy facts">
-            <thead><tr>{['Fact', 'Value', 'Source'].map((h) => <th key={h} scope="col" className={th}>{h}</th>)}</tr></thead>
+            <thead><tr>{['Fact', 'Value', 'Source'].map((h) => <th key={h} scope="col" className={th}><GlossaryText text={h} /></th>)}</tr></thead>
             <tbody>{SITE_VARS.filter((id) => project.attributes[id] !== undefined && project.attributes[id] !== null).map((id) => (
               <tr key={id}><td className={td}>{variableInfo.get(id)?.label ?? id}</td><td className={td}>{String(project.attributes[id])}</td><td className={`${td} text-xs text-ink-soft`}>{sources[id] ? `${sources[id]!.layer} · ${sources[id]!.retrievedAt}` : variableInfo.get(id)?.source ?? ''}</td></tr>
             ))}</tbody>

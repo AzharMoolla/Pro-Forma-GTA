@@ -7,6 +7,7 @@ import { money, num, pct } from './format'
 import { ChartFigure } from './Visuals'
 import { AffordabilityChart } from './chartViews'
 import { useWorkspace } from './workspace'
+import { GlossaryText, VarHint } from './Glossary'
 
 // People & affordability: who the homes are for, whether they can afford them over time, and what the new residents
 // mean for schools, seniors' services and transit. Demographics are user-entered from the Census Profile, with source.
@@ -46,7 +47,7 @@ export function People() {
             const value = a[v.id]
             return (
               <label key={v.id} className="flex items-center justify-between gap-3 text-sm">
-                <span className="min-w-0">{v.label}{v.unit && <span className="text-ink-mute"> ({v.unit})</span>}</span>
+                <span className="min-w-0"><GlossaryText text={v.label} />{v.unit && <span className="text-ink-mute"> ({v.unit})</span>} <VarHint v={v} /></span>
                 <input aria-label={v.label} placeholder={v.id === 'demo.incomeGrowth' ? '0.02' : 'unknown'} inputMode={v.type === 'number' ? 'decimal' : undefined}
                   className="num min-h-9 w-32 shrink-0 rounded border border-line-strong bg-surface px-2 text-right"
                   defaultValue={value === null || value === undefined ? '' : String(value)} key={String(value)}
@@ -65,7 +66,7 @@ export function People() {
         file={`${node.id}-affordability`}
         table={(
           <TableWrap caption="Affordability by unit type">
-            <thead><tr>{['Unit', 'Homes', 'Monthly cost', 'Income needed at 30%', 'Year 1', `Year ${YEARS}`].map((h, i) => <th key={h} scope="col" className={i ? `${th} text-right` : th}>{h}</th>)}</tr></thead>
+            <thead><tr>{['Unit', 'Homes', 'Monthly cost', 'Income needed at 30%', 'Year 1', `Year ${YEARS}`].map((h, i) => <th key={h} scope="col" className={i ? `${th} text-right` : th}><GlossaryText text={h} /></th>)}</tr></thead>
             <tbody>{rows.map((r) => <tr key={r.unit}><td className={td}>{r.unit} <span className="text-xs text-ink-mute">({r.tenure})</span></td><td className={tdNum}>{r.count}</td><td className={tdNum}>{money(r.monthlyCost, false)}</td><td className={tdNum}>{money(r.incomeNeeded, false)}</td><td className={tdNum}>{r.shares[0] === undefined ? 'income unknown' : pct(r.shares[0], 1)}</td><td className={tdNum}>{r.shares.at(-1) === undefined ? '—' : pct(r.shares.at(-1)!, 1)}</td></tr>)}</tbody>
           </TableWrap>
         )}

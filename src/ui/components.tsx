@@ -89,7 +89,7 @@ export function NumberField({ label, value, onCommit, suffix, scale = 1, step, r
   }
   return (
     <div className={cx('flex flex-col gap-1', compact && 'min-w-0')}>
-      <label htmlFor={id} className={cx('text-xs text-ink-soft', compact && 'sr-only')}>{label}</label>
+      <label htmlFor={id} className={cx('text-xs text-ink-soft', compact && 'sr-only')}>{compact ? label : <GlossaryText text={label} />}</label>
       <div className="flex items-center gap-1">
         <input
           id={id}

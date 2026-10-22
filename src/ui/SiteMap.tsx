@@ -10,6 +10,7 @@ import { variableInfo } from './data'
 import { scoped, scopedKey } from './streetscapeScene'
 import { IndigenousCard } from './Indigenous'
 import { useWorkspace } from './workspace'
+import { GlossaryText } from './Glossary'
 
 interface SiteMessage extends StreetContext { type: 'planning-map:site'; name: string; point: Position; matches: SiteMatch[] }
 
@@ -136,7 +137,7 @@ export function SiteMap() {
           <>
             <p className="mb-3 text-sm text-ink-soft">Each value comes from the layer named beside it. Untick anything you don't want; you can still change every value later under Site &amp; program. Screening only: a missing match isn't clearance, and a zone label isn't a zoning opinion.</p>
             <TableWrap caption="Values from the map">
-              <thead><tr>{['Apply', 'Variable', 'From the map', 'Now in the project', 'Source'].map((h) => <th key={h} scope="col" className={th}>{h}</th>)}</tr></thead>
+              <thead><tr>{['Apply', 'Variable', 'From the map', 'Now in the project', 'Source'].map((h) => <th key={h} scope="col" className={th}><GlossaryText text={h} /></th>)}</tr></thead>
               <tbody>{rows.map((r) => {
                 const info = variableInfo.get(r.variable)
                 const same = current(r.variable) === r.value

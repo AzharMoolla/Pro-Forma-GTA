@@ -10,6 +10,7 @@ import { useAnalysis } from './sections3'
 import { ChartFigure } from './Visuals'
 import { axis, EChart, type EChartsOption, type Tokens } from './EChart'
 import { useWorkspace } from './workspace'
+import { GlossaryText } from './Glossary'
 
 // Feasibility: can the project be funded, what land price and revenue it supports, how it holds up when several
 // things go wrong at once, and what HST does to cash. Every figure re-runs the same engine on a changed input.
@@ -74,7 +75,7 @@ export function Feasibility() {
           file={`${node.id}-funding-gap`}
           table={(
             <TableWrap caption="Funding by month">
-              <thead><tr>{['Month', 'Loan', 'Commitment', 'Permanent loan', 'Equity out'].map((h, i) => <th key={h} scope="col" className={i ? `${th} text-right` : th}>{h}</th>)}</tr></thead>
+              <thead><tr>{['Month', 'Loan', 'Commitment', 'Permanent loan', 'Equity out'].map((h, i) => <th key={h} scope="col" className={i ? `${th} text-right` : th}><GlossaryText text={h} /></th>)}</tr></thead>
               <tbody>{fund.months.map((m) => <tr key={m.month}><td className={td}>{m.month}</td><td className={tdNum}>{money(m.debt, false)}</td><td className={tdNum}>{m.limit ? money(m.limit, false) : '—'}</td><td className={tdNum}>{money(m.permanent, false)}</td><td className={tdNum}>{money(m.equityNet, false)}</td></tr>)}</tbody>
             </TableWrap>
           )}
@@ -105,7 +106,7 @@ export function Feasibility() {
         </div>
         {!solved ? <p className="text-sm text-warn">Enter a target as a number.</p> : (
           <TableWrap caption="Solved values">
-            <thead><tr>{['Question', 'Answer', 'As modelled'].map((h, i) => <th key={h} scope="col" className={i ? `${th} text-right` : th}>{h}</th>)}</tr></thead>
+            <thead><tr>{['Question', 'Answer', 'As modelled'].map((h, i) => <th key={h} scope="col" className={i ? `${th} text-right` : th}><GlossaryText text={h} /></th>)}</tr></thead>
             <tbody>
               <tr><td className={td}>Most you could pay for the land and still reach {metric.label.toLowerCase()} {pct(target, 1)} (residual land value)</td><td className={tdNum}>{solvedText(solved.land, land, 'money')}</td><td className={tdNum}>{land === null ? 'not estimated' : money(land)}</td></tr>
               <tr><td className={td}>Rents and prices needed for {pct(target, 1)}</td><td className={tdNum}>{solvedText(solved.revenue, null, 'change')}</td><td className={tdNum}>as entered</td></tr>
@@ -121,7 +122,7 @@ export function Feasibility() {
       <Card title="Combined downside">
         <p className="mb-3 text-sm text-ink-soft">Each shock alone, then all at once. Deals rarely fail from one thing going wrong; they fail when costs rise, the schedule slips, rates climb and the market softens together.</p>
         <TableWrap caption="Downside scenarios">
-          <thead><tr>{['Scenario', 'Profit on cost', 'Levered IRR', 'Unlevered profit', 'Funding gap'].map((h, i) => <th key={h} scope="col" className={i ? `${th} text-right` : th}>{h}</th>)}</tr></thead>
+          <thead><tr>{['Scenario', 'Profit on cost', 'Levered IRR', 'Unlevered profit', 'Funding gap'].map((h, i) => <th key={h} scope="col" className={i ? `${th} text-right` : th}><GlossaryText text={h} /></th>)}</tr></thead>
           <tbody>{rows.map((r) => {
             const v = (id: string) => r.result?.metrics[id]?.value ?? null
             return (

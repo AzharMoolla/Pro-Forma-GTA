@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { CALCULATORS, runAll, type Calculator } from '../verification/cases'
 import { Card, Chip, TableWrap, td, tdNum, th } from './components'
 import { money, pct } from './format'
+import { GlossaryText } from './Glossary'
 
 // Verification: the model's answers beside answers worked out independently (by hand, from a statute or a textbook
 // formula). The same cases run in the test suite on every build.
@@ -19,10 +20,10 @@ export function Verification() {
         <p className="mt-2"><Chip tone={failed ? 'bad' : 'good'}>{failed ? `${failed} of ${results.length} checks fail` : `All ${results.length} checks pass`}</Chip></p>
         <div className="mt-3">
           <TableWrap caption="Verification checks">
-            <thead><tr>{['Check', 'Inputs', 'Expected', 'Model', 'Difference', 'Result'].map((h, i) => <th key={h} scope="col" className={i >= 2 && i <= 4 ? `${th} text-right` : th}>{h}</th>)}</tr></thead>
+            <thead><tr>{['Check', 'Inputs', 'Expected', 'Model', 'Difference', 'Result'].map((h, i) => <th key={h} scope="col" className={i >= 2 && i <= 4 ? `${th} text-right` : th}><GlossaryText text={h} /></th>)}</tr></thead>
             <tbody>{results.map((r) => (
               <tr key={r.case.id}>
-                <td className={td}><span className="num text-xs text-ink-mute">{r.case.id}</span> <span className="font-medium">{r.case.title}</span> <Chip>{KIND[r.case.kind]}</Chip><p className="text-xs text-ink-soft">{r.case.derivation}</p></td>
+                <td className={td}><span className="num text-xs text-ink-mute">{r.case.id}</span> <span className="font-medium"><GlossaryText text={r.case.title} /></span> <Chip>{KIND[r.case.kind]}</Chip><p className="text-xs text-ink-soft">{r.case.derivation}</p></td>
                 <td className={`${td} text-xs`}>{r.case.inputs}</td>
                 <td className={tdNum}>{fmt(r.case.expected, r.case.unit)}</td>
                 <td className={tdNum}>{fmt(r.actual, r.case.unit)}</td>

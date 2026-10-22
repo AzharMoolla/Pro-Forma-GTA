@@ -6,30 +6,42 @@ import { emptyRecord, type TaskRecord, type TrackerState } from '../tracker/trac
 import { demoProjects } from './data'
 import { updateNode, type NodePath } from './tree'
 
-export type Mode = 'quick' | 'professional' | 'institutional'
+/** Detail level: Simple hides the ledger, scenarios and cost editing; Full detail shows everything. Never changes the math. */
+export type Mode = 'quick' | 'professional'
+export const MODE_LABEL: Record<Mode, string> = { quick: 'Simple', professional: 'Full detail' }
 export type SectionId = 'overview' | 'map' | 'people' | 'charts' | 'feasibility' | 'assumptions' | 'verification' | 'report' | 'privacy' | 'terms' | 'progress' | 'market' | 'program' | 'costs' | 'revenue' | 'finance' | 'returns' | 'scenarios' | 'audit'
 
-export const SECTIONS: Array<{ id: SectionId; label: string; minMode: Mode }> = [
-  { id: 'overview', label: 'Overview', minMode: 'quick' },
-  { id: 'map', label: 'Site map', minMode: 'quick' },
-  { id: 'progress', label: 'Development tracker', minMode: 'quick' },
-  { id: 'market', label: 'Market evidence', minMode: 'quick' },
-  { id: 'people', label: 'People & affordability', minMode: 'quick' },
-  { id: 'program', label: 'Site & program', minMode: 'quick' },
-  { id: 'costs', label: 'Cost & budget', minMode: 'quick' },
-  { id: 'revenue', label: 'Revenue & operations', minMode: 'quick' },
-  { id: 'finance', label: 'Finance & ledger', minMode: 'professional' },
-  { id: 'returns', label: 'Returns & range', minMode: 'quick' },
-  { id: 'feasibility', label: 'Feasibility & stress', minMode: 'quick' },
-  { id: 'assumptions', label: 'Assumptions', minMode: 'quick' },
-  { id: 'charts', label: 'Charts', minMode: 'quick' },
-  { id: 'scenarios', label: 'Scenarios', minMode: 'professional' },
-  { id: 'audit', label: 'Sources & audit', minMode: 'quick' },
-  { id: 'verification', label: 'Verification', minMode: 'quick' },
-  { id: 'report', label: 'Report & export', minMode: 'quick' },
+/** Sections grouped by the question they answer, in the order a project is worked through. */
+export type GroupId = 'site' | 'model' | 'results' | 'checks' | 'deliver'
+export const GROUPS: Array<{ id: GroupId; label: string }> = [
+  { id: 'site', label: 'Site & context' },
+  { id: 'model', label: 'Pro forma' },
+  { id: 'results', label: 'Results & risk' },
+  { id: 'checks', label: 'Assumptions & checks' },
+  { id: 'deliver', label: 'Track & share' },
 ]
 
-const rank: Record<Mode, number> = { quick: 0, professional: 1, institutional: 2 }
+export const SECTIONS: Array<{ id: SectionId; label: string; minMode: Mode; group?: GroupId; kpis?: boolean }> = [
+  { id: 'overview', label: 'Overview', minMode: 'quick', kpis: true },
+  { id: 'map', label: 'Site map', minMode: 'quick', group: 'site' },
+  { id: 'program', label: 'Site & program', minMode: 'quick', group: 'site', kpis: true },
+  { id: 'market', label: 'Market evidence', minMode: 'quick', group: 'site', kpis: true },
+  { id: 'people', label: 'People & affordability', minMode: 'quick', group: 'site' },
+  { id: 'costs', label: 'Cost & budget', minMode: 'quick', group: 'model', kpis: true },
+  { id: 'revenue', label: 'Revenue & operations', minMode: 'quick', group: 'model', kpis: true },
+  { id: 'finance', label: 'Finance & ledger', minMode: 'professional', group: 'model', kpis: true },
+  { id: 'returns', label: 'Returns & range', minMode: 'quick', group: 'results', kpis: true },
+  { id: 'feasibility', label: 'Feasibility & stress', minMode: 'quick', group: 'results', kpis: true },
+  { id: 'scenarios', label: 'Scenarios', minMode: 'professional', group: 'results', kpis: true },
+  { id: 'charts', label: 'Charts', minMode: 'quick', group: 'results' },
+  { id: 'assumptions', label: 'Assumptions', minMode: 'quick', group: 'checks', kpis: true },
+  { id: 'audit', label: 'Sources & audit', minMode: 'quick', group: 'checks' },
+  { id: 'verification', label: 'Verification', minMode: 'quick', group: 'checks' },
+  { id: 'progress', label: 'Development tracker', minMode: 'quick', group: 'deliver' },
+  { id: 'report', label: 'Report & export', minMode: 'quick', group: 'deliver' },
+]
+
+const rank: Record<Mode, number> = { quick: 0, professional: 1 }
 export const atLeast = (mode: Mode, min: Mode) => rank[mode] >= rank[min]
 
 export type Inspect =
@@ -109,7 +121,7 @@ export function initialState(): State {
       else if (p.meta && p.draft) projects[id] = { ...p, scenarios } // a project the user created in this browser
     }
     if (!Object.keys(projects).length) Object.assign(projects, pristineProjects())
-    return { ...base, projectId: saved.projectId && projects[saved.projectId] ? saved.projectId : base.projectId, mode: saved.mode ?? base.mode }
+    return { ...base, projectId: saved.projectId && projects[saved.projectId] ? saved.projectId : base.projectId, mode: saved.mode === 'quick' ? 'quick' : base.mode } // 'institutional' (retired) reads as Full detail
   } catch {
     return base
   }
