@@ -32,7 +32,7 @@ function size(part: Part): { w: number; top: number } {
     if (b.kind === 'industrial') return { w: 24.7 + extra, top: Math.max(6, h) + 1 }
     if (b.kind === 'institutional') return { w: 13.7 + extra, top: Math.max(6.7, h) + 1 }
     if (b.kind === 'lots') return { w: 22 + extra, top: 3 }
-    return { w: (b.retail || b.podium ? 18.9 : 16.7) + extra, top: h + 3 }
+    return { w: (b.retail || b.podium ? 19.4 : 16.7) + extra, top: h + 3 }
   }
   if (part.kind === 'station') return part.transit === 'subway' ? { w: 7.5, top: 5 } : { w: 25.5, top: 6.5 }
   if (part.kind === 'tree') return { w: 5, top: 10 }
@@ -86,7 +86,7 @@ function buildingArt(p: Palette, b: Building, x: number): string {
     s += wrap(podium ? 'storefront' : 'tower', at(bx, building(p, Math.max(6, h), podium)))
     if (b.balconies) s += `<g data-feature="balconies"></g>` // the corner balcony stack is part of the tower drawing
     // Roof attachments sit on the roof (the setback crown when the tower has one)
-    const roofX = bx + (podium ? 1.2 : 0) + (h - (podium ? .67 : 0) >= 18 ? 1.4 : 0)
+    const roofX = bx + (podium ? 1.4 : 0) + (h - (podium ? .67 : 0) >= 18 ? 1.4 : 0)
     const roofY = -Math.max(6, h)
     if (b.greenRoof && !podium) s += wrap('green-roof', at(roofX, greenRoof(p, 12, 0), roofY))
     else if (b.greenRoof) s += `<g data-feature="green-roof"></g>` // drawn with the podium tower

@@ -198,3 +198,9 @@ What remains is deliberate: industrial roof lights turning a corner, and solar p
 **Figma:** "Component kit / … / Revision 5 (complete kit)" (nodes 6:2 and 6:4079).
 
 **Checks:** 62 components, 132 SVGs in the zip, 5 lamps in the street view (the pocket park has one).
+
+### Mixed use: the tower stands on its podium
+
+- **Podium depth:** podiums are 2.9 m deep: the 1.2 m setback plus the tower's own 1.7 m depth. The tower stands on the podium roof, centred (1 m in from each side) and flush with the back, instead of sitting behind a podium too shallow to hold it.
+- **Drawing order:** the podium is drawn first. The tower's walls and side wall start at the podium roof.
+- **Shopfront frame:** it is drawn before the awning, so the awning overhangs it cleanly.

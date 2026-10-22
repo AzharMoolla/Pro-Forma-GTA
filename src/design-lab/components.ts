@@ -44,23 +44,25 @@ function pane(x:number,y:number,w:number,h:number,p:Palette,mullion=true,sill=tr
 
 export function building(p:Palette,height=40,podium=false){
   if(!podium) return tower(p,height,false)
-  // Mixed use: the tower sits on the podium, set back 1.2 m behind its front face, so the podium roof reads as a
-  // terrace in front of it. The setback lifts the tower by its projection, so the tower is shortened to keep the
-  // overall height. The green roof sits on the tower's own roof, no wider than it.
+  // Mixed use: the tower stands on the podium roof. It is set back 1.2 m from the podium front and centred (1 m in
+  // from each side); the podium is 2.9 m deep (setback + the tower's 1.7 m depth), so the tower sits flush with its
+  // back. The podium is drawn first and the tower's walls stop at the podium roof. The setback lifts the tower by its
+  // projection, so the tower is shortened to keep the overall height. The green roof stays on the tower's own roof.
   const sb=1.2, lift=sb*RISE, h=height-lift, crowned=h>=18
   const roof=`<g transform="translate(${crowned?1.4:0})">${greenRoof(p,crowned?12.2:15,-h)}</g>`
-  return `<g transform="translate(${sb} ${-lift})">${tower(p,h,true)}${roof}</g><g transform="translate(-.8)">${podiumBase(p,'retail')}</g>`
+  return `<g transform="translate(-.8)">${podiumBase(p,'retail')}</g><g transform="translate(${.2+sb} ${-lift})">${tower(p,h,true)}${roof}</g>`
 }
 function tower(p:Palette,height:number,podium:boolean){
   const w=15, depth=1.7, base=podium?5.5:3.1
   const crown=height>=18 ? 3 : 0 // top storey set back: an amenity floor and roof terrace, so towers read as towers
   const bodyTop=-height+crown
+  const bodyH=podium ? height-crown-base : height-crown // on a podium the walls start at its roof
   const floors=Math.max(1,Math.floor((height-crown-base)/3))
   // Envelope first: the scale check measures this rectangle
   let s=rect(0,-height,w,height,'none','none',0,'data-envelope="height"')+(podium?'':groundShadow(w,depth,p))
   s+=sideWall(p,w,podium?-base:0,bodyTop,depth) // on a podium the wall starts at the podium roof
-  s+=rect(0,bodyTop,w,height-crown,p.wall,'none',0)+wash(0,bodyTop,w,height-crown,p)+rect(0,bodyTop,w,height-crown,'url(#PANEL)','none',0)
-  s+=rect(0,bodyTop,w,height-crown,p.wall,'none',0,'filter="url(#GRAIN)" opacity=".045"')
+  s+=rect(0,bodyTop,w,bodyH,p.wall,'none',0)+wash(0,bodyTop,w,bodyH,p)+rect(0,bodyTop,w,bodyH,'url(#PANEL)','none',0)
+  s+=rect(0,bodyTop,w,bodyH,p.wall,'none',0,'filter="url(#GRAIN)" opacity=".045"')
   // Recessed balcony stack at the corner: depth on the facade without inventing a design
   s+=rect(11.9,bodyTop+.4,2.8,height-crown-base-.4,p.shade,'none',0)+shade(11.9,bodyTop+.4,.35,height-crown-base-.4,p,.35)
   for(let i=0;i<floors;i++){
@@ -70,7 +72,7 @@ function tower(p:Palette,height:number,podium:boolean){
     // projecting balcony at the corner stack: slab, glass guard, shadow beneath
     s+=pane(12.5,y+.45,1.6,1.9,p,false)+shade(11.9,y+2.62,3,.32,p,.28)+rect(11.75,y+2.48,3.3,.14,p.wall,p.ink,LW.edge)+rect(11.75,y+1.95,3.3,.53,p.glass,p.ink,LW.fine,'fill-opacity=".45"')
   }
-  s+=rect(0,bodyTop,w,height-crown,'none',p.ink,LW.outline)
+  s+=rect(0,bodyTop,w,bodyH,'none',p.ink,LW.outline)
   // Cornice with its shadow, then the terrace roof behind the crown
   s+=shade(0,bodyTop+.22,w,.3,p,.25)+rect(-.14,bodyTop,w+.28,.22,p.wall,p.ink,LW.edge)+roofPlane(p,-.14,bodyTop,w+.28,depth,depth*RISE)
   if(crown){
@@ -311,7 +313,7 @@ export function civic(p:Palette,height=6.7){
 }
 function shopfront(p:Palette){
   // Brick pier frame, a sign band with a blank panel, stall risers, and a recessed door
-  let s=rect(0,-3.6,8,3.6,p.brick,'none',0)+rect(0,-3.6,8,3.6,'url(#BRICK)','none',0)
+  let s=rect(0,-3.6,8,3.6,p.brick,'none',0)+rect(0,-3.6,8,3.6,'url(#BRICK)','none',0)+rect(0,-3.6,8,3.6,'none',p.ink,LW.outline) // frame first, so the awning overhangs it cleanly
   s+=rect(.2,-3.42,7.6,.52,p.warm,p.ink,LW.detail)+rect(1.2,-3.32,4,.32,p.wall,p.fine,LW.fine)
   s+=pane(.35,-2.6,4.65,1.95,p,false)+line(2.65,-2.6,2.65,-.65,p.ink,LW.detail)
   s+=rect(.25,-.65,4.85,.65,p.shade,p.ink,LW.detail)+rect(.45,-.55,2,.45,'none',p.fine,LW.fine)+rect(2.85,-.55,2,.45,'none',p.fine,LW.fine)
@@ -323,12 +325,12 @@ function shopfront(p:Palette){
   for(let x=.15;x<7.7;x+=.7)s+=path(`M${x},-2.83 h.35 l-.3,.43 h-.35Z`,p.wall,p.fine,LW.fine)
   s+=path('M-.15,-2.4 h7.7 v.16 q-.2,.12 -.4,0 q-.2,.12 -.4,0 H-.15Z',p.warm,p.ink,LW.detail)
   for(const x of [.7,3.4])s+=rect(x,-.95,1.05,.3,p.warm,p.fine,LW.fine)+path(`M${x+.25},-.95 v-.38 h.55 v.38 M${x+.4},-1.33 q-.2,-.35 .1,-.3`,'none',p.fine,LW.fine)
-  return s+rect(0,-3.6,8,3.6,'none',p.ink,LW.outline)
+  return s
 }
 export const podiumTypes=['residential','retail','office','civic'] as const
 type PodiumType=typeof podiumTypes[number]
 function podiumBase(p:Palette,kind:PodiumType){
-  const w=17, depth=1.2 // a shallow base: matches the 1.2 m tower setback, so a tower's front corner lands on the podium's back corner
+  const w=17, depth=2.9 // deep enough for a tower set back 1.2 m with its own 1.7 m depth to stand on it
   let s=`<g data-feature="podium-${kind}">`+groundShadow(w,depth,p)+sideWall(p,w,0,-5.5,depth)
   s+=rect(0,-5.5,w,5.5,kind==='retail'?p.brick:p.wall,'none',0)+(kind==='retail'?rect(0,-5.5,w,5.5,'url(#BRICK)','none',0):wash(0,-5.5,w,5.5,p))
   s+=roofPlane(p,-.15,-5.6,w+.3,depth,depth*RISE)+shade(0,-5.4,w,.25,p,.25)
@@ -355,7 +357,7 @@ function podiumBase(p:Palette,kind:PodiumType){
   for(let x=.6;x<16.5;x+=2.1)s+=pane(x,-5.1,1.35,.8,p,false)
   return s+rect(0,-5.5,w,5.5,'none',p.ink,LW.outline)+'</g>'
 }
-export function podiumSvg(kind:PodiumType,skin:Skin){return uniqueSvg(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="-1.2 -7 20.5 7.5" role="img" aria-label="${kind} podium · illustrative template">${definitions(skin)}${podiumBase(palettes[skin],kind)}</svg>`,`podium-${kind}-${skin}`)}
+export function podiumSvg(kind:PodiumType,skin:Skin){return uniqueSvg(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="-1.2 -7.7 22.4 8.2" role="img" aria-label="${kind} podium · illustrative template">${definitions(skin)}${podiumBase(palettes[skin],kind)}</svg>`,`podium-${kind}-${skin}`)}
 export function solar(p:Palette){let s='';for(let i=0;i<4;i++){const x=i*1.55;s+=path(`M${x+.15},0 h1.3 l.35,-.1 h-1.3Z`,p.shadow,'none',0,'opacity=".22"')+path(`M${x},-.25 l.5,-1.35 h1.4 l-.5,1.35 Z`,p.glass,p.ink,LW.edge)+line(x+.45,-.4,x+.85,-1.45,p.sheen,.04,'opacity=".6"')+line(x+.65,-1.25,x+1.55,-1.25,p.fine,.03)+line(x+.5,-.85,x+1.4,-.85,p.fine,.03)+line(x+.8,-1.6,x+.3,-.25,p.fine,.03)+line(x+1.2,-1.6,x+.7,-.25,p.fine,.03)+line(x+.15,-.25,x+.15,0,p.ink,.055)+line(x+1.1,-.25,x+1.1,0,p.ink,.055)}return s}
 export function bus(p:Palette){
   let s=`<g data-feature="city-bus">`+path('M.12,-.5 V-2.67 Q.12,-3.08 .58,-3.08 H11.35 Q11.86,-3.08 11.88,-2.57 L11.95,-.84 Q11.97,-.5 11.65,-.5Z',p.wall,p.ink,.045)
@@ -801,7 +803,7 @@ function subwayTunnel(p:Palette){
 
 export const pieces: Piece[] = [
   {id:'01',name:'Apartment block',size:'15 m frontage · adjustable height',width:17,height:40,trigger:'Storeys / building program',note:'A repeated floor template; no invented facade specification.',draw:(p,h)=>building(p,h)},
-  {id:'02',name:'Mixed-use podium',size:'17 m base · adjustable height',width:18,height:25,trigger:'Retail + podium + explicit roof flags',note:'Lab fixture includes balconies and a green roof; these are attachments, not inferred design.',draw:(p,h)=>building(p,h??25,true)},
+  {id:'02',name:'Mixed-use podium',size:'17 m base · adjustable height',width:19.4,height:25,trigger:'Retail + podium + explicit roof flags',note:'Lab fixture includes balconies and a green roof; these are attachments, not inferred design.',draw:(p,h)=>building(p,h??25,true)},
   {id:'03',name:'Townhouse row',size:'4 × 4.4 m illustrative bays · 9 m to the eaves, 10.7 m to the gable',width:18,height:11,trigger:'Confirmed townhouse program',note:'Repeat homes along the street at a fixed height. Rear rows need separate blocks; the strip does not infer site layout.',draw:p=>townhouses(p)},
   {id:'18',name:'Deciduous tree',size:'Approximately 9.7 m high',width:7,height:10,trigger:'Landscape input / mapped tree / scene dressing',note:'A small family of rounded, upright and irregular silhouettes; species and exact location are not asserted.',draw:p=>tree(p)},
   {id:'22',name:'Pocket park',size:'17 m illustrative strip',width:18,height:8.5,trigger:'Park program / mapped park',note:'Play equipment is a synthetic lab attachment; park area alone does not establish it.',draw:park},
