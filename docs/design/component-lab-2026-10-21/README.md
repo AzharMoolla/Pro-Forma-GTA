@@ -168,3 +168,33 @@ New, built to the revision 3 rules in both skins:
 **Figma:** "Component kit / … / Revision 4 (40 components)" (nodes 5:2 and 5:3270) sits below the revision 3 sheets.
 
 **Checks:** the verification script now expects 40 components and 88 SVGs in the zip.
+
+## Revision 5: the complete kit (62 components and 4 podiums)
+
+**New:**
+- **Streets:** 31 road segment, 32 sidewalk with a boulevard and tree pit, 34 intersection (sidewalk corners, both streets, crosswalks, centre line broken through the box), 35 driveway with a dropped curb and apron, 37 trail with a wayfinding post.
+- **Landscape and water:** 20 planting bed, 21 lawn, 28 pond, 30 water direction cue.
+- **Furniture:** 38 bicycle rack, 51 street lamp, 52 bench, 53 waste and recycling bins, 54 bollards, 55 fire hydrant.
+- **Servicing:** 56 garage / loading module, 57 utility module (transformer pad, meters), 58 construction kit (hoarding, site office, 28 m tower crane).
+- **Badges:** 17 amenity badge, 60 phase / status badge.
+- **Beyond the planned 60:** 61 rail track and 62 subway tunnel cue. They answer where rail sits: at-grade rail goes in a background layer on its track with the platform; the subway is a section cue below the street, since from the street only its entrance shows.
+
+**Sharpened:**
+- **Train:** a cab car with a sloped nose, windscreen and headlight; bogie frames, underfloor equipment, roof units, a coupler. It sits on its own track.
+- **Ravine:** trees are planted into the slope at their computed ground height (`ravineGround`), so they no longer float.
+- **Parks:** surfaces are solid slabs with an edge (`slab`).
+  - Pocket park: a curved path, planting, seating, a lamp and a small play corner.
+  - Playground: a flecked rubber surface, a fence with a gate, a spring rider and a parents' bench.
+  - Plaza: a paver band, a capped seating wall, raised tree planters, public art and a café table.
+  - Lawn: grass tufts.
+
+**Clipping check:** a scripted pass compared every window and door pane in every component. Fixes:
+- The train's windows clipped the doors and the cab windscreen; they now keep clear.
+- An apartment lobby pane sat under the entrance door; the door bay is now clear.
+- The mixed-use tower's hidden ground floor crossed the podium's windows; it is no longer drawn behind a podium.
+
+What remains is deliberate: industrial roof lights turning a corner, and solar panels whose slanted bounding boxes overlap while the panels themselves stand 15 cm apart.
+
+**Figma:** "Component kit / … / Revision 5 (complete kit)" (nodes 6:2 and 6:4079).
+
+**Checks:** 62 components, 132 SVGs in the zip, 5 lamps in the street view (the pocket park has one).

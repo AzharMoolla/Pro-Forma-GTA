@@ -1,5 +1,5 @@
 {
-  "plannedComponents": 60,
+  "plannedComponents": 62,
   "trialComponents": [
     {
       "id": "01",
@@ -280,6 +280,160 @@
       "size": "Height limit, angular plane and setback",
       "trigger": "Mapped height limit, angular plane and setback",
       "note": "Red dashed limits over a ghosted envelope; the by-law text and its exceptions govern."
+    },
+    {
+      "id": "17",
+      "name": "Amenity badge",
+      "size": "1.7 m marker on a post",
+      "trigger": "An amenity the program confirms (pool, gym, childcare, rooftop space)",
+      "note": "A marker, not a drawing of the amenity; placement is illustrative."
+    },
+    {
+      "id": "20",
+      "name": "Planting bed",
+      "size": "6 m raised bed",
+      "trigger": "Landscape input or a mapped planting area",
+      "note": "Shrubs, perennials and grasses as a texture; species are not asserted."
+    },
+    {
+      "id": "21",
+      "name": "Lawn",
+      "size": "12 m mown lawn",
+      "trigger": "Open space or park area in the program",
+      "note": "Mown stripes on a flat area; grading and soil depth are not shown."
+    },
+    {
+      "id": "28",
+      "name": "Pond",
+      "size": "9 m pond with reeds",
+      "trigger": "Mapped pond or stormwater pond",
+      "note": "Water body as context; depth, function and access are not implied."
+    },
+    {
+      "id": "30",
+      "name": "Water direction cue",
+      "size": "6 m flow marker",
+      "trigger": "Mapped watercourse with a known flow direction",
+      "note": "Chevrons point downstream; flow rate and flood extent are not shown."
+    },
+    {
+      "id": "31",
+      "name": "Road segment",
+      "size": "14 m two-lane road",
+      "trigger": "Frontage street and its class (mapped road)",
+      "note": "Lanes, centre line and curbs; widths follow the road class, not a survey."
+    },
+    {
+      "id": "32",
+      "name": "Sidewalk",
+      "size": "12 m paved sidewalk with boulevard",
+      "trigger": "Mapped sidewalk on the frontage",
+      "note": "Paver joints, curb and boulevard strip; sidewalk width is illustrative unless measured."
+    },
+    {
+      "id": "34",
+      "name": "Intersection",
+      "size": "16 m crossing of two streets",
+      "trigger": "Corner site or mapped intersection",
+      "note": "Crosswalks, stop bar and corner curbs; turning lanes and signals are not asserted."
+    },
+    {
+      "id": "35",
+      "name": "Driveway",
+      "size": "3.2 m curb cut across the sidewalk",
+      "trigger": "Vehicle access in the program (curb cut)",
+      "note": "Dropped curb and apron; access approval and sightlines are separate."
+    },
+    {
+      "id": "37",
+      "name": "Trail",
+      "size": "14 m multi-use path",
+      "trigger": "Mapped trail or ravine path",
+      "note": "A path through planting with a wayfinding post; surface and width are illustrative."
+    },
+    {
+      "id": "38",
+      "name": "Bicycle rack",
+      "size": "3 hoops · one parked bike",
+      "trigger": "Bicycle parking count in the program",
+      "note": "Three hoops at street scale; the required count comes from the by-law."
+    },
+    {
+      "id": "51",
+      "name": "Street lamp",
+      "size": "6.7 m pole with warm light",
+      "trigger": "Documented street lighting or illustrative dressing",
+      "note": "A light pool for atmosphere, not a lighting calculation."
+    },
+    {
+      "id": "52",
+      "name": "Bench",
+      "size": "1.8 m bench",
+      "trigger": "Documented public realm or illustrative dressing",
+      "note": "A single bench at scale."
+    },
+    {
+      "id": "53",
+      "name": "Waste and recycling bins",
+      "size": "Two 1 m bins",
+      "trigger": "Public realm or waste-storage input",
+      "note": "Waste and recycling pair; collection arrangements are not implied."
+    },
+    {
+      "id": "54",
+      "name": "Bollards",
+      "size": "Three 0.9 m bollards",
+      "trigger": "Documented public realm or a protected edge",
+      "note": "Reflective bands; spacing is illustrative."
+    },
+    {
+      "id": "55",
+      "name": "Fire hydrant",
+      "size": "0.9 m hydrant",
+      "trigger": "Mapped hydrant or servicing context",
+      "note": "Generic hydrant; fire-route and flow requirements come from the servicing study."
+    },
+    {
+      "id": "56",
+      "name": "Garage / loading module",
+      "size": "7.5 m frontage · overhead door",
+      "trigger": "Loading space or parking-ramp input",
+      "note": "Overhead door with a clearance bar and dock bumpers; loading type and turning space are separate."
+    },
+    {
+      "id": "57",
+      "name": "Utility module",
+      "size": "Transformer pad and meter cabinet",
+      "trigger": "Hydro connection or utility servicing in the costs",
+      "note": "Servicing to plan for, not an equipment specification or location."
+    },
+    {
+      "id": "58",
+      "name": "Construction kit",
+      "size": "Hoarding, site office, 28 m tower crane",
+      "trigger": "Project status: under construction (tracker)",
+      "note": "Shows a site being built; crane position and swing are not a construction plan."
+    },
+    {
+      "id": "60",
+      "name": "Phase / status badge",
+      "size": "1.7 m marker on a post",
+      "trigger": "Phase number or status from the plan and tracker",
+      "note": "Three segments, the first filled (phase 1 of 3); the real phase comes from the data."
+    },
+    {
+      "id": "61",
+      "name": "Rail track",
+      "size": "Rails on ties and ballast",
+      "trigger": "Rail corridor at grade (map), drawn in the background layer",
+      "note": "Trains and platforms sit on it; alignment and grade separation come from the rail data."
+    },
+    {
+      "id": "62",
+      "name": "Subway tunnel cue",
+      "size": "18 m street section with a tube below",
+      "trigger": "Subway line under the frontage (map)",
+      "note": "A section cue only: depth, structure and any easement come from the transit agency."
     }
   ],
   "inventory": [
@@ -343,7 +497,9 @@
       "41 Bus",
       "42 Subway entrance",
       "43 Rail platform",
-      "44 Train"
+      "44 Train",
+      "61 Rail track",
+      "62 Subway tunnel cue"
     ],
     [
       "Vehicles and people",

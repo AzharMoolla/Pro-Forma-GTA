@@ -17,7 +17,7 @@ try {
   page.on('request', r => { if (!new URL(r.url()).hostname.match(/^(127\.0\.0\.1|localhost)$/)) externalRequests.push(r.url()) })
   await page.goto(process.env.LAB_URL ?? 'http://127.0.0.1:5184/component-lab/')
   await page.locator('#components article.piece').last().waitFor()
-  assert.equal(await page.locator('#components article.piece').count(), 40)
+  assert.equal(await page.locator('#components article.piece').count(), 62)
   const geometryMatches = await page.locator('#components article.piece').evaluateAll(cards => cards.every(card => {
     const geometry = svg => [...svg.querySelector('g').querySelectorAll('path,rect,line,circle')].map(el =>
       ['tagName', 'x', 'y', 'width', 'height', 'd', 'x1', 'y1', 'x2', 'y2', 'cx', 'cy', 'r', 'transform'].map(k => k === 'tagName' ? el.tagName : el.getAttribute(k)))
@@ -37,7 +37,7 @@ try {
   }))
   assert.ok(detailChecks.closedRoofs && detailChecks.roofCount >= 9)
   assert.equal(detailChecks.treeVariants, 3)
-  assert.equal(detailChecks.lamps, 4)
+  assert.equal(detailChecks.lamps, 5) // four street lamps plus the one in the pocket park
   assert.equal(detailChecks.backdrop, 1)
   const selected=page.locator('.selectable-building').first()
   await selected.focus()
@@ -87,13 +87,13 @@ try {
   await page.keyboard.press('Escape')
   assert.equal(await page.locator('dialog[open]').count(), 0)
   const downloadEvent = page.waitForEvent('download')
-  await page.getByRole('button', { name:'Download 88 SVGs .zip' }).click()
+  await page.getByRole('button', { name:'Download 132 SVGs .zip' }).click()
   const download = await downloadEvent
   const stream = await download.createReadStream(), chunks = []
   for await (const chunk of stream) chunks.push(chunk)
   const zip = unzipSync(Buffer.concat(chunks))
   const svgNames = Object.keys(zip).filter(k=>k.endsWith('.svg'))
-  assert.equal(svgNames.length, 88) // 40 components and 4 podiums, two skins each
+  assert.equal(svgNames.length, 132) // 62 components and 4 podiums, two skins each
   const xmlErrors = await page.evaluate(svgs => svgs.flatMap(([name,text]) => {
     const parsed = new DOMParser().parseFromString(text,'image/svg+xml')
     if(parsed.querySelector('parsererror'))return [name]

@@ -83,9 +83,12 @@ function tower(p:Palette,height:number,podium:boolean){
     s+=shade(cx,-height+.2,cw,.25,p,.22)+roofPlane(p,cx-.1,-height,cw+.2,depth*.8,depth*.8*RISE)
   }
   // Ground floor: lobby glazing, entrance canopy with its shadow
-  s+=rect(.5,-base+.35,14,base-.35,p.shade,p.ink,LW.detail)
-  for(let i=0;i<7;i++)s+=pane(.66+(i*1.95),-base+.55,1.72,base-.75,p,false)
-  s+=rect(6.55,-2.55,1.8,2.55,p.glass,p.ink,LW.edge)+line(7.45,-2.5,7.45,0,p.ink,LW.detail)+circle(7.62,-1.25,.045,p.ink)
+  // Ground floor (hidden behind a podium, so not drawn there): lobby glazing either side of the door bay
+  if(!podium){
+    s+=rect(.5,-base+.35,14,base-.35,p.shade,p.ink,LW.detail)
+    for(let i=0;i<7;i++)if(i!==3)s+=pane(.66+(i*1.95),-base+.55,1.72,base-.75,p,false)
+    s+=rect(6.55,-2.55,1.8,2.55,p.glass,p.ink,LW.edge)+line(7.45,-2.5,7.45,0,p.ink,LW.detail)+circle(7.62,-1.25,.045,p.ink)
+  }
   if(!podium)s+=shade(5.6,-2.55,3.75,.3,p,.3)+path('M5.6,-2.9 h3.75 l.35,.35 H5.25Z',p.roof,p.ink,LW.edge)+rect(.65,-.55,1.35,.55,p.wall,p.ink,LW.detail)+path('M.8,-.55 q.2,-.65 .35,0 q.2,-.8 .4,0','none',p.green,.07)
   return podium ? s : s+line(-.3,0,w+depth+.3,0,p.ink,LW.outline)
 }
@@ -171,7 +174,6 @@ function playground(p:Palette){
   s+=line(5.8,-1.96,5.8,-.66,p.fine,.022)+line(6.32,-1.96,6.32,-.66,p.fine,.022)+rect(5.73,-.68,.66,.09,p.warm,p.ink,.025)
   return s
 }
-function park(p:Palette){return rect(0,-.08,17,.08,p.green)+path('M0,0 H17 l.5,.28 H.5Z',p.foliage,p.fine,.025)+path('M4,0 H8 l.5,.25 H4.5Z',p.wall,p.fine,.025)+tree(p,2.5,0,.65,1)+tree(p,14.5,0,.85,2)+bench(p,5.8)+`<ellipse cx="11.6" cy=".03" rx="3.8" ry=".14" fill="${p.shadow}" opacity=".16"/>`+`<g transform="translate(8)">${playground(p)}</g>`+path('M1,.12 h1.2 M9,.14 h1.5 M13,.12 h1.3','none',p.green,.03,'opacity=".5"')+person(p,4.4)+path('M.5,-.1 q.2,-.7 .4,0 M16,-.1 q.2,-.7 .4,0','none',p.green,.035)}
 function shelter(p:Palette){
   return `<g data-feature="shelter-frame">`+path('M.1,0 H5.1 l-.25,.18 H.3Z',p.shadow,'none',0,'opacity=".2"')+path('M.25,-.08 V-2.55 H4.65 V-.08Z',p.glass,p.fine,.04)+rect(.25,-2.53,4.4,.32,p.shadow,'none',0,'opacity=".2"')+line(.9,-.4,1.8,-2.1,p.sheen,.05,'opacity=".6"')+line(2.9,-.4,3.4,-1.3,p.sheen,.05,'opacity=".5"')+
     path('M4.65,-.08 V-2.55 l.45,-.25 V-.33Z',p.shade,p.ink,.04)+
@@ -465,25 +467,6 @@ function roofTerrace(p:Palette){
   return s
 }
 function treeCluster(p:Palette){return tree(p,2.6,0,.75,1)+tree(p,7.6,0,.7,2)+tree(p,5,0,1,0)}
-function plaza(p:Palette){
-  const w=16, d=2.5
-  let s=path(ground(0,w,d),p.wall,p.ink,LW.edge)
-  for(let x=1;x<w;x+=1)s+=line(x,0,x+d,-d*RISE,p.fine,LW.fine)
-  for(let k=1;k<3;k++){const t=k/3;s+=line(d*t,-d*RISE*t,w+(d*t),-d*RISE*t,p.fine,LW.fine)}
-  s+=rect(2.6,-1.8,10.5,.45,p.shade,p.ink,LW.detail)+shade(2.6,-1.35,10.5,.12,p,.25) // seating wall at the back
-  for(const x of [1.2,13.6]){s+=rect(x,-.7,1.6,.7,p.shade,p.ink,LW.detail)+tree(p,x+.8,-.7,.42,x<5?0:2)}
-  // Public art on a plinth
-  s+=contactAt(8,.6,p)+rect(7.5,-.6,1,.6,p.wall,p.ink,LW.detail)+path('M7.7,-.6 C7.5,-1.6 8.6,-1.9 8.3,-2.6 C8.9,-2 8.7,-1.1 8.3,-.6Z',p.warm,p.ink,LW.detail)
-  return s+person(p,5.2)+person(p,10.6,0,1)+bench(p,10.9)
-}
-function playgroundPiece(p:Palette){
-  const w=9.5, d=2
-  let s=path(ground(0,w,d),p.warm,p.ink,LW.edge,'fill-opacity=".45"')+contactAt(4.8,3.6,p,.12)
-  s+=`<g transform="translate(1)">${playground(p)}</g>`
-  for(let x=0;x<=w;x+=.95)s+=line(x,0,x,-.9,p.ink,LW.fine)
-  s+=line(0,-.9,w,-.9,p.ink,LW.detail)+line(0,-.45,w,-.45,p.ink,LW.fine)
-  return s+`<g transform="translate(8.9 0) scale(.72)">${person(p,0,0,1)}</g>`
-}
 function rainGarden(p:Palette){
   // A shallow planted basin below the sidewalk; a curb cut lets street runoff in
   let s=path('M0,0 L1.2,.55 H6.8 L8,0 Z',p.green,p.ink,LW.edge,'fill-opacity=".35"')
@@ -502,14 +485,6 @@ function lakeEdge(p:Palette){
   for(let x=2.4;x<=12.4;x+=1.25)s+=line(x,-1.3,x,-.35,p.ink,LW.detail)
   s+=line(2.4,-1.3,12.4,-1.3,p.ink,LW.edge)+line(2.4,-.85,12.4,-.85,p.fine,LW.fine)
   return s+person(p,6.5,-.35)
-}
-function ravine(p:Palette){
-  // A wooded valley below the table land, with a creek at the bottom
-  const valley='M0,0 C2.5,0 3.5,2.6 6,2.7 H11.5 C14,2.6 15,0 18,0 V3.2 H0Z'
-  let s=path(valley,p.foliage,p.ink,LW.edge)+path('M0,0 C2.5,0 3.5,2.6 6,2.7 L4,3.2 H0Z','url(#HATCH)','none',0)
-  s+=path('M6.3,2.7 Q8.7,2.45 11.2,2.7','none',p.water,.16)
-  s+=conifer(p,1.2,0,.85)+tree(p,3.7,1.4,.6,1)+conifer(p,8,2.65,.7)+tree(p,10.2,2.65,.65,0)+conifer(p,14.4,1.4,.75)+tree(p,16.8,0,.7,2)
-  return s+line(-.3,0,1,0,p.ink,LW.outline)+line(17,0,18.3,0,p.ink,LW.outline)
 }
 function crossing(p:Palette){
   const w=10, d=3
@@ -550,16 +525,6 @@ function railPlatform(p:Palette){
   for(let i=0;i<5;i++)s+=path(`M${-1.2+(i*.24)},${-(i*.22)} h.24 v-.22`,'none',p.ink,LW.detail)
   return s
 }
-function train(p:Palette){
-  const L=25
-  let s=path(`M.6,0 H${L-.6} l-.2,.1 H.8Z`,p.shadow,'none',0,'opacity=".2"')
-  s+=path(`M.3,-.9 V-4.2 Q.3,-4.8 .9,-4.8 H${L-.9} Q${L-.3},-4.8 ${L-.3},-4.2 V-.9Z`,p.wall,p.ink,LW.edge)+rect(.3,-1.35,L-.6,.45,p.shadow,'none',0,'opacity=".14"')
-  for(const [y,h] of [[-2.55,.85],[-4.05,.8]] as const)for(let x=1.4;x<L-1.6;x+=1.6){if((x>3&&x<5.4)||(x>19.3&&x<21.8))continue;s+=pane(x,y,1.2,h,p,false,false)}
-  s+=rect(.3,-3.05,L-.6,.2,p.limit,'none',0,'opacity=".7"')
-  for(const x of [3.3,19.6])s+=rect(x,-2.9,2,2,p.shadow,'none',0,'opacity=".25"')+pane(x+.1,-2.8,.85,1.9,p,false,false)+pane(x+1.05,-2.8,.85,1.9,p,false,false)
-  for(const x of [3.4,5.6,19.4,21.6])s+=wheel(p,x,-.42,.42)
-  return s+rect(1.5,-5.05,3,.25,p.shade,p.ink,LW.detail)+rect(L-4.5,-5.05,3,.25,p.shade,p.ink,LW.detail)
-}
 function truck(p:Palette){
   let s=path('M.3,0 H8.3 l-.2,.1 H.5Z',p.shadow,'none',0,'opacity=".2"')
   s+=rect(.1,-3.6,6.1,3.05,p.wall,p.ink,LW.edge)+rect(.1,-1.05,6.1,.5,p.shadow,'none',0,'opacity=".14"')+line(.4,-3.3,5.9,-3.3,p.fine,LW.fine)
@@ -581,6 +546,256 @@ function policyOverlay(p:Palette){
   s+=line(5,-H-4,W+4,-H+11,p.limit,LW.edge,dash) // angular plane, extended past the building
   s+=line(-1.2,-limit,W+3,-limit,p.limit,LW.outline,dash)+path(`M-1.2,${-limit-.55} l.7,.55 -.7,.55Z`,p.limit,'none',0) // height limit
   s+=line(3,0,3,-H-1,p.limit,LW.detail,dash)+path('M0,-.6 H3 M.35,-.85 L0,-.6 .35,-.35 M2.65,-.85 L3,-.6 2.65,-.35','none',p.limit,LW.detail) // front setback
+  return s
+}
+
+// ---- Batch four (revision 3 rules): streets, ground, small furniture, servicing, badges
+const curbFront = (x:number,w:number,p:Palette) => rect(x,-.15,w,.15,p.wall,p.ink,LW.detail)+shade(x,0,w,.1,p,.2)
+function roadSegment(p:Palette){
+  const w=14, d=6
+  let s=path(ground(0,w,d),p.road,p.ink,LW.edge)
+  s+=line(d*.5,-d*RISE*.5,w+(d*.5),-d*RISE*.5,p.warm,.1,'stroke-dasharray="1.2 .8"') // centre line
+  for(const t of [.06,.94])s+=line(d*t,-d*RISE*t,w+(d*t),-d*RISE*t,p.paper,.05) // lane edges
+  return s+curbFront(0,w,p)+path(`M${d},${-d*RISE} H${w+d} l.4,-.22 H${d+.4}Z`,p.wall,p.ink,LW.detail)
+}
+function sidewalk(p:Palette){
+  const w=12, d=2
+  let s=path(ground(0,w,d),p.wall,p.ink,LW.edge)
+  for(let x=.6;x<w;x+=.6)s+=line(x,0,x+d,-d*RISE,p.fine,LW.fine)
+  for(const t of [.33,.66])s+=line(d*t,-d*RISE*t,w+(d*t),-d*RISE*t,p.fine,LW.fine)
+  // Boulevard strip with a tree pit at the curb side
+  s+=path(`M0,0 H${w} l.35,-.2 H.35Z`,p.green,'none',0,'opacity=".35"')+rect(5.4,-.3,1.2,.25,p.shade,p.ink,LW.fine)
+  return s+curbFront(-.1,w+.2,p)
+}
+function intersection(p:Palette){
+  const w=16, d=6, dr=d*RISE
+  // Four sidewalk corners; the main street crosses as a band, the cross street runs through the middle
+  const a=.3, b=.7, at=(t:number)=>[d*t,-dr*t] as const
+  let s=path(ground(0,w,d),p.wall,p.ink,LW.edge)
+  s+=path(`M${at(a)[0]},${at(a)[1]} H${w+at(a)[0]} L${w+at(b)[0]},${at(b)[1]} H${at(b)[0]}Z`,p.road,'none',0)
+  s+=path(`M5.2,0 H10.8 l${d},${-dr} H${5.2+d}Z`,p.road,'none',0)
+  // Curb edges around each corner
+  for(const t of [a,b])for(const [x0,x1] of [[0,5.2],[10.8,w]] as const)s+=line(x0+at(t)[0],at(t)[1],x1+at(t)[0],at(t)[1],p.ink,LW.detail)
+  for(const x of [5.2,10.8])s+=line(x,0,x+at(a)[0],at(a)[1],p.ink,LW.detail)+line(x+at(b)[0],at(b)[1],x+d,-dr,p.ink,LW.detail)
+  // Crosswalks across the cross street on both sides of the main street
+  for(let x=5.5;x<10.6;x+=.85)s+=path(`M${x},-.55 h.45 l.9,-.5 h-.45Z`,p.paper,p.fine,LW.fine)
+  for(let x=5.5;x<10.6;x+=.85)s+=path(`M${x+d-1.3},${-dr+.72} h.45 l.9,-.5 h-.45Z`,p.paper,p.fine,LW.fine)
+  // Centre line of the main street, broken through the intersection
+  const mid=at(.5)
+  s+=line(mid[0]+.3,mid[1],mid[0]+4.9,mid[1],p.warm,.08,'stroke-dasharray="1 .7"')+line(mid[0]+11.1,mid[1],mid[0]+w-.3,mid[1],p.warm,.08,'stroke-dasharray="1 .7"')
+  return s+curbFront(0,5.2,p)+curbFront(10.8,5.2,p)
+}
+function driveway(p:Palette){
+  const w=8, d=2
+  let s=path(ground(0,w,d),p.wall,p.ink,LW.edge)
+  for(let x=.6;x<w;x+=.6)if(x<2.4||x>5.6)s+=line(x,0,x+d,-d*RISE,p.fine,LW.fine)
+  // Dropped curb and a concrete apron across the sidewalk
+  s+=path(`M2.4,0 H5.6 l${d},${-d*RISE} H${2.4+d}Z`,p.shade,p.ink,LW.detail)+path('M2.4,0 L2.9,-.15 H5.1 L5.6,0','none',p.ink,LW.detail)
+  return s+curbFront(0,2.4,p)+curbFront(5.6,2.4,p)+path(`M${2.4+d},${-d*RISE} l.3,-.6 h2.6 l.3,.6`,'none',p.ink,LW.detail,'stroke-dasharray=".3 .2"')
+}
+function trail(p:Palette){
+  const band='M0,-.1 C3,-.1 4,-.9 7,-.8 C10,-.7 11,-.2 14,-.3 L14.6,-.62 C11.6,-.52 10.6,-1.02 7.6,-1.12 C4.6,-1.22 3.6,-.42 .6,-.42Z'
+  let s=path(ground(0,14,2.4),p.foliage,'none',0,'opacity=".7"')+path(band,p.warm,p.ink,LW.edge,'fill-opacity=".55"')
+  s+=path('M.3,-.26 C3.3,-.26 4.3,-1.06 7.3,-.96 C10.3,-.86 11.3,-.36 14.3,-.46','none',p.paper,.04,'stroke-dasharray=".3 .3"')
+  // Wayfinding post
+  s+=contactAt(11.5,.3,p)+line(11.5,0,11.5,-1.5,p.warm,.12)+path('M11.5,-1.45 h.75 l.2,.15 -.2,.15 h-.75Z',p.wall,p.ink,LW.fine)
+  return s+tree(p,2,-.9,.35,1)
+}
+function plantingBed(p:Palette){
+  let s=contactAt(3,3.1,p,.1)+rect(0,-.45,6,.45,p.shade,p.ink,LW.edge)+shade(0,-.45,6,.08,p,.25)
+  // Shrubs, then perennials and grasses in front
+  for(const [x,r] of [[.9,.55],[2.3,.7],[3.9,.6],[5.2,.5]] as const)s+=path(`M${x-r},-.45 a${r},${r*.9} 0 0 1 ${r*2},0Z`,p.foliage,p.green,.06)+path(`M${x-(r*.6)},${-.45-(r*.55)} a${r*.4},${r*.3} 0 0 1 ${r*.7},-.05`,'none',p.sheen,.04,'opacity=".6"')
+  for(let x=.3;x<5.9;x+=.45)s+=path(`M${x},-.45 q-.08,-.45 -.18,-.55 M${x},-.45 q.06,-.5 .12,-.6`,'none',p.green,.035)+circle(x+.1,-.85,.06,p.warm)
+  return s
+}
+function pond(p:Palette){
+  let s=path('M.4,0 C1.5,.9 8.5,.9 9.6,0 Z',p.water,p.ink,LW.edge)+path('M1.2,.18 C3,.55 7,.55 8.8,.18','none',p.paper,.05,'opacity=".7"')
+  for(const x of [.8,1.3,8.4,8.9])s+=path(`M${x},0 q-.1,-.6 -.05,-.95 M${x+.12},0 q.05,-.5 .15,-.8`,'none',p.green,.045)+rect(x-.02,-1.02,.07,.22,p.warm)
+  for(const [x,r] of [[2.2,.18],[7.6,.22],[3,.13]] as const)s+=circle(x,.04,r,p.shade,p.ink,LW.fine)
+  return s+line(-.2,0,10.2,0,p.ink,LW.edge)
+}
+function waterCue(p:Palette){
+  let s=rect(0,0,6,.7,p.water,'none',0)+line(0,0,6,0,p.ink,LW.edge)
+  for(const x of [1,2.6,4.2])s+=path(`M${x},.18 l.5,.17 -.5,.17`,'none',p.paper,.07) // flow chevrons point downstream
+  return s+path('M.3,.55 q.4,-.1 .8,0 M4.8,.55 q.4,-.1 .8,0','none',p.paper,.04)
+}
+function bicycleRack(p:Palette){
+  let s=contactAt(1.9,1.9,p,.08)
+  for(const x of [.4,1.6,2.8])s+=path(`M${x},0 v-.7 q0,-.3 .3,-.3 h.3 q.3,0 .3,.3 v.7`,'none',p.ink,LW.edge)
+  // One parked bicycle
+  s+=circle(1.25,-.32,.32,'none',p.ink,.04)+circle(2.45,-.32,.32,'none',p.ink,.04)+path('M1.25,-.32 L1.6,-.82 H2.15 L2.45,-.32 M1.6,-.82 L1.85,-.32 L2.15,-.82 M1.55,-.95 h.25 M2.15,-.82 l.05,-.15 h.15','none',p.green,.045)
+  return s
+}
+function bin(p:Palette){
+  let s=contactAt(.75,.8,p)
+  for(const [x,c] of [[0,p.shade],[.8,p.glass]] as const)s+=rect(x,-1,.65,1,c,p.ink,LW.edge)+rect(x+.36,-1,.29,1,p.shadow,'none',0,'opacity=".18"')+rect(x-.04,-1.08,.73,.1,p.warm,p.ink,LW.fine)+rect(x+.17,-.92,.3,.06,p.ink,'none',0)
+  return s
+}
+function bollard(p:Palette){
+  let s=''
+  for(const x of [.3,1.4,2.5])s+=contactAt(x,.22,p,.05)+rect(x-.12,-.9,.24,.9,p.shade,p.ink,LW.edge)+rect(x+.02,-.9,.1,.9,p.shadow,'none',0,'opacity=".2"')+rect(x-.12,-.72,.24,.08,p.limit,'none',0,'opacity=".8"')+path(`M${x-.12},-.9 q.12,-.1 .24,0`,p.shade,p.ink,LW.fine)
+  return s
+}
+function hydrant(p:Palette){
+  return contactAt(.4,.35,p)+rect(.1,-.12,.6,.12,p.warm,p.ink,LW.detail)+rect(.2,-.72,.4,.6,p.warm,p.ink,LW.edge)+rect(.45,-.72,.15,.6,p.shadow,'none',0,'opacity=".18"')
+    +path('M.17,-.72 q.23,-.22 .46,0Z',p.warm,p.ink,LW.detail)+rect(.36,-.9,.08,.12,p.warm,p.ink,LW.fine)+rect(.04,-.5,.16,.16,p.warm,p.ink,LW.fine)+rect(.6,-.5,.16,.16,p.warm,p.ink,LW.fine)+circle(.4,-.4,.07,p.shade,p.ink,LW.fine)
+}
+function garageModule(p:Palette){
+  const w=7.5
+  let s=rect(0,-4,w,4,p.wall,'none',0)+wash(0,-4,w,4,p)+rect(0,-4,w,4,'url(#PANEL)','none',0)
+  // Overhead door in a reveal, a clearance bar, dock bumpers and a ramp curb
+  s+=rect(.6,-3.3,3.6,3.3,p.shadow,'none',0,'opacity=".35"')+rect(.75,-3.15,3.3,3.15,p.shade,p.ink,LW.edge)
+  for(let y=-2.85;y<0;y+=.35)s+=line(.8,y,4,y,p.fine,LW.fine)
+  s+=rect(.6,-3.65,3.6,.15,p.limit,'none',0,'opacity=".7"')+shade(.6,-3.3,3.6,.3,p,.3)
+  for(const x of [.45,4.15])s+=rect(x,-1.1,.2,.5,p.ink,'none',0)
+  s+=pane(5.1,-2.6,1.5,2.6,p,false,false)+line(5.85,-2.6,5.85,0,p.ink,LW.detail)
+  return s+rect(0,-4,w,4,'none',p.ink,LW.outline)+line(-.3,0,w+.3,0,p.ink,LW.outline)
+}
+function utilityModule(p:Palette){
+  // A pad-mounted transformer and a meter cabinet: servicing to plan for, not an equipment specification
+  let s=groundShadow(2.2,.6,p)+rect(-.1,-.15,2.6,.15,p.shade,p.ink,LW.detail)
+  s+=sideWall(p,2.2,-.15,-1.5,.6)+rect(0,-1.5,2.2,1.35,p.green,p.ink,LW.edge,'fill-opacity=".55"')+roofPlane(p,0,-1.5,2.2,.6,.6*RISE)
+  for(let y=-1.3;y<-.4;y+=.18)s+=line(.25,y,1,y,p.ink,LW.fine)
+  s+=rect(1.3,-1.3,.7,.5,p.paper,p.ink,LW.fine)+path('M1.65,-1.22 l-.12,.18 h.12 l-.1,.17','none',p.limit,.035)
+  s+=rect(3,-1.25,.9,1.25,p.shade,p.ink,LW.edge)+circle(3.45,-.85,.16,p.paper,p.ink,LW.fine)+circle(3.45,-.4,.16,p.paper,p.ink,LW.fine)
+  return s+line(-.3,0,4.2,0,p.ink,LW.outline)
+}
+function constructionKit(p:Palette){
+  // Hoarding, a site office and a tower crane: the project while it is being built
+  let s=''
+  // Tower crane: lattice mast, jib, counter-jib and counterweight, hook
+  s+=contactAt(14,1.4,p,.1)+rect(13.4,-.3,1.2,.3,p.shade,p.ink,LW.detail)
+  s+=path('M13.6,-.3 V-26 M14.4,-.3 V-26','none',p.warm,LW.edge)
+  for(let y=-.3;y>-26;y-=1)s+=line(13.6,y,14.4,y-1,p.warm,LW.fine)+line(13.6,y-1,14.6,y-1,p.warm,LW.fine)
+  s+=path('M14,-28 L13.6,-26 H14.4Z',p.warm,p.ink,LW.detail)+path('M6,-26 H23 V-25.5 H6Z',p.warm,p.ink,LW.detail)+line(14,-28,22.5,-26,p.ink,LW.fine)+line(14,-28,7,-26,p.ink,LW.fine)
+  s+=rect(6.2,-25.5,1.6,1.1,p.shade,p.ink,LW.detail)+rect(14.6,-25.4,.9,.8,p.glass,p.ink,LW.detail)
+  s+=line(20,-25.5,20,-14,p.ink,LW.fine)+path('M19.75,-14 h.5 v.3 a.25,.25 0 0 1 -.5,0Z',p.warm,p.ink,LW.fine)
+  // Site office trailer
+  s+=groundShadow(4,.5,p)+sideWall(p,4,-.4,-2.8,.5)+rect(0,-2.8,4,2.4,p.wall,p.ink,LW.edge)+pane(.5,-2.3,1.2,.8,p,false)+pane(2.4,-2.3,1.2,.8,p,false)+roofPlane(p,0,-2.8,4,.5,.5*RISE)+line(.4,-.4,.4,0,p.ink,LW.detail)+line(3.6,-.4,3.6,0,p.ink,LW.detail)
+  // Hoarding along the frontage
+  s+=shade(4.6,0,19.4,.1,p,.2)+rect(4.6,-2.4,19.4,2.4,p.wall,p.ink,LW.edge)
+  for(let x=7;x<24;x+=2.4)s+=line(x,-2.4,x,0,p.ink,LW.detail)
+  s+=rect(4.6,-2.4,19.4,.25,p.limit,'none',0,'opacity=".55"')+rect(9.5,-1.9,5,1.2,p.paper,p.fine,LW.fine)
+  return s
+}
+function badgeBase(p:Palette,inner:string){
+  return contactAt(1.1,.3,p,.05)+line(1.1,0,1.1,-1.1,p.ink,LW.edge)+circle(1.1,-1.95,.85,p.wall,p.ink,LW.edge)+circle(1.1,-1.95,.68,'none',p.fine,LW.fine)+inner
+}
+function amenityBadge(p:Palette){
+  // A marker for an amenity the program confirms (here: a pool); placement is illustrative
+  return badgeBase(p,path('M.6,-2.05 q.25,-.18 .5,0 q.25,.18 .5,0 M.6,-1.8 q.25,-.18 .5,0 q.25,.18 .5,0','none',p.water,.09)+path('M.85,-2.45 v.35 M1.35,-2.45 v.35 M.85,-2.35 h.5','none',p.ink,.05))
+}
+function phaseBadge(p:Palette){
+  // Phase or status: three segments, the first filled (phase 1 of 3); the number comes from the plan
+  let inner=''
+  for(let i=0;i<3;i++){const a0=(-90+(i*120)+6)*Math.PI/180, a1=(-90+((i+1)*120)-6)*Math.PI/180, r=.5;inner+=path(`M${1.1+(r*Math.cos(a0))},${-1.95+(r*Math.sin(a0))} A${r},${r} 0 0 1 ${1.1+(r*Math.cos(a1))},${-1.95+(r*Math.sin(a1))}`,'none',i===0?p.limit:p.fine,.14)}
+  return badgeBase(p,inner+circle(1.1,-1.95,.16,p.ink))
+}
+
+/** A flat area with a visible edge thickness, so surfaces read as solid ground rather than paper. */
+const slab = (x:number,w:number,depth:number,fill:string,p:Palette,thick=.18,extra='') =>
+  path(ground(x,w,depth),fill,p.ink,LW.edge,extra)+rect(x,0,w,thick,p.shade,p.ink,LW.detail)+path(`M${x+w},0 l${depth},${-depth*RISE} v${thick} l${-depth},${depth*RISE}Z`,p.shadow,'none',0,'opacity=".25"')
+
+function park(p:Palette){
+  // Pocket park: lawn with a curved path, a shade tree group, a planted edge, seating, a lamp and a small play corner
+  let s=slab(0,17,2.6,p.foliage,p)
+  for(let k=0;k<8;k++){const x=k*2.2;s+=path(`M${x},0 h1.1 l2.6,${-2.6*RISE} h-1.1Z`,p.green,'none',0,'opacity=".1"')}
+  s+=path('M0,-.2 C4,-.3 6,-1.2 9,-1.1 C12,-1 13,-.35 17,-.4 L17.6,-.75 C13.6,-.7 12.6,-1.35 9.6,-1.45 C6.6,-1.55 4.6,-.65 .6,-.55Z',p.wall,p.ink,LW.detail)
+  s+=tree(p,2.4,-1.05,.62,1)+tree(p,15.6,-1.2,.82,2)+tree(p,13.4,-.9,.55,0)
+  s+=`<g transform="translate(.8 -.15) scale(.7)">${plantingBed(p)}</g>`
+  s+=`<g transform="translate(7 -.6) scale(.62)">${playground(p)}</g>`
+  s+=bench(p,4.6)+lamp(p,11.2)+person(p,6.1,0,1)+`<g transform="translate(9.7 -.75) scale(.7)">${person(p,0,0,0)}</g>`
+  return s
+}
+function playgroundPiece(p:Palette){
+  const w=9.5, d=2.4
+  // Poured rubber surface on a curbed slab, flecked; equipment, a spring rider, a fence with a gate, parents' bench, trees
+  let s=slab(0,w,d,p.warm,p,.2,'fill-opacity=".55"')
+  for(let i=0;i<70;i++){const t=((i*37)%100)/100, u=((i*61)%100)/100;s+=circle((u*w)+(t*d),-t*d*RISE,.035,i%3?p.paper:p.green,'none')}
+  s+=tree(p,1.1,-1.25,.42,1)+tree(p,8.9,-1.25,.5,0)
+  s+=contactAt(4.6,3.2,p,.12)+`<g transform="translate(1.1 -.35)">${playground(p)}</g>`
+  // Spring rider
+  s+=path('M8.15,-.35 q-.12,-.15 0,-.3 q.12,-.15 0,-.3','none',p.ink,LW.detail)+path('M7.75,-.95 q.4,-.35 .8,0 l-.1,.12 h-.6Z',p.limit,p.ink,LW.fine,'fill-opacity=".8"')+circle(8.4,-1.05,.1,p.limit,p.ink,LW.fine)
+  // Fence with a gate opening at the front
+  for(let x=0;x<=w+.01;x+=.95)if(x<4||x>5.5)s+=line(x,.2,x,-.75,p.ink,LW.fine)
+  s+=path('M0,-.75 H4 M5.5,-.75 H9.5 M0,-.35 H4 M5.5,-.35 H9.5','none',p.ink,LW.detail)
+  s+=`<g transform="translate(10.1 0)">${bench(p)}</g>`+`<g transform="translate(6.2 -.35) scale(.62)">${person(p,0,0,1)}</g>`+`<g transform="translate(3.1 -.6) scale(.6)">${person(p,0,0,0)}</g>`
+  return s
+}
+function plaza(p:Palette){
+  const w=16, d=2.5
+  let s=slab(0,w,d,p.wall,p)
+  for(let x=1;x<w;x+=1)s+=line(x,0,x+d,-d*RISE,p.fine,LW.fine)
+  for(let k=1;k<3;k++){const t=k/3;s+=line(d*t,-d*RISE*t,w+(d*t),-d*RISE*t,p.fine,LW.fine)}
+  // A band of darker pavers marks the public route through
+  s+=path(`M0,${-.2} H${w} l.45,-.25 H.45Z`,p.shade,'none',0,'opacity=".7"')
+  // Seating wall with a cap and its shadow
+  s+=rect(2.6,-1.85,10.5,.5,p.shade,p.ink,LW.detail)+rect(2.5,-1.95,10.7,.12,p.wall,p.ink,LW.detail)+shade(2.6,-1.35,10.5,.14,p,.28)
+  // Trees in raised planters with grates
+  for(const x of [1.2,13.6]){s+=rect(x,-.75,1.6,.75,p.shade,p.ink,LW.detail)+rect(x+.08,-.75,1.44,.1,p.green,'none',0)+tree(p,x+.8,-.75,.44,x<5?0:2)}
+  // Public art on a plinth, cafe table and chairs
+  s+=contactAt(8,.6,p)+rect(7.5,-.6,1,.6,p.wall,p.ink,LW.detail)+path('M7.7,-.6 C7.5,-1.6 8.6,-1.9 8.3,-2.6 C8.9,-2 8.7,-1.1 8.3,-.6Z',p.warm,p.ink,LW.detail)+path('M8.3,-2.6 C8.9,-2 8.7,-1.1 8.3,-.6 L8.45,-.6 C8.9,-1.1 9.05,-2 8.3,-2.6Z',p.shadow,'none',0,'opacity=".2"')
+  s+=contactAt(11,.55,p)+rect(10.7,-.75,.6,.06,p.wall,p.ink,LW.fine)+line(11,-.7,11,0,p.ink,LW.detail)+path('M10.3,0 v-.5 h.25 M11.7,0 v-.5 h-.25','none',p.ink,LW.fine)
+  return s+person(p,5.2)+person(p,12.4,0,1)+bench(p,3.4)
+}
+function lawn(p:Palette){
+  const w=12, d=3
+  let s=slab(0,w,d,p.foliage,p,.15)
+  for(let k=0;k<6;k++){const x=k*2;s+=path(`M${x},0 h1 l${d},${-d*RISE} h-1Z`,p.green,'none',0,'opacity=".12"')} // mown stripes
+  for(let i=0;i<24;i++){const x=.4+((i*.53)%11.2), t=((i*29)%10)/10;s+=path(`M${x+(t*d)},${-t*d*RISE} l-.04,-.14 M${x+.06+(t*d)},${-t*d*RISE} l.03,-.16`,'none',p.green,.03)}
+  return s+path(`M0,0 H${w} l.15,-.08 H.15Z`,p.green,'none',0,'opacity=".4"')
+}
+/** Height of the ravine floor at x, from its two slope curves (so trees can be planted into the ground). */
+function ravineGround(x:number){
+  const cub=(a:number,b:number,c:number,e:number,t:number)=>(((1-t)**3)*a)+(3*((1-t)**2)*t*b)+(3*(1-t)*(t**2)*c)+((t**3)*e)
+  const along=(xs:[number,number,number,number],ys:[number,number,number,number])=>{let lo=0,hi=1;for(let i=0;i<30;i++){const m=(lo+hi)/2;if(cub(...xs,m)<x)lo=m;else hi=m}return cub(...ys,lo)}
+  if(x<=6)return along([0,2.5,3.5,6],[0,0,2.6,2.7])
+  if(x<=11.5)return 2.7
+  return along([11.5,14,15,18],[2.7,2.6,0,0])
+}
+function ravine(p:Palette){
+  // A wooded valley below the table land, with a creek at the bottom
+  const valley='M0,0 C2.5,0 3.5,2.6 6,2.7 H11.5 C14,2.6 15,0 18,0 V3.2 H0Z'
+  let s=path(valley,p.foliage,p.ink,LW.edge)+path('M0,0 C2.5,0 3.5,2.6 6,2.7 L4,3.2 H0Z','url(#HATCH)','none',0)
+  s+=path('M6.3,2.7 Q8.7,2.45 11.2,2.7','none',p.water,.16)
+  // Each tree is planted .12 m into the slope at its own x
+  const at=(x:number)=>ravineGround(x)+.12
+  s+=conifer(p,1.2,at(1.2),.85)+tree(p,3.7,at(3.7),.6,1)+conifer(p,8,at(8),.7)+tree(p,10.2,at(10.2),.65,0)+conifer(p,14.4,at(14.4),.75)+tree(p,16.8,at(16.8),.7,2)
+  for(const [x,r] of [[5.2,.16],[12.8,.2],[9.2,.12]] as const)s+=circle(x,ravineGround(x)-.05,r,p.shade,p.ink,LW.fine)
+  return s+line(-.3,0,1,0,p.ink,LW.outline)+line(17,0,18.3,0,p.ink,LW.outline)
+}
+/** Rails on ties and ballast; trains and the platform sit on it. Rail top is y=0. */
+function track(p:Palette,L=26){
+  let s=path(`M-.4,.62 L.3,.18 H${L-.3} L${L+.4},.62Z`,p.shade,p.ink,LW.detail)+path(`M-.4,.62 L.3,.18 H${L-.3} L${L+.4},.62Z`,'url(#HATCH)','none',0)
+  for(let x=.3;x<L;x+=.6)s+=rect(x,.06,.32,.12,p.warm,p.ink,LW.fine)
+  return s+rect(0,-.02,L,.08,p.ink,'none',0)+line(0,.06,L,.06,p.fine,LW.fine)
+}
+function train(p:Palette){
+  const L=25
+  // Cab car: a sloped nose with windscreen and headlight at the right, bilevel body, bogies, underfloor kit, roof units
+  let s=track(p,L+.6)
+  s+=path(`M.3,-1.05 V-4.25 Q.3,-4.8 .85,-4.8 H${L-3.6} Q${L-2.6},-4.8 ${L-1.6},-4 L${L-.3},-2.4 V-1.05Z`,p.wall,p.ink,LW.edge)
+  s+=rect(.3,-1.55,L-.6,.5,p.shadow,'none',0,'opacity=".14"')+rect(.3,-3.12,L-1.9,.22,p.green,'none',0,'opacity=".75"')
+  s+=path(`M${L-3.2},-4.45 Q${L-2.4},-4.4 ${L-1.75},-3.7 L${L-.95},-2.75 H${L-3.2}Z`,p.glass,p.ink,LW.detail)+line(L-2.9,-3,L-2.2,-4.1,p.sheen,.05,'opacity=".7"')
+  s+=circle(L-.6,-1.85,.13,p.paper,p.ink,LW.fine)+rect(L-.75,-1.4,.5,.2,p.limit,'none',0,'opacity=".8"')
+  for(const [y,h] of [[-2.7,.9],[-4.2,.82]] as const)for(let x=1.4;x<L-4;x+=1.5){const e=x+1.15;if((e>3.1&&x<5.5)||(e>17.4&&x<19.8)||e>L-3.35)continue;s+=pane(x,y,1.15,h,p,false,false)} // windows keep clear of doors and the cab
+  for(const x of [3.3,17.6])s+=rect(x-.1,-3,2.2,1.95,p.shadow,'none',0,'opacity=".3"')+pane(x,-2.9,.95,1.85,p,false,false)+pane(x+1.05,-2.9,.95,1.85,p,false,false)
+  // Roof equipment and a coupler
+  s+=rect(2,-5.05,2.6,.25,p.shade,p.ink,LW.detail)+rect(L-8,-5.05,2.6,.25,p.shade,p.ink,LW.detail)+rect(-.25,-1.45,.55,.18,p.ink,'none',0)
+  // Underfloor equipment between bogies
+  s+=rect(7.5,-1.05,8,.42,p.shade,p.ink,LW.detail)+rect(9,-1.05,1.6,.42,p.shadow,'none',0,'opacity=".25"')
+  // Bogies: a frame over two wheels with a spring
+  for(const c of [4.5,L-4.7]){s+=rect(c-1.75,-.95,3.5,.42,p.shade,p.ink,LW.detail)+circle(c,-.74,.12,'none',p.ink,LW.fine);for(const dx of [-1.05,1.05])s+=wheel(p,c+dx,-.42,.42)}
+  return s
+}
+function subwayTunnel(p:Palette){
+  // Section cue: the street at grade, and the subway tube below it (shown only where a line runs under the site frontage)
+  let s=rect(0,-.2,18,.2,p.road,p.ink,LW.detail)+rect(0,0,18,6,p.shade,'none',0,'opacity=".35"')+rect(0,0,18,6,'url(#HATCH)','none',0)
+  s+=line(0,0,18,0,p.ink,LW.edge)+rect(0,1.4,18,4,p.paper,p.ink,LW.detail,'stroke-dasharray=".5 .35"')
+  // A train in the tunnel and the track bed
+  s+=line(.4,4.95,17.6,4.95,p.ink,LW.edge)+rect(2,2.15,13,2.6,p.wall,p.ink,LW.detail,'fill-opacity=".85"')
+  for(let x=2.7;x<14.5;x+=1.3)s+=pane(x,2.6,.9,.85,p,false,false)
+  for(const x of [3.5,5,12,13.5])s+=circle(x,4.78,.18,p.ink,p.ink,LW.fine)
   return s
 }
 
@@ -614,7 +829,7 @@ export const pieces: Piece[] = [
   {id:'16',name:'Roof terrace',size:'10 m deck on a roof anchor',width:12,height:2.8,trigger:'Explicit rooftop amenity input',note:'Decking, planters, glass guard, shade and pergola; area and access must come from the model.',draw:roofTerrace},
   {id:'19',name:'Tree cluster',size:'Three canopies · about 10 m',width:10.5,height:10,trigger:'Mapped tree canopy or landscape input',note:'Three overlapping canopies; species, count and location are not asserted.',draw:treeCluster},
   {id:'23',name:'Plaza / POPS',size:'16 m paved forecourt',width:19,height:5.5,trigger:'Plaza or POPS area in the program, or a mapped POPS',note:'Paving grid, seating wall, planters and public art; not a landscape plan.',draw:plaza},
-  {id:'24',name:'Playground',size:'9.5 m fenced play area',width:11.8,height:3.3,trigger:'Explicit playground or park program',note:'Safety surface, fence and equipment; park area alone does not establish a playground.',draw:playgroundPiece},
+  {id:'24',name:'Playground',size:'9.5 m fenced play area',width:12.2,height:6.5,trigger:'Explicit playground or park program',note:'Safety surface, fence and equipment; park area alone does not establish a playground.',draw:playgroundPiece},
   {id:'25',name:'Rain garden',size:'8 m planted basin',width:9,height:1.1,below:1,trigger:'Stormwater measures in the program or explicit landscape',note:'A basin below grade with a curb inlet; sizing belongs to the servicing engineer.',draw:rainGarden},
   {id:'27',name:'Lake edge',size:'18 m shoreline with boardwalk',width:18.5,height:1.8,below:2.4,trigger:'Water within the chosen distance of the site (map proximity)',note:'Shoreline as context; water nearby does not establish public access or a boardwalk.',draw:lakeEdge},
   {id:'29',name:'Ravine / woodland',size:'18 m wooded valley',width:18.5,height:6.5,below:3.4,trigger:'TRCA regulated area, ravine or natural-heritage layers',note:'A wooded valley with a creek; the regulated limit and setbacks come from TRCA, not this picture.',draw:ravine},
@@ -622,9 +837,31 @@ export const pieces: Piece[] = [
   {id:'36',name:'Cycle lane',size:'12 m lane segment',width:14,height:1.9,trigger:'Mapped cycle infrastructure on the frontage street',note:'Painted lane with flex posts; the protection type comes from the cycling network data.',draw:cycleLane},
   {id:'40',name:'Bus-stop pole',size:'3 m pole · stop flag',width:1.2,height:3.2,trigger:'Mapped bus stop without a shelter',note:'Stop flag and timetable case; routes and frequency are not implied.',draw:busStopPole},
   {id:'43',name:'Rail platform',size:'20 m platform · canopy',width:23.5,height:6.3,trigger:'GO or rail station within the mapped station area',note:'Platform, canopy, edge strip and stair; the station layout is illustrative.',draw:railPlatform},
-  {id:'44',name:'Train',size:'25 m bilevel coach',width:25.5,height:5.1,trigger:'Rail corridor or station-area context',note:'A generic bilevel coach; no service level or operator livery.',draw:train},
+  {id:'44',name:'Train',size:'25 m bilevel coach',width:25.5,height:5.1,trigger:'Rail corridor or station-area context',note:'A generic bilevel coach; no service level or operator livery.',below:.8,draw:train},
   {id:'47',name:'Truck',size:'8.6 m box truck · 3.6 m high',width:8.8,height:3.7,trigger:'Loading or servicing activity (loading space input)',note:'A box truck at scale; does not establish loading access or turning space.',draw:truck},
   {id:'59',name:'Policy-limit overlay',size:'Height limit, angular plane and setback',width:22,height:32.5,trigger:'Mapped height limit, angular plane and setback',note:'Red dashed limits over a ghosted envelope; the by-law text and its exceptions govern.',draw:policyOverlay},
+  {id:'17',name:'Amenity badge',size:'1.7 m marker on a post',width:2.2,height:2.9,trigger:'An amenity the program confirms (pool, gym, childcare, rooftop space)',note:'A marker, not a drawing of the amenity; placement is illustrative.',draw:amenityBadge},
+  {id:'20',name:'Planting bed',size:'6 m raised bed',width:6.2,height:1.5,trigger:'Landscape input or a mapped planting area',note:'Shrubs, perennials and grasses as a texture; species are not asserted.',draw:plantingBed},
+  {id:'21',name:'Lawn',size:'12 m mown lawn',width:15.5,height:1.8,trigger:'Open space or park area in the program',note:'Mown stripes on a flat area; grading and soil depth are not shown.',draw:lawn},
+  {id:'28',name:'Pond',size:'9 m pond with reeds',width:10.4,height:1.2,below:.9,trigger:'Mapped pond or stormwater pond',note:'Water body as context; depth, function and access are not implied.',draw:pond},
+  {id:'30',name:'Water direction cue',size:'6 m flow marker',width:6.2,height:.3,below:.9,trigger:'Mapped watercourse with a known flow direction',note:'Chevrons point downstream; flow rate and flood extent are not shown.',draw:waterCue},
+  {id:'31',name:'Road segment',size:'14 m two-lane road',width:20.3,height:3.8,trigger:'Frontage street and its class (mapped road)',note:'Lanes, centre line and curbs; widths follow the road class, not a survey.',draw:roadSegment},
+  {id:'32',name:'Sidewalk',size:'12 m paved sidewalk with boulevard',width:14.2,height:1.4,trigger:'Mapped sidewalk on the frontage',note:'Paver joints, curb and boulevard strip; sidewalk width is illustrative unless measured.',draw:sidewalk},
+  {id:'34',name:'Intersection',size:'16 m crossing of two streets',width:22.3,height:3.7,trigger:'Corner site or mapped intersection',note:'Crosswalks, stop bar and corner curbs; turning lanes and signals are not asserted.',draw:intersection},
+  {id:'35',name:'Driveway',size:'3.2 m curb cut across the sidewalk',width:10.2,height:2,trigger:'Vehicle access in the program (curb cut)',note:'Dropped curb and apron; access approval and sightlines are separate.',draw:driveway},
+  {id:'37',name:'Trail',size:'14 m multi-use path',width:16.5,height:2.6,trigger:'Mapped trail or ravine path',note:'A path through planting with a wayfinding post; surface and width are illustrative.',draw:trail},
+  {id:'38',name:'Bicycle rack',size:'3 hoops · one parked bike',width:4,height:1.2,trigger:'Bicycle parking count in the program',note:'Three hoops at street scale; the required count comes from the by-law.',draw:bicycleRack},
+  {id:'51',name:'Street lamp',size:'6.7 m pole with warm light',width:4.4,height:6.9,trigger:'Documented street lighting or illustrative dressing',note:'A light pool for atmosphere, not a lighting calculation.',draw:p=>lamp(p,.6)},
+  {id:'52',name:'Bench',size:'1.8 m bench',width:2,height:1.2,trigger:'Documented public realm or illustrative dressing',note:'A single bench at scale.',draw:p=>bench(p)},
+  {id:'53',name:'Waste and recycling bins',size:'Two 1 m bins',width:1.6,height:1.2,trigger:'Public realm or waste-storage input',note:'Waste and recycling pair; collection arrangements are not implied.',draw:bin},
+  {id:'54',name:'Bollards',size:'Three 0.9 m bollards',width:2.8,height:1,trigger:'Documented public realm or a protected edge',note:'Reflective bands; spacing is illustrative.',draw:bollard},
+  {id:'55',name:'Fire hydrant',size:'0.9 m hydrant',width:.8,height:1,trigger:'Mapped hydrant or servicing context',note:'Generic hydrant; fire-route and flow requirements come from the servicing study.',draw:hydrant},
+  {id:'56',name:'Garage / loading module',size:'7.5 m frontage · overhead door',width:7.8,height:4.1,trigger:'Loading space or parking-ramp input',note:'Overhead door with a clearance bar and dock bumpers; loading type and turning space are separate.',draw:garageModule},
+  {id:'57',name:'Utility module',size:'Transformer pad and meter cabinet',width:4.2,height:1.9,trigger:'Hydro connection or utility servicing in the costs',note:'Servicing to plan for, not an equipment specification or location.',draw:utilityModule},
+  {id:'58',name:'Construction kit',size:'Hoarding, site office, 28 m tower crane',width:24.2,height:28.3,trigger:'Project status: under construction (tracker)',note:'Shows a site being built; crane position and swing are not a construction plan.',draw:constructionKit},
+  {id:'60',name:'Phase / status badge',size:'1.7 m marker on a post',width:2.2,height:2.9,trigger:'Phase number or status from the plan and tracker',note:'Three segments, the first filled (phase 1 of 3); the real phase comes from the data.',draw:phaseBadge},
+  {id:'61',name:'Rail track',size:'Rails on ties and ballast',width:21,height:.3,below:.8,trigger:'Rail corridor at grade (map), drawn in the background layer',note:'Trains and platforms sit on it; alignment and grade separation come from the rail data.',draw:p=>track(p,20)},
+  {id:'62',name:'Subway tunnel cue',size:'18 m street section with a tube below',width:18.2,height:.4,below:6.2,trigger:'Subway line under the frontage (map)',note:'A section cue only: depth, structure and any easement come from the transit agency.',draw:subwayTunnel},
 ]
 export function definitions(skin:Skin){return `<defs>
   <linearGradient id="WASH" x1="0" y1="0" x2="1" y2=".5"><stop stop-color="${skin==='watercolour'?'#fffdf1':'#7eb4cd'}" stop-opacity=".8"/><stop offset=".45" stop-color="#b6c5c5" stop-opacity=".05"/><stop offset="1" stop-color="#8b9c90" stop-opacity=".45"/></linearGradient>
