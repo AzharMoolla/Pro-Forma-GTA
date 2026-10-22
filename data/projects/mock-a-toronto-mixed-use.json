@@ -671,7 +671,7 @@
       {
         "id": "parkland-cil",
         "catalogueId": "parkland-cil",
-        "label": "Parkland cash-in-lieu (10% land-value cap, site < 1 ha)",
+        "label": "Parkland cash-in-lieu (10% land-value cap, site ≤ 5 ha)",
         "driver": {
           "kind": "percentOf",
           "rate": 0.1,

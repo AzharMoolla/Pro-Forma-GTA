@@ -14,6 +14,7 @@ import { Streetscape } from './Streetscape'
 import { Visuals } from './Visuals'
 import { Feasibility } from './Feasibility'
 import { Assumptions } from './Assumptions'
+import { Verification } from './Verification'
 import { People } from './People'
 import { Report } from './Report'
 import { PrivacyPolicy, Terms } from './Legal'
@@ -28,6 +29,7 @@ export function Sections({ section }: { section: SectionId }) {
     case 'charts': return <Visuals />
     case 'feasibility': return <Feasibility />
     case 'assumptions': return <Assumptions />
+    case 'verification': return <Verification />
     case 'people': return <People />
     case 'report': return <Report />
     case 'privacy': return <PrivacyPolicy />

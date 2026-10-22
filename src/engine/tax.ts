@@ -104,3 +104,18 @@ export function hstTiming(p: ProjectInput, s: HstSettings): HstResult {
     months,
   }
 }
+
+/**
+ * Ontario land transfer tax (Land Transfer Tax Act, O. Reg. rates): 0.5% to $55k, 1% to $250k, 1.5% to $400k, 2% above;
+ * 2.5% above $2M only for land with one or two single-family residences.
+ */
+export function ontarioLtt(price: number, singleFamily = false): number {
+  const bands: Array<[number, number]> = [[55_000, 0.005], [250_000, 0.01], [400_000, 0.015], [singleFamily ? 2_000_000 : Infinity, 0.02], [Infinity, 0.025]]
+  let tax = 0
+  let from = 0
+  for (const [to, rate] of bands) {
+    if (price > from) tax += (Math.min(price, to) - from) * rate
+    from = to
+  }
+  return roundCents(tax)
+}

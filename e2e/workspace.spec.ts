@@ -1,7 +1,7 @@
 import { AxeBuilder } from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
 
-const sections = ['Overview', 'Site map', 'Market evidence', 'People & affordability', 'Site & program', 'Cost & budget', 'Revenue & operations', 'Finance & ledger', 'Returns & range', 'Feasibility & stress', 'Assumptions', 'Charts', 'Scenarios', 'Sources & audit', 'Report & export']
+const sections = ['Overview', 'Site map', 'Market evidence', 'People & affordability', 'Site & program', 'Cost & budget', 'Revenue & operations', 'Finance & ledger', 'Returns & range', 'Feasibility & stress', 'Assumptions', 'Charts', 'Scenarios', 'Sources & audit', 'Verification', 'Report & export']
 
 async function fresh(page: Page) {
   await page.goto('/')
@@ -314,4 +314,14 @@ test('assumptions: switching one off changes results, shows everywhere, and turn
   await openSection(page, 'Assumptions')
   await page.getByRole('button', { name: 'Turn all back on' }).click()
   await expect(poc).toHaveText(before!)
+})
+
+test('verification: every check passes and your own numbers match the model', async ({ page }) => {
+  await fresh(page)
+  await openSection(page, 'Verification')
+  await expect(page.getByText(/^All \d+ checks pass$/)).toBeVisible()
+  const ltt = page.locator('section section', { has: page.getByRole('heading', { name: /Ontario land transfer tax/ }) })
+  await ltt.getByLabel('Price ($)').fill('62000000')
+  await expect(ltt.getByText('Match', { exact: true })).toBeVisible()
+  await expect(ltt.getByText('$1,236,475').first()).toBeVisible()
 })

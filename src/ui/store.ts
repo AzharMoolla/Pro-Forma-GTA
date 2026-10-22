@@ -7,7 +7,7 @@ import { demoProjects } from './data'
 import { updateNode, type NodePath } from './tree'
 
 export type Mode = 'quick' | 'professional' | 'institutional'
-export type SectionId = 'overview' | 'map' | 'people' | 'charts' | 'feasibility' | 'assumptions' | 'report' | 'privacy' | 'terms' | 'progress' | 'market' | 'program' | 'costs' | 'revenue' | 'finance' | 'returns' | 'scenarios' | 'audit'
+export type SectionId = 'overview' | 'map' | 'people' | 'charts' | 'feasibility' | 'assumptions' | 'verification' | 'report' | 'privacy' | 'terms' | 'progress' | 'market' | 'program' | 'costs' | 'revenue' | 'finance' | 'returns' | 'scenarios' | 'audit'
 
 export const SECTIONS: Array<{ id: SectionId; label: string; minMode: Mode }> = [
   { id: 'overview', label: 'Overview', minMode: 'quick' },
@@ -25,6 +25,7 @@ export const SECTIONS: Array<{ id: SectionId; label: string; minMode: Mode }> = 
   { id: 'charts', label: 'Charts', minMode: 'quick' },
   { id: 'scenarios', label: 'Scenarios', minMode: 'professional' },
   { id: 'audit', label: 'Sources & audit', minMode: 'quick' },
+  { id: 'verification', label: 'Verification', minMode: 'quick' },
   { id: 'report', label: 'Report & export', minMode: 'quick' },
 ]
 
