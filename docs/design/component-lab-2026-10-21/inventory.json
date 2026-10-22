@@ -140,6 +140,146 @@
       "size": "Approximately 2.1 m long · 1.8 m high",
       "trigger": "Illustrative street life or cycling context",
       "note": "Filled rider with clean bicycle geometry. No traffic volume or cycle-lane availability is implied."
+    },
+    {
+      "id": "07",
+      "name": "Reserved school site",
+      "size": "20 m frontage · fenced, signed land",
+      "trigger": "School-board reservation from the map or a planning condition",
+      "note": "A reserved site is land, not a school: no building is drawn until one is confirmed."
+    },
+    {
+      "id": "08",
+      "name": "Existing building",
+      "size": "14 m frontage · 12 m context massing",
+      "trigger": "Retained or neighbouring building from the map (footprint and height when known)",
+      "note": "Neutral, hatched context massing; no facade is invented for a building nobody has surveyed."
+    },
+    {
+      "id": "09",
+      "name": "Land plot",
+      "size": "18 m frontage · vacant parcel",
+      "trigger": "Lot area and frontage (program inputs, mapped parcel)",
+      "note": "Corner stakes and the frontage dimension are schematic; parcel lines are not survey-grade."
+    },
+    {
+      "id": "10",
+      "name": "Future-phase block",
+      "size": "16 m frontage · 20 m ghosted envelope",
+      "trigger": "Later phase in a master plan (phase offset)",
+      "note": "A dashed envelope only: a placeholder for timing, not a design."
+    },
+    {
+      "id": "11",
+      "name": "Balcony",
+      "size": "4.2 m bay · slab, guard and door",
+      "trigger": "Balcony count or type in the program",
+      "note": "Slab, glass guard and the shadow it throws; projection depth is illustrative."
+    },
+    {
+      "id": "13",
+      "name": "Entrance",
+      "size": "5 m bay · 4 m high",
+      "trigger": "Every building has one; position is illustrative",
+      "note": "Recessed double doors, canopy, address plaque and a level threshold. No accessibility audit is implied."
+    },
+    {
+      "id": "16",
+      "name": "Roof terrace",
+      "size": "10 m deck on a roof anchor",
+      "trigger": "Explicit rooftop amenity input",
+      "note": "Decking, planters, glass guard, shade and pergola; area and access must come from the model."
+    },
+    {
+      "id": "19",
+      "name": "Tree cluster",
+      "size": "Three canopies · about 10 m",
+      "trigger": "Mapped tree canopy or landscape input",
+      "note": "Three overlapping canopies; species, count and location are not asserted."
+    },
+    {
+      "id": "23",
+      "name": "Plaza / POPS",
+      "size": "16 m paved forecourt",
+      "trigger": "Plaza or POPS area in the program, or a mapped POPS",
+      "note": "Paving grid, seating wall, planters and public art; not a landscape plan."
+    },
+    {
+      "id": "24",
+      "name": "Playground",
+      "size": "9.5 m fenced play area",
+      "trigger": "Explicit playground or park program",
+      "note": "Safety surface, fence and equipment; park area alone does not establish a playground."
+    },
+    {
+      "id": "25",
+      "name": "Rain garden",
+      "size": "8 m planted basin",
+      "trigger": "Stormwater measures in the program or explicit landscape",
+      "note": "A basin below grade with a curb inlet; sizing belongs to the servicing engineer."
+    },
+    {
+      "id": "27",
+      "name": "Lake edge",
+      "size": "18 m shoreline with boardwalk",
+      "trigger": "Water within the chosen distance of the site (map proximity)",
+      "note": "Shoreline as context; water nearby does not establish public access or a boardwalk."
+    },
+    {
+      "id": "29",
+      "name": "Ravine / woodland",
+      "size": "18 m wooded valley",
+      "trigger": "TRCA regulated area, ravine or natural-heritage layers",
+      "note": "A wooded valley with a creek; the regulated limit and setbacks come from TRCA, not this picture."
+    },
+    {
+      "id": "33",
+      "name": "Crossing",
+      "size": "10 m road width · signal pole",
+      "trigger": "Mapped signalised or marked crossing at the frontage",
+      "note": "Zebra bars, curb ramps, tactile plates and a pedestrian signal; signal timing is not implied."
+    },
+    {
+      "id": "36",
+      "name": "Cycle lane",
+      "size": "12 m lane segment",
+      "trigger": "Mapped cycle infrastructure on the frontage street",
+      "note": "Painted lane with flex posts; the protection type comes from the cycling network data."
+    },
+    {
+      "id": "40",
+      "name": "Bus-stop pole",
+      "size": "3 m pole · stop flag",
+      "trigger": "Mapped bus stop without a shelter",
+      "note": "Stop flag and timetable case; routes and frequency are not implied."
+    },
+    {
+      "id": "43",
+      "name": "Rail platform",
+      "size": "20 m platform · canopy",
+      "trigger": "GO or rail station within the mapped station area",
+      "note": "Platform, canopy, edge strip and stair; the station layout is illustrative."
+    },
+    {
+      "id": "44",
+      "name": "Train",
+      "size": "25 m bilevel coach",
+      "trigger": "Rail corridor or station-area context",
+      "note": "A generic bilevel coach; no service level or operator livery."
+    },
+    {
+      "id": "47",
+      "name": "Truck",
+      "size": "8.6 m box truck · 3.6 m high",
+      "trigger": "Loading or servicing activity (loading space input)",
+      "note": "A box truck at scale; does not establish loading access or turning space."
+    },
+    {
+      "id": "59",
+      "name": "Policy-limit overlay",
+      "size": "Height limit, angular plane and setback",
+      "trigger": "Mapped height limit, angular plane and setback",
+      "note": "Red dashed limits over a ghosted envelope; the by-law text and its exceptions govern."
     }
   ],
   "inventory": [

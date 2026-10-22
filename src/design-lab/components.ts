@@ -1,11 +1,11 @@
 // Original SVG artwork. Metres are the common drawing coordinates; y=0 is ground.
 // This lab has no dependency on financial inputs or production rendering.
 export type Skin = 'watercolour' | 'blueprint'
-export interface Piece { id: string; name: string; size: string; trigger: string; note: string; width: number; height: number; draw: (p: Palette, height?: number) => string }
-interface Palette { ink: string; paper: string; wall: string; shade: string; roof: string; glass: string; green: string; foliage: string; warm: string; road: string; water: string; fine: string; shadow: string; sheen: string; brick: string; glassShade: string; spandrel: string }
+export interface Piece { id: string; name: string; size: string; trigger: string; note: string; width: number; height: number; draw: (p: Palette, height?: number) => string; below?: number }
+interface Palette { ink: string; paper: string; wall: string; shade: string; roof: string; glass: string; green: string; foliage: string; warm: string; road: string; water: string; fine: string; shadow: string; sheen: string; brick: string; glassShade: string; spandrel: string; limit: string }
 export const palettes: Record<Skin, Palette> = {
-  watercolour: { ink:'#526065',paper:'#faf8f1',wall:'#e9e6da',shade:'#d6d8d1',roof:'#a7b2ad',glass:'#c3d8de',green:'#6c8261',foliage:'#c5d0ad',warm:'#c8a586',road:'#deddd6',water:'#b4d3d8',fine:'#9da5a0',shadow:'#3f4a4e',sheen:'#ffffff',brick:'#d9b9a3',glassShade:'#a9c3cb',spandrel:'#93a6aa' },
-  blueprint: { ink:'#e1edf0',paper:'#123958',wall:'#1d4662',shade:'#163d58',roof:'#426b80',glass:'#376781',green:'#9dbcb5',foliage:'#29596a',warm:'#839fac',road:'#1a405b',water:'#285b78',fine:'#7395ab',shadow:'#061d30',sheen:'#bfe0ee',brick:'#244e69',glassShade:'#2b5670',spandrel:'#24506a' },
+  watercolour: { ink:'#526065',paper:'#faf8f1',wall:'#e9e6da',shade:'#d6d8d1',roof:'#a7b2ad',glass:'#c3d8de',green:'#6c8261',foliage:'#c5d0ad',warm:'#c8a586',road:'#deddd6',water:'#b4d3d8',fine:'#9da5a0',shadow:'#3f4a4e',sheen:'#ffffff',brick:'#d9b9a3',glassShade:'#a9c3cb',spandrel:'#93a6aa',limit:'#b5452b' },
+  blueprint: { ink:'#e1edf0',paper:'#123958',wall:'#1d4662',shade:'#163d58',roof:'#426b80',glass:'#376781',green:'#9dbcb5',foliage:'#29596a',warm:'#839fac',road:'#1a405b',water:'#285b78',fine:'#7395ab',shadow:'#061d30',sheen:'#bfe0ee',brick:'#244e69',glassShade:'#2b5670',spandrel:'#24506a',limit:'#ff9f8a' },
 }
 const path = (d: string, fill: string, stroke: string, width=.075, extra='') => `<path d="${d}" fill="${fill}" stroke="${stroke}" stroke-width="${width}" stroke-linecap="round" stroke-linejoin="round" ${extra}/>`
 const rect = (x:number,y:number,w:number,h:number,fill:string,stroke='none',sw=.065,extra='') => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" ${extra}/>`
@@ -58,7 +58,7 @@ function tower(p:Palette,height:number,podium:boolean){
   const floors=Math.max(1,Math.floor((height-crown-base)/3))
   // Envelope first: the scale check measures this rectangle
   let s=rect(0,-height,w,height,'none','none',0,'data-envelope="height"')+(podium?'':groundShadow(w,depth,p))
-  s+=sideWall(p,w,0,bodyTop,depth)
+  s+=sideWall(p,w,podium?-base:0,bodyTop,depth) // on a podium the wall starts at the podium roof
   s+=rect(0,bodyTop,w,height-crown,p.wall,'none',0)+wash(0,bodyTop,w,height-crown,p)+rect(0,bodyTop,w,height-crown,'url(#PANEL)','none',0)
   s+=rect(0,bodyTop,w,height-crown,p.wall,'none',0,'filter="url(#GRAIN)" opacity=".045"')
   // Recessed balcony stack at the corner: depth on the facade without inventing a design
@@ -326,7 +326,7 @@ function shopfront(p:Palette){
 export const podiumTypes=['residential','retail','office','civic'] as const
 type PodiumType=typeof podiumTypes[number]
 function podiumBase(p:Palette,kind:PodiumType){
-  const w=17, depth=1.7
+  const w=17, depth=1.2 // a shallow base: matches the 1.2 m tower setback, so a tower's front corner lands on the podium's back corner
   let s=`<g data-feature="podium-${kind}">`+groundShadow(w,depth,p)+sideWall(p,w,0,-5.5,depth)
   s+=rect(0,-5.5,w,5.5,kind==='retail'?p.brick:p.wall,'none',0)+(kind==='retail'?rect(0,-5.5,w,5.5,'url(#BRICK)','none',0):wash(0,-5.5,w,5.5,p))
   s+=roofPlane(p,-.15,-5.6,w+.3,depth,depth*RISE)+shade(0,-5.4,w,.25,p,.25)
@@ -381,6 +381,209 @@ function cyclist(p:Palette){return `<g data-feature="cyclist">`+`<ellipse cx="1.
   path('M1.3,-1.22 Q1.4,-1.13 1.43,-1.17 L1.56,-1.22 L1.58,-1.16 L1.42,-1.1 Q1.34,-1.07 1.24,-1.15Z',p.warm,p.ink,.018)+circle(1.57,-1.19,.04,p.warm,p.ink,.015)+
   rect(1.04,-1.58,.08,.13,p.warm)+circle(1.12,-1.67,.108,p.warm,p.ink,.02)+path('M1.01,-1.7 Q1.11,-1.88 1.23,-1.7Z',p.ink,p.ink,.018)+
   path('M.94,-.44 l.13,.02 .04,.05 H.91Z',p.ink,p.ink,.015)+`</g>`}
+// ---- Batch three (revision 3 rules): site context, attachments, landscape and water, street and transit, overlays
+/** A flat ground area seen at the shared projection: front edge on y=0, receding `depth` metres. */
+const ground = (x:number,w:number,depth:number) => `M${x},0 H${x+w} l${depth},${-depth*RISE} H${x+depth} Z`
+const contactAt = (cx:number,rx:number,p:Palette,ry=.08) => `<ellipse cx="${cx}" cy=".02" rx="${rx}" ry="${ry}" fill="${p.shadow}" opacity=".22"/>`
+function conifer(p:Palette,x:number,y=0,k=1){
+  let s=`<g data-feature="conifer" transform="translate(${x} ${y}) scale(${k})">`+contactAt(.2,1.1,p,.12)+path('M-.1,0 V-1.4 H.1 V0Z',p.warm,p.ink,LW.detail)
+  for(const [w,top,bot] of [[1.5,-3.6,-1.2],[1.2,-4.9,-2.6],[.85,-6.1,-3.9]] as const)s+=path(`M${-w},${bot} L0,${top} L${w},${bot} Q0,${bot+.35} ${-w},${bot}Z`,p.foliage,p.green,.075)+path(`M0,${top} L${w},${bot} Q${w*.4},${bot+.2} ${w*.2},${bot+.1}Z`,p.shadow,'none',0,'opacity=".12"')
+  return s+'</g>'
+}
+
+function schoolSite(p:Palette){
+  const w=20, d=3
+  let s=path(ground(0,w,d),p.foliage,'none',0)+path(ground(0,w,d),p.green,'none',0,'opacity=".12"')
+  s+=path(ground(0,w,d),'none',p.ink,LW.edge,'stroke-dasharray=".55 .35"') // reserved boundary, not a building
+  s+=tree(p,16.5,-1.4,.45,2)+tree(p,19,-1.1,.38,0)
+  for(let x=.2;x<=w;x+=1.6)s+=rect(x,-1.05,.09,1.05,p.wall,p.ink,LW.fine)
+  s+=line(0,-.85,w,-.85,p.ink,LW.detail)+line(0,-.45,w,-.45,p.ink,LW.detail)+shade(0,0,w,.12,p,.18)
+  // Sign with a generic school pictogram (no name or board implied)
+  s+=contactAt(2.3,.5,p)+line(2.3,0,2.3,-2.4,p.ink,LW.edge)+rect(1.15,-3.25,2.3,1.35,p.wall,p.ink,LW.edge)+shade(1.15,-1.9,2.3,.12,p,.25)
+  s+=path('M1.75,-2.15 v-.55 l.55,-.38 .55,.38 v.55Z',p.warm,p.ink,LW.fine)+rect(2.2,-2.45,.2,.3,p.glass,p.ink,LW.fine)+line(2.3,-3.08,2.3,-2.98,p.ink,LW.fine)+path('M2.3,-3.08 h.35 v.16 h-.35',p.limit,'none',0)
+  return s
+}
+function existingBuilding(p:Palette,height=12){
+  // Context massing only: neutral, hatched, no invented facade
+  const w=14, depth=1.7
+  let s=groundShadow(w,depth,p)+sideWall(p,w,0,-height,depth)
+  s+=rect(0,-height,w,height,p.shade,'none',0)+rect(0,-height,w,height,'url(#HATCH)','none',0)
+  for(let y=-3;y>-height+.5;y-=3)s+=line(0,y,w,y,p.fine,LW.fine,'stroke-dasharray=".3 .25"')
+  s+=roofPlane(p,0,-height,w,depth,depth*RISE)+rect(0,-height,w,height,'none',p.ink,LW.edge)
+  return s+line(-.3,0,w+depth+.3,0,p.ink,LW.outline)
+}
+function landPlot(p:Palette){
+  const w=18, d=4
+  let s=path(ground(0,w,d),p.warm,'none',0,'opacity=".28"')+path(ground(0,w,d),'url(#HATCH)','none',0)+path(ground(0,w,d),'none',p.ink,LW.edge)
+  // Survey stakes at the corners, with flagging tape
+  for(const [x,y] of [[0,0],[w,0],[d,-d*RISE],[w+d,-d*RISE]] as const)s+=contactAt(x,.25,p,.05)+line(x,y,x,y-.9,p.ink,LW.edge)+path(`M${x},${y-.9} l.4,.12 -.4,.12Z`,p.limit,'none',0)
+  // Frontage dimension below grade
+  s+=line(0,.55,w,.55,p.ink,LW.fine)+line(0,.35,0,.75,p.ink,LW.fine)+line(w,.35,w,.75,p.ink,LW.fine)+path(`M.35,.45 L0,.55 .35,.65 M${w-.35},.45 L${w},.55 ${w-.35},.65`,'none',p.ink,LW.fine)
+  return s
+}
+function futurePhase(p:Palette,height=20){
+  // A later phase as a ghosted envelope: dashed, no detail, so it never reads as built
+  const w=16, depth=1.7, dash='stroke-dasharray=".6 .4"'
+  let s=rect(0,-height,w,height,p.paper,'none',0,'opacity=".35"')
+  s+=path(`M${w},0 V${-height} l${depth},${-depth*RISE} V${-depth*RISE}`,'none',p.ink,LW.detail,dash)
+  s+=path(`M0,${-height} l${depth},${-depth*RISE} H${w+depth}`,'none',p.ink,LW.detail,dash)
+  s+=rect(0,-height,w,height,'none',p.ink,LW.edge,dash)
+  for(let y=-3;y>-height+.5;y-=3)s+=line(.3,y,w-.3,y,p.fine,LW.fine,'stroke-dasharray=".15 .35"')
+  return s+line(-.3,0,w+depth+.3,0,p.ink,LW.detail,dash)
+}
+function balcony(p:Palette){
+  let s=rect(-.3,-3.2,4.2,3.2,p.wall,'none',0)+wash(-.3,-3.2,4.2,3.2,p)+rect(-.3,-3.2,4.2,3.2,'url(#PANEL)','none',0)
+  s+=rect(.9,-2.95,1.6,2.55,p.shadow,'none',0,'opacity=".3"')+pane(1,-2.85,1.4,2.45,p,true,false)
+  // Slab, glass guard and its top rail, the shadow the slab throws
+  s+=shade(-.2,-.25,4,.45,p,.28)+rect(-.3,-.4,4.2,.18,p.wall,p.ink,LW.edge)
+  s+=rect(-.3,-1.45,4.2,1.05,p.glass,p.ink,LW.detail,'fill-opacity=".45"')+line(-.3,-1.45,3.9,-1.45,p.ink,LW.edge)+line(.4,-.55,1.4,-1.35,p.sheen,.04,'opacity=".6"')
+  for(const x of [-.25,1.8,3.85])s+=line(x,-1.45,x,-.4,p.ink,LW.detail)
+  return s+rect(-.3,-3.2,4.2,3.2,'none',p.ink,LW.outline)
+}
+function entrance(p:Palette){
+  let s=rect(0,-4,5,4,p.wall,'none',0)+wash(0,-4,5,4,p)+rect(0,-4,5,4,'url(#PANEL)','none',0)
+  // Recessed vestibule, double doors, sidelight
+  s+=rect(.9,-3,3.2,3,p.shadow,'none',0,'opacity=".32"')+pane(1.05,-2.85,1.4,2.85,p,false,false)+pane(2.55,-2.85,1.4,2.85,p,false,false)
+  s+=line(2.3,-1.6,2.3,-1.1,p.ink,LW.edge)+line(2.7,-1.6,2.7,-1.1,p.ink,LW.edge)
+  // Canopy on two tie rods, and its shadow
+  s+=shade(.5,-3.2,4,.4,p,.3)+rect(.4,-3.5,4.2,.22,p.wall,p.ink,LW.edge)+roofPlane(p,.4,-3.5,4.2,.6,.6*RISE)
+  s+=line(.7,-3.4,.2,-3.95,p.ink,LW.detail)+line(4.3,-3.4,4.8,-3.95,p.ink,LW.detail)
+  // Address plaque, two steps and a level threshold for step-free access
+  s+=rect(4.25,-2.2,.55,.4,p.warm,p.ink,LW.fine)+path('M.7,0 v-.1 h.15 v-.1 H4.15 v.1 h.15 V0Z',p.shade,p.ink,LW.detail)
+  return s+rect(0,-4,5,4,'none',p.ink,LW.outline)
+}
+function roofTerrace(p:Palette){
+  const w=10, d=1.7
+  // Decking on the roof plane, planters, glass guard, a table and umbrella, a pergola
+  let s=path(ground(0,w,d),p.warm,p.ink,LW.edge)
+  for(let x=.5;x<w;x+=.5)s+=line(x,0,x+d,-d*RISE,p.ink,LW.fine,'opacity=".35"')
+  s+=rect(7.2,-2.4,.12,2.4,p.wall,p.ink,LW.detail)+rect(9.6,-2.4,.12,2.4,p.wall,p.ink,LW.detail)+path(`M7.05,-2.4 h2.8 l${d*.6},${-d*.6*RISE} h-2.8Z`,p.wall,p.ink,LW.detail)
+  for(let x=7.4;x<9.7;x+=.35)s+=line(x,-2.4,x+(d*.6),-2.4-(d*.6*RISE),p.ink,LW.fine)
+  s+=contactAt(4.4,.8,p,.1)+line(4.4,0,4.4,-2.1,p.ink,LW.detail)+path('M2.9,-1.95 Q4.4,-2.75 5.9,-1.95Z',p.warm,p.ink,LW.edge)+rect(3.8,-.75,1.2,.1,p.wall,p.ink,LW.fine)+line(4.4,-.65,4.4,0,p.ink,LW.detail)
+  for(const x of [.2,8.4])s+=rect(x,-.75,1.4,.75,p.shade,p.ink,LW.detail)+path(`M${x+.15},-.75 q.2,-.75 .45,-.1 q.25,-.9 .5,0 q.2,-.6 .35,0`,p.foliage,p.green,.05)
+  s+=rect(0,-1.1,w,1.1,p.glass,p.ink,LW.detail,'fill-opacity=".35"')+line(0,-1.1,w,-1.1,p.ink,LW.edge)+line(1,-.2,1.7,-1,p.sheen,.04,'opacity=".6"')
+  return s
+}
+function treeCluster(p:Palette){return tree(p,2.6,0,.75,1)+tree(p,7.6,0,.7,2)+tree(p,5,0,1,0)}
+function plaza(p:Palette){
+  const w=16, d=2.5
+  let s=path(ground(0,w,d),p.wall,p.ink,LW.edge)
+  for(let x=1;x<w;x+=1)s+=line(x,0,x+d,-d*RISE,p.fine,LW.fine)
+  for(let k=1;k<3;k++){const t=k/3;s+=line(d*t,-d*RISE*t,w+(d*t),-d*RISE*t,p.fine,LW.fine)}
+  s+=rect(2.6,-1.8,10.5,.45,p.shade,p.ink,LW.detail)+shade(2.6,-1.35,10.5,.12,p,.25) // seating wall at the back
+  for(const x of [1.2,13.6]){s+=rect(x,-.7,1.6,.7,p.shade,p.ink,LW.detail)+tree(p,x+.8,-.7,.42,x<5?0:2)}
+  // Public art on a plinth
+  s+=contactAt(8,.6,p)+rect(7.5,-.6,1,.6,p.wall,p.ink,LW.detail)+path('M7.7,-.6 C7.5,-1.6 8.6,-1.9 8.3,-2.6 C8.9,-2 8.7,-1.1 8.3,-.6Z',p.warm,p.ink,LW.detail)
+  return s+person(p,5.2)+person(p,10.6,0,1)+bench(p,10.9)
+}
+function playgroundPiece(p:Palette){
+  const w=9.5, d=2
+  let s=path(ground(0,w,d),p.warm,p.ink,LW.edge,'fill-opacity=".45"')+contactAt(4.8,3.6,p,.12)
+  s+=`<g transform="translate(1)">${playground(p)}</g>`
+  for(let x=0;x<=w;x+=.95)s+=line(x,0,x,-.9,p.ink,LW.fine)
+  s+=line(0,-.9,w,-.9,p.ink,LW.detail)+line(0,-.45,w,-.45,p.ink,LW.fine)
+  return s+`<g transform="translate(8.9 0) scale(.72)">${person(p,0,0,1)}</g>`
+}
+function rainGarden(p:Palette){
+  // A shallow planted basin below the sidewalk; a curb cut lets street runoff in
+  let s=path('M0,0 L1.2,.55 H6.8 L8,0 Z',p.green,p.ink,LW.edge,'fill-opacity=".35"')
+  s+=line(1.6,.38,6.4,.38,p.water,.09,'stroke-dasharray=".5 .3"')
+  for(let x=.6;x<7.6;x+=.42){const h=.45+((x*7)%3)*.12;s+=path(`M${x},.1 q-.12,${-h} -.2,${-h-.1} M${x},.1 q.05,${-h-.1} .14,${-h-.2} M${x},.1 q.15,${-h+.1} .26,${-h}`,'none',p.green,.035)}
+  s+=rect(-.6,-.18,.6,.18,p.shade,p.ink,LW.detail)+path('M-.5,-.32 h.45 l-.1,-.08 M-.05,-.32 l-.1,.08','none',p.water,.05)
+  return s+line(-.6,0,8.4,0,p.ink,LW.edge)
+}
+function lakeEdge(p:Palette){
+  let s=rect(0,0,18,2.1,p.water,'none',0)+path('M0,0 H18','none',p.ink,LW.edge)
+  for(let i=0;i<16;i++){const x=.4+(i*1.1),y=.55+((i%3)*.45);s+=path(`M${x},${y} q.3,-.08 .65,0`,'none',p.paper,.055)}
+  // Armour-stone shoreline and a boardwalk on piles
+  for(const [x,r] of [[.4,.32],[1.1,.26],[1.7,.36],[13.3,.3],[14,.38],[14.8,.27],[15.5,.33],[16.3,.29],[17.1,.35]] as const)s+=circle(x,.12,r,p.shade,p.ink,LW.fine)+path(`M${x-r*.6},${.12-r*.5} a${r},${r} 0 0 1 ${r*1.1},-.05`,'none',p.sheen,.03,'opacity=".6"')
+  s+=shade(2.6,.05,9.8,.35,p,.25)+rect(2.4,-.35,10,.25,p.warm,p.ink,LW.edge)
+  for(let x=2.8;x<12.4;x+=1.2)s+=line(x,-.1,x,1.2,p.ink,LW.detail)
+  for(let x=2.4;x<=12.4;x+=1.25)s+=line(x,-1.3,x,-.35,p.ink,LW.detail)
+  s+=line(2.4,-1.3,12.4,-1.3,p.ink,LW.edge)+line(2.4,-.85,12.4,-.85,p.fine,LW.fine)
+  return s+person(p,6.5,-.35)
+}
+function ravine(p:Palette){
+  // A wooded valley below the table land, with a creek at the bottom
+  const valley='M0,0 C2.5,0 3.5,2.6 6,2.7 H11.5 C14,2.6 15,0 18,0 V3.2 H0Z'
+  let s=path(valley,p.foliage,p.ink,LW.edge)+path('M0,0 C2.5,0 3.5,2.6 6,2.7 L4,3.2 H0Z','url(#HATCH)','none',0)
+  s+=path('M6.3,2.7 Q8.7,2.45 11.2,2.7','none',p.water,.16)
+  s+=conifer(p,1.2,0,.85)+tree(p,3.7,1.4,.6,1)+conifer(p,8,2.65,.7)+tree(p,10.2,2.65,.65,0)+conifer(p,14.4,1.4,.75)+tree(p,16.8,0,.7,2)
+  return s+line(-.3,0,1,0,p.ink,LW.outline)+line(17,0,18.3,0,p.ink,LW.outline)
+}
+function crossing(p:Palette){
+  const w=10, d=3
+  let s=path(ground(0,w,d),p.road,p.ink,LW.edge)
+  // Zebra bars run across the depth of the road
+  for(let x=.9;x<w-.4;x+=.9)s+=path(`M${x},-.15 h.48 l${d-.4},${-(d-.4)*RISE} h-.48Z`,p.paper,p.fine,LW.fine)
+  // Curb ramps with tactile plates at each end
+  for(const x of [-.9,w+.1])s+=path(`M${x},0 h.8 l${d},${-d*RISE} h-.8Z`,p.wall,p.ink,LW.detail)+path(`M${x+.15},-.2 h.5 l.5,-.28 h-.5Z`,p.warm,p.ink,LW.fine)
+  // Pedestrian signal
+  s+=contactAt(w+1.2,.35,p)+line(w+1.2,0,w+1.2,-3.4,p.ink,LW.edge)+rect(w+.85,-3.4,.7,.85,p.shade,p.ink,LW.detail)+rect(w+.95,-3.3,.5,.3,p.paper,p.ink,LW.fine)
+  s+=circle(w+1.2,-3.22,.05,p.ink)+path(`M${w+1.2},-3.17 v.1 m-.07,.06 l.07,-.06 .07,.06`,'none',p.ink,.02)
+  return s
+}
+function cycleLane(p:Palette){
+  const w=12, d=1.8
+  let s=path(ground(0,w,d),p.green,p.ink,LW.edge,'fill-opacity=".38"')
+  s+=line(.3,0,w,0,p.paper,.08,'stroke-dasharray=".8 .5"')
+  // Painted bicycle symbol, foreshortened by the projection
+  s+=`<g transform="translate(5.6 ${-d*RISE*.5}) scale(1 .45)">`+circle(-.55,0,.42,'none',p.paper,.09)+circle(.55,0,.42,'none',p.paper,.09)+path('M-.55,0 L-.15,-.7 H.35 L.55,0 M-.15,-.7 L.1,0 L.35,-.7','none',p.paper,.09)+'</g>'
+  for(let x=.6;x<w;x+=2.2)s+=contactAt(x+d,.15,p,.04)+rect(x+d-.07,-d*RISE-.8,.14,.8,p.wall,p.ink,LW.fine)+rect(x+d-.07,-d*RISE-.62,.14,.12,p.limit,'none',0)
+  return s
+}
+function busStopPole(p:Palette){
+  let s=contactAt(.5,.3,p)+line(.5,0,.5,-3,p.ink,LW.edge)+rect(.05,-3.1,.9,.75,p.wall,p.ink,LW.detail)
+  s+=path('M.22,-2.55 v-.35 q0,-.08 .08,-.08 h.42 q.08,0 .08,.08 v.35Z',p.glass,p.ink,LW.fine)+circle(.32,-2.53,.05,p.ink)+circle(.68,-2.53,.05,p.ink)
+  s+=rect(.25,-1.9,.5,.65,p.paper,p.ink,LW.fine)+line(.32,-1.75,.68,-1.75,p.fine,LW.fine)+line(.32,-1.6,.6,-1.6,p.fine,LW.fine)
+  return s
+}
+function railPlatform(p:Palette){
+  const w=20, d=3
+  let s=groundShadow(w,1,p)+rect(0,-1.1,w,1.1,p.shade,p.ink,LW.edge)+sideWall(p,w,0,-1.1,1)
+  s+=path(`M0,-1.1 H${w} l${d},${-d*RISE} H${d}Z`,p.wall,p.ink,LW.edge)+path(`M0,-1.1 H${w} l.35,-.2 H.35Z`,p.warm,'none',0) // tactile edge strip
+  for(let x=1;x<w;x+=1.5)s+=line(x,-1.1,x+d,-1.1-(d*RISE),p.fine,LW.fine)
+  // Canopy on columns, a bench and a stair down at the end
+  for(let x=2;x<w;x+=4)s+=rect(x+1.2,-4.6,.18,3.5-(1.2*RISE),p.wall,p.ink,LW.detail)
+  s+=path(`M.6,-4.6 H${w-.6} l${d*.8},${-d*.8*RISE} H${.6+(d*.8)}Z`,p.roof,p.ink,LW.edge)+rect(.6,-4.6,w-1.2,.2,p.wall,p.ink,LW.edge)+shade(.6,-4.4,w-1.2,.3,p,.22)
+  s+=`<g transform="translate(9 -1.1)">${bench(p)}</g>`
+  for(let i=0;i<5;i++)s+=path(`M${-1.2+(i*.24)},${-(i*.22)} h.24 v-.22`,'none',p.ink,LW.detail)
+  return s
+}
+function train(p:Palette){
+  const L=25
+  let s=path(`M.6,0 H${L-.6} l-.2,.1 H.8Z`,p.shadow,'none',0,'opacity=".2"')
+  s+=path(`M.3,-.9 V-4.2 Q.3,-4.8 .9,-4.8 H${L-.9} Q${L-.3},-4.8 ${L-.3},-4.2 V-.9Z`,p.wall,p.ink,LW.edge)+rect(.3,-1.35,L-.6,.45,p.shadow,'none',0,'opacity=".14"')
+  for(const [y,h] of [[-2.55,.85],[-4.05,.8]] as const)for(let x=1.4;x<L-1.6;x+=1.6){if((x>3&&x<5.4)||(x>19.3&&x<21.8))continue;s+=pane(x,y,1.2,h,p,false,false)}
+  s+=rect(.3,-3.05,L-.6,.2,p.limit,'none',0,'opacity=".7"')
+  for(const x of [3.3,19.6])s+=rect(x,-2.9,2,2,p.shadow,'none',0,'opacity=".25"')+pane(x+.1,-2.8,.85,1.9,p,false,false)+pane(x+1.05,-2.8,.85,1.9,p,false,false)
+  for(const x of [3.4,5.6,19.4,21.6])s+=wheel(p,x,-.42,.42)
+  return s+rect(1.5,-5.05,3,.25,p.shade,p.ink,LW.detail)+rect(L-4.5,-5.05,3,.25,p.shade,p.ink,LW.detail)
+}
+function truck(p:Palette){
+  let s=path('M.3,0 H8.3 l-.2,.1 H.5Z',p.shadow,'none',0,'opacity=".2"')
+  s+=rect(.1,-3.6,6.1,3.05,p.wall,p.ink,LW.edge)+rect(.1,-1.05,6.1,.5,p.shadow,'none',0,'opacity=".14"')+line(.4,-3.3,5.9,-3.3,p.fine,LW.fine)
+  s+=path('M6.3,-.55 V-2.75 Q6.3,-3 6.55,-3 H7.6 Q7.85,-3 8,-2.75 L8.55,-1.8 V-.55Z',p.wall,p.ink,LW.edge)
+  s+=path('M6.65,-2.75 H7.55 L7.95,-1.95 H6.65Z',p.glass,p.ink,LW.detail)+line(6.95,-2.05,7.25,-2.6,p.sheen,.04,'opacity=".7"')
+  s+=line(.1,-.55,8.55,-.55,p.ink,LW.edge)+rect(8.3,-1.25,.25,.15,p.warm)
+  return s+wheel(p,1.4,-.42,.42)+wheel(p,4.9,-.42,.42)+wheel(p,7.3,-.42,.42)
+}
+function policyOverlay(p:Palette){
+  // Illustrative zoning envelope: a height limit, a 45° angular plane and a front setback over a ghosted building
+  const dash='stroke-dasharray=".7 .45"'
+  // The ghosted proposal is 28 m tall and 16 m wide; the limits cut into it and what exceeds them is hatched red
+  const H=28, W=16, limit=24
+  let s=futurePhase(p,H)
+  // Over the height limit: the band of the building above it
+  s+=rect(0,-H,W,H-limit,p.limit,'none',0,'opacity=".14"')+rect(0,-H,W,H-limit,'url(#HATCH)','none',0)
+  // Over the 45° angular plane: the corner wedge it slices off, from (9, −28) down to (16, −21)
+  s+=path(`M9,${-H} H${W} V${-H+7}Z`,p.limit,'none',0,'opacity=".18"')
+  s+=line(5,-H-4,W+4,-H+11,p.limit,LW.edge,dash) // angular plane, extended past the building
+  s+=line(-1.2,-limit,W+3,-limit,p.limit,LW.outline,dash)+path(`M-1.2,${-limit-.55} l.7,.55 -.7,.55Z`,p.limit,'none',0) // height limit
+  s+=line(3,0,3,-H-1,p.limit,LW.detail,dash)+path('M0,-.6 H3 M.35,-.85 L0,-.6 .35,-.35 M2.65,-.85 L3,-.6 2.65,-.35','none',p.limit,LW.detail) // front setback
+  return s
+}
+
 export const pieces: Piece[] = [
   {id:'01',name:'Apartment block',size:'15 m frontage · adjustable height',width:17,height:40,trigger:'Storeys / building program',note:'A repeated floor template; no invented facade specification.',draw:(p,h)=>building(p,h)},
   {id:'02',name:'Mixed-use podium',size:'17 m base · adjustable height',width:18,height:25,trigger:'Retail + podium + explicit roof flags',note:'Lab fixture includes balconies and a green roof; these are attachments, not inferred design.',draw:(p,h)=>building(p,h??25,true)},
@@ -402,6 +605,26 @@ export const pieces: Piece[] = [
   {id:'46',name:'Delivery van',size:'5.5 m long · 2.65 m high',width:5.6,height:2.7,trigger:'Illustrative servicing activity',note:'Generic scale reference; does not establish delivery access or loading approval.',draw:van},
   {id:'48',name:'Pedestrian figures',size:'Adults around 1.7 m · three clean silhouettes',width:5,height:1.8,trigger:'Illustrative street life',note:'Walking, standing and wheelchair figures. No demographic or pedestrian-volume inference.',draw:p=>person(p,.5,0,0)+person(p,2,0,1)+wheelchair(p,3.8)},
   {id:'49',name:'Cyclist',size:'Approximately 2.1 m long · 1.8 m high',width:2.2,height:1.85,trigger:'Illustrative street life or cycling context',note:'Filled rider with clean bicycle geometry. No traffic volume or cycle-lane availability is implied.',draw:cyclist},
+  {id:'07',name:'Reserved school site',size:'20 m frontage · fenced, signed land',width:23.5,height:3.4,trigger:'School-board reservation from the map or a planning condition',note:'A reserved site is land, not a school: no building is drawn until one is confirmed.',draw:schoolSite},
+  {id:'08',name:'Existing building',size:'14 m frontage · 12 m context massing',width:16,height:12,trigger:'Retained or neighbouring building from the map (footprint and height when known)',note:'Neutral, hatched context massing; no facade is invented for a building nobody has surveyed.',draw:p=>existingBuilding(p)},
+  {id:'09',name:'Land plot',size:'18 m frontage · vacant parcel',width:22.5,height:2.6,below:1,trigger:'Lot area and frontage (program inputs, mapped parcel)',note:'Corner stakes and the frontage dimension are schematic; parcel lines are not survey-grade.',draw:landPlot},
+  {id:'10',name:'Future-phase block',size:'16 m frontage · 20 m ghosted envelope',width:18,height:20,trigger:'Later phase in a master plan (phase offset)',note:'A dashed envelope only: a placeholder for timing, not a design.',draw:p=>futurePhase(p)},
+  {id:'11',name:'Balcony',size:'4.2 m bay · slab, guard and door',width:4.2,height:3.3,trigger:'Balcony count or type in the program',note:'Slab, glass guard and the shadow it throws; projection depth is illustrative.',draw:balcony},
+  {id:'13',name:'Entrance',size:'5 m bay · 4 m high',width:5.5,height:4.3,trigger:'Every building has one; position is illustrative',note:'Recessed double doors, canopy, address plaque and a level threshold. No accessibility audit is implied.',draw:entrance},
+  {id:'16',name:'Roof terrace',size:'10 m deck on a roof anchor',width:12,height:2.8,trigger:'Explicit rooftop amenity input',note:'Decking, planters, glass guard, shade and pergola; area and access must come from the model.',draw:roofTerrace},
+  {id:'19',name:'Tree cluster',size:'Three canopies · about 10 m',width:10.5,height:10,trigger:'Mapped tree canopy or landscape input',note:'Three overlapping canopies; species, count and location are not asserted.',draw:treeCluster},
+  {id:'23',name:'Plaza / POPS',size:'16 m paved forecourt',width:19,height:5.5,trigger:'Plaza or POPS area in the program, or a mapped POPS',note:'Paving grid, seating wall, planters and public art; not a landscape plan.',draw:plaza},
+  {id:'24',name:'Playground',size:'9.5 m fenced play area',width:11.8,height:3.3,trigger:'Explicit playground or park program',note:'Safety surface, fence and equipment; park area alone does not establish a playground.',draw:playgroundPiece},
+  {id:'25',name:'Rain garden',size:'8 m planted basin',width:9,height:1.1,below:1,trigger:'Stormwater measures in the program or explicit landscape',note:'A basin below grade with a curb inlet; sizing belongs to the servicing engineer.',draw:rainGarden},
+  {id:'27',name:'Lake edge',size:'18 m shoreline with boardwalk',width:18.5,height:1.8,below:2.4,trigger:'Water within the chosen distance of the site (map proximity)',note:'Shoreline as context; water nearby does not establish public access or a boardwalk.',draw:lakeEdge},
+  {id:'29',name:'Ravine / woodland',size:'18 m wooded valley',width:18.5,height:6.5,below:3.4,trigger:'TRCA regulated area, ravine or natural-heritage layers',note:'A wooded valley with a creek; the regulated limit and setbacks come from TRCA, not this picture.',draw:ravine},
+  {id:'33',name:'Crossing',size:'10 m road width · signal pole',width:13.5,height:3.7,trigger:'Mapped signalised or marked crossing at the frontage',note:'Zebra bars, curb ramps, tactile plates and a pedestrian signal; signal timing is not implied.',draw:crossing},
+  {id:'36',name:'Cycle lane',size:'12 m lane segment',width:14,height:1.9,trigger:'Mapped cycle infrastructure on the frontage street',note:'Painted lane with flex posts; the protection type comes from the cycling network data.',draw:cycleLane},
+  {id:'40',name:'Bus-stop pole',size:'3 m pole · stop flag',width:1.2,height:3.2,trigger:'Mapped bus stop without a shelter',note:'Stop flag and timetable case; routes and frequency are not implied.',draw:busStopPole},
+  {id:'43',name:'Rail platform',size:'20 m platform · canopy',width:23.5,height:6.3,trigger:'GO or rail station within the mapped station area',note:'Platform, canopy, edge strip and stair; the station layout is illustrative.',draw:railPlatform},
+  {id:'44',name:'Train',size:'25 m bilevel coach',width:25.5,height:5.1,trigger:'Rail corridor or station-area context',note:'A generic bilevel coach; no service level or operator livery.',draw:train},
+  {id:'47',name:'Truck',size:'8.6 m box truck · 3.6 m high',width:8.8,height:3.7,trigger:'Loading or servicing activity (loading space input)',note:'A box truck at scale; does not establish loading access or turning space.',draw:truck},
+  {id:'59',name:'Policy-limit overlay',size:'Height limit, angular plane and setback',width:22,height:32.5,trigger:'Mapped height limit, angular plane and setback',note:'Red dashed limits over a ghosted envelope; the by-law text and its exceptions govern.',draw:policyOverlay},
 ]
 export function definitions(skin:Skin){return `<defs>
   <linearGradient id="WASH" x1="0" y1="0" x2="1" y2=".5"><stop stop-color="${skin==='watercolour'?'#fffdf1':'#7eb4cd'}" stop-opacity=".8"/><stop offset=".45" stop-color="#b6c5c5" stop-opacity=".05"/><stop offset="1" stop-color="#8b9c90" stop-opacity=".45"/></linearGradient>
@@ -421,7 +644,7 @@ export function uniqueSvg(svg:string,id:string){
   return svg
 }
 export function pieceSvg(piece:Piece,skin:Skin,withPaper=false,height?:number,instance='piece',townhouseBays=4){
-  const h=piece.id==='03'?11:(height??piece.height), pad=1.2, below=piece.id==='26'?2.3:.5, width=piece.id==='03'?(townhouseBays*4.4)+.8:piece.width
+  const h=piece.id==='03'?11:(height??piece.height), pad=1.2, below=piece.below ?? (piece.id==='26'?2.3:.5), width=piece.id==='03'?(townhouseBays*4.4)+.8:piece.width
   const view=`${-pad} ${-h-pad} ${width+(pad*2)} ${h+pad+below}`
   return uniqueSvg(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${view}" role="img" aria-label="${escape(piece.name)} · ${skin} · illustrative component" data-piece="${piece.id}">${definitions(skin)}${withPaper?rect(-pad,-h-pad,width+(pad*2),h+pad+below,palettes[skin].paper):''}<g>${piece.id==='03'?townhouses(palettes[skin],townhouseBays):piece.draw(palettes[skin],height)}</g></svg>`,`${instance}-${piece.id}-${skin}`)
 }

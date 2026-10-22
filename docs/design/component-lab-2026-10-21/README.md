@@ -124,3 +124,47 @@ Shared rules in `src/design-lab/components.ts`, applied to the three pilot piece
 - **Fixes:** door panes no longer carry window sills, which had poked below the ground line.
 - **Figma:** "Component kit / Watercolour / Revision 3 (sharpened)" (node 4:2) and "Component kit / Blueprint / Revision 3 (sharpened)" (node 4:2299) sit below the pilot sheet. Each piece is fitted to its own cell; the shared height scale is shown in the lab's assembly view. Pattern textures (brick, panel, hatch) do not survive Figma's SVG import.
 - **Checks:** `scripts/verify-component-lab.mjs` passes. That covers identical geometry in both skins, the height scale, fit at minimum and maximum heights, townhouse repetition, roofs, trees and lamps, desktop, dialog and mobile accessibility, no overflow, valid XML and no external requests.
+
+## Revision 4: batch three (40 of 60 components)
+
+New, built to the revision 3 rules in both skins:
+
+- **Site context:**
+  - 07 Reserved school site: fenced, signed land and no building, because a reservation is not a school.
+  - 08 Existing building: neutral, hatched context massing.
+  - 09 Land plot: corner stakes and a frontage dimension.
+  - 10 Future-phase block: a dashed ghost envelope.
+- **Attachments:**
+  - 11 Balcony: slab, glass guard, shadow.
+  - 13 Entrance: recessed double doors, canopy, plaque, level threshold.
+  - 16 Roof terrace: decking, planters, guard, umbrella, pergola.
+- **Landscape and water:**
+  - 19 Tree cluster.
+  - 23 Plaza / POPS: paving grid, seating wall, planters, public art.
+  - 24 Playground: safety surface and fence.
+  - 25 Rain garden: basin below grade with a curb inlet.
+  - 27 Lake edge: armour stone, boardwalk on piles.
+  - 29 Ravine / woodland: a valley with a creek, conifers and deciduous trees.
+- **Street and transit:**
+  - 33 Crossing: zebra bars, curb ramps, tactile plates, pedestrian signal.
+  - 36 Cycle lane: painted lane, foreshortened bike symbol, flex posts.
+  - 40 Bus-stop pole.
+  - 43 Rail platform: edge strip, canopy, stair.
+  - 44 Train: bilevel coach.
+  - 47 Truck: box truck.
+- **Overlay:** 59 Policy-limit overlay. A red dashed height limit, a 45° angular plane and a front setback over a ghosted proposal. The parts that exceed the limits are hatched red.
+
+**New in the drawing system:**
+- A `limit` colour in both palettes.
+- An optional per-piece `below` allowance for pieces drawn below grade.
+- A `conifer` helper and a `ground()` helper for flat areas at the shared projection.
+
+**Fixes:**
+- Mixed use: the tower sits on its podium, set back 1.2 m, with its side wall starting at the podium roof. The green roof stays on the tower's own roof.
+- Podiums are 1.2 m deep, matching the setback, so the tower's front corner lands on the podium's back corner.
+- The industrial ribbon window stops short of the entrance door.
+- Export and download file names keep only letters, digits and "+" (the "/" in "Plaza / POPS" broke the export).
+
+**Figma:** "Component kit / … / Revision 4 (40 components)" (nodes 5:2 and 5:3270) sits below the revision 3 sheets.
+
+**Checks:** the verification script now expects 40 components and 88 SVGs in the zip.

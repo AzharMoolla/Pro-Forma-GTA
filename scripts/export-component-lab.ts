@@ -7,7 +7,7 @@ const out = new URL('../docs/design/component-lab-2026-10-21/', import.meta.url)
 await mkdir(new URL('svg/', out), { recursive: true })
 const files: Record<string, Uint8Array> = {}
 for (const piece of pieces) for (const skin of ['watercolour', 'blueprint'] as Skin[]) {
-  const name = `${piece.id}-${piece.name.toLowerCase().replaceAll(' ', '-')}-${skin}.svg`
+  const name = `${piece.id}-${piece.name.toLowerCase().replace(/[^a-z0-9+]+/g, '-')}-${skin}.svg`
   const svg = pieceSvg(piece, skin)
   files[name] = strToU8(svg)
   await writeFile(new URL(`svg/${name}`, out), svg)
