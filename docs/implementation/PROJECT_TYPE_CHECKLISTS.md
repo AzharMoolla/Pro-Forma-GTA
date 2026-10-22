@@ -2,7 +2,7 @@
 
 Generated from `data/costs/catalogue.json` (v0.1.0, as of 2026-10-21) by `npm run report`. Do not edit by hand.
 
-The catalogue holds **182 project variables** and **247 cost items** across 16 stages. Each project type below lists every item that can apply. Items marked **if …** are switched on by a project variable (dirty soil, affordable units, TTC proximity, amenities and so on). Source tags: verified · source · quote · proposed (not law).
+The catalogue holds **183 project variables** and **247 cost items** across 16 stages. Each project type below lists every item that can apply. Items marked **if …** are switched on by a project variable (dirty soil, affordable units, TTC proximity, amenities and so on). Source tags: verified · source · quote · proposed (not law).
 
 | Project type | Always applies | Conditional | Example |
 |---|---|---|---|
@@ -20,7 +20,7 @@ The catalogue holds **182 project variables** and **247 cost items** across 16 s
 
 | Group | Count | Examples |
 |---|---|---|
-| site | 40 | Municipality; Site address (municipal address point); Ward; Neighbourhood; … |
+| site | 41 | Municipality; Site address (municipal address point); Ward; Neighbourhood; … |
 | deal | 5 | Land price; Land is a taxable supply (vacant / commercial); Buyer is a foreign entity (NRST); Land financed with a land loan; … |
 | planning | 25 | Official plan amendment required; Zoning by-law amendment required; Site plan approval required; Draft plan of subdivision; … |
 | program | 19 | Residential tenure; Share of 2+ bedroom units (Growing Up guidelines, DC rates); Retail NLA; Office NLA; … |

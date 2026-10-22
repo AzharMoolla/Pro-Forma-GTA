@@ -71,8 +71,8 @@ test('master plan: plan tree, roll-up and range run in a worker', async ({ page 
 
 test('overview shows the sketch and colour-coded analysis', async ({ page }) => {
   await fresh(page)
-  await expect(page.getByRole('img', { name: /Watercolour streetscape of .*38-storey tower.*zoning height limit of about 20 storeys; 1 building is taller/ })).toBeVisible()
-  for (const style of ['Pencil sketch', 'Blueprint', 'Massing model']) {
+  await expect(page.getByRole('img', { name: /Pencil sketch streetscape of .*38-storey tower by a station.*zoning height limit of about 20 storeys.*1 building is taller/ })).toBeVisible()
+  for (const style of ['Blueprint', 'Pencil sketch']) {
     await page.getByText(style, { exact: true }).click()
     await expect(page.getByRole('img', { name: new RegExp(`^${style} streetscape`) })).toBeVisible()
   }

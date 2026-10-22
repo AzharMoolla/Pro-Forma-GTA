@@ -1,0 +1,145 @@
+// Streetscape stress tests: many buildings with different specs, mixed zoning and airport limits, transit near some
+// blocks and not others, every feature the picture can draw. Renders the real SVG and writes it to
+// test-results/streetscape/ for visual review (open them from the dev server: /test-results/streetscape/...).
+import { mkdirSync, writeFileSync } from 'node:fs'
+import { createElement } from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
+import { describe, expect, it } from 'vitest'
+import mockAJson from '../../data/projects/mock-a-toronto-mixed-use.json'
+import { mockB, mockBMeta } from '../../data/projects/mock-b-durham-master-plan'
+import type { Attributes } from '../../src/engine/catalogue'
+import type { Node } from '../../src/engine/portfolio'
+import type { Component, ProjectInput } from '../../src/engine/project'
+import { projectsUnder } from '../../src/ui/coverage'
+import { StreetscapeSvg, type ArtStyle } from '../../src/ui/Streetscape'
+import { controllingLimit, sceneOf, scoped, type Scene } from '../../src/ui/streetscapeScene'
+import { tinyProject } from './fixtures'
+
+const rental = tinyProject().components[0]!
+const retail: Component = { kind: 'commercial', id: 'retail', use: 'retail', netLeasableSqft: 8_000, rentPerSqftYear: 40, rentGrowth: 0.02, vacancy: 0.05, leaseUpMonths: 6, freeRentMonths: 2, tiPerSqft: 60, leasingCommissionPerSqft: 10, unrecoveredOpexPerSqftYear: 3, exitCapRate: 0.06 }
+const commercialUse = (u: 'office' | 'industrial' | 'other'): Component => ({ ...retail, id: u, use: u } as Component)
+const lots: Component = { kind: 'landSale', id: 'lots', sales: [{ month: 3, amount: 1_000_000 }] }
+
+const b = (id: string, storeys: number, podium: number, components: Component[], gca = storeys * 9_000): ProjectInput =>
+  tinyProject({ id, name: id, components, program: { lotAreaSqft: 20_000, planningGfaSqft: gca, gcaAboveSqft: gca, gcaBelowSqft: 0, storeys, podiumStoreys: podium } })
+
+const plan = (children: Array<[string, ProjectInput[]]>): Node => ({
+  id: 'mp', name: 'Stress test', discountRate: 0.1, costEscalation: 0, costLines: [],
+  children: children.map(([id, projects], i) => ({ offsetMonths: i * 12, node: { id, name: id, discountRate: 0.1, costEscalation: 0, costLines: [], children: projects.map((p) => ({ offsetMonths: 0, node: p })) } })),
+})
+
+// 15 buildings: towers, mid-rises, townhouses, office, industrial, institutional, lots; retail podiums; 1 to 80 storeys
+const stress = plan([
+  ['phase-1', [b('p1-tower-80', 80, 6, [rental, retail]), b('p1-tower-38', 38, 3, [rental, retail]), b('p1-office', 30, 4, [commercialUse('office'), retail]), b('p1-midrise', 9, 2, [rental, retail]), b('p1-heritage', 12, 3, [rental, retail])]],
+  ['phase-2', [b('p2-midrise-14', 14, 0, [rental]), b('p2-town', 3, 0, [rental]), b('p2-tower-25', 25, 4, [rental]), b('p2-school-ish', 3, 0, [commercialUse('other')]), b('p2-tower-41', 41, 5, [rental, retail])]],
+  ['phase-3', [b('p3-industrial', 2, 0, [commercialUse('industrial')]), b('p3-lots', 2, 0, [lots]), b('p3-town-1', 1, 0, [rental]), b('p3-tower-30', 30, 3, [rental]), b('p3-midrise-6', 6, 1, [rental, retail])]],
+])
+
+const stressAttributes: Attributes = {
+  'site.municipality': 'toronto', 'site.frontageRoadClass': 'Major Arterial', 'site.sidewalks': 'Sidewalk on both sides', 'site.nearestCrossingM': 48,
+  'site.nearestTransitStopM': 38, 'site.nearestTransitStop': 'Example Station', 'design.vehicleAccessPoints': 2, 'planning.carParkingStalls': 900,
+  'planning.parkingLevelsBelowGrade': 3, 'zoning.parkingZone': 'A', 'planning.bikeParking': 2_000, 'planning.loadingSpaces': 6, 'design.stormwaterTank': true,
+  'site.highWaterTable': true, 'site.frontageM': 600, 'mp.parksHa': 4, 'mp.schoolSites': 1, 'mp.communityCentre': true, 'design.streetscapeM': 600,
+  'mp.arterialM': 400, 'mp.localRoadM': 1_200, 'mp.watermainM': 2_000, 'mp.sanitaryM': 1_800, 'mp.swmPonds': 1, 'zoning.code': 'CR 5.0', 'site.nearAerodrome': true,
+  // zoning areas: phase 1 at 20 storeys, phase 2 at 12 with one block in a 40-storey zone, phase 3 none
+  'phase-1|zoning.heightLimitStoreys': 20, 'phase-2|zoning.heightLimitStoreys': 12, 'phase-2/p2-tower-41|zoning.heightLimitStoreys': 40,
+  // phase 1 sits on a subway; one phase-3 block by a GO station; the rest are not near transit
+  'phase-1|site.nearTtc60m': true, 'phase-3/p3-tower-30|mp.transitIntegration': true, 'phase-3/p3-tower-30|site.municipality': 'oshawa',
+  // airport: tighter than zoning on one phase-1 tower, the only limit on one phase-3 block
+  'phase-1/p1-tower-38|site.aeronauticalLimitM': 45, 'phase-3/p3-midrise-6|site.aeronauticalLimitM': 15,
+  // features, spread over the blocks
+  'phase-1/p1-tower-80|design.balconies': true, 'phase-1/p1-tower-80|program.pool': true, 'phase-1/p1-tower-80|program.rooftopAmenity': true,
+  'phase-1/p1-heritage|site.heritage': true, 'phase-1/p1-midrise|design.greenRoofM2': 400, 'phase-1/p1-midrise|program.childcare': true,
+  'phase-2/p2-tower-25|design.solarPv': true, 'phase-2/p2-tower-25|design.balconies': true, 'phase-2/p2-town|program.childcare': true,
+  'phase-3/p3-industrial|design.solarPv': true, 'phase-3/p3-tower-30|design.greenRoofM2': 200,
+}
+
+const sceneFor = (node: Node, a: Attributes) => sceneOf(projectsUnder(node).map(({ path, project }) => ({ path, project, label: path.at(-1) })), a)
+const render = (scene: Scene, style: ArtStyle, title: string) =>
+  renderToStaticMarkup(createElement(StreetscapeSvg, { scene, style, title, uid: 's', stats: [['Homes', '1,000'], ['Total cost', '$1B']] }))
+const write = (name: string, svg: string) => {
+  mkdirSync('test-results/streetscape', { recursive: true })
+  writeFileSync(`test-results/streetscape/${name}.svg`, svg.replace('width="100%" height="100%"', 'width="2400"'))
+}
+const count = (svg: string, needle: string) => svg.split(needle).length - 1
+
+describe('streetscape: 15 buildings, mixed zoning, transit near some blocks', () => {
+  const scene = sceneFor(stress, stressAttributes)
+
+  it('scoped variables: building beats phase beats project', () => {
+    expect(scoped(stressAttributes, ['phase-2', 'p2-tower-41'], 'zoning.heightLimitStoreys')).toBe(40)
+    expect(scoped(stressAttributes, ['phase-2', 'p2-town'], 'zoning.heightLimitStoreys')).toBe(12)
+    expect(scoped(stressAttributes, ['phase-3', 'p3-lots'], 'zoning.heightLimitStoreys')).toBeUndefined()
+    expect(scoped(stressAttributes, ['phase-3', 'p3-lots'], 'site.frontageRoadClass')).toBe('Major Arterial')
+  })
+
+  it('classifies every building and lays them out in order without overlaps', () => {
+    expect(scene.buildings.map((x) => x.kind)).toEqual(['tower', 'tower', 'office', 'midrise', 'midrise', 'midrise', 'townhouse', 'tower', 'institutional', 'tower', 'industrial', 'lots', 'townhouse', 'tower', 'midrise'])
+    for (let i = 1; i < scene.parts.length; i++) expect(scene.parts[i]!.x).toBeGreaterThanOrEqual(scene.parts[i - 1]!.x + scene.parts[i - 1]!.w)
+    expect(scene.W).toBeGreaterThan(sceneFor(plan([['phase-1', [b('a', 10, 0, [rental])]]]), {}).W * 3) // more buildings, wider drawing
+  })
+
+  it('stations only where blocks are near transit: one subway entrance before phase 1, one GO station in phase 3', () => {
+    expect(scene.parts.filter((p) => p.kind === 'station').map((p) => (p as { transit: string }).transit)).toEqual(['subway', 'go'])
+    expect(scene.buildings.filter((x) => x.transit).map((x) => x.id)).toEqual(['p1-tower-80', 'p1-tower-38', 'p1-office', 'p1-midrise', 'p1-heritage', 'p3-tower-30'])
+  })
+
+  it('limits differ by zone, so each building gets its own line; the lower of zoning and airport controls', () => {
+    expect(scene.uniformLimit).toBeNull()
+    const byId = Object.fromEntries(scene.buildings.map((x) => [x.id, x]))
+    expect(controllingLimit(byId['p1-tower-38']!)).toBe(15) // airport 45 m ≈ 15 storeys beats zoning 20
+    expect(controllingLimit(byId['p2-tower-41']!)).toBe(40) // its own zone
+    expect(controllingLimit(byId['p3-midrise-6']!)).toBe(5) // airport only
+    expect(controllingLimit(byId['p3-tower-30']!)).toBeNull()
+    expect(scene.over.map((x) => x.id)).toEqual(['p1-tower-80', 'p1-tower-38', 'p1-office', 'p2-midrise-14', 'p2-tower-25', 'p2-tower-41', 'p3-midrise-6'])
+    expect(scene.notes).toContain('near an aerodrome: aeronautical height limit to check') // blocks near the aerodrome with no limit entered
+  })
+
+  for (const style of ['sketch', 'blueprint'] as const) {
+    it(`${style}: draws every building, feature and requirement, inside the picture`, () => {
+      const svg = render(scene, style, 'Stress test')
+      write(`stress-15-${style}`, svg)
+      expect(count(svg, 'data-building=')).toBe(15)
+      for (const f of ['subway-station', 'go-station', 'storefront', 'balconies', 'pool', 'rooftop-amenity', 'green-roof', 'solar', 'heritage', 'playground', 'curtain-wall', 'portico', 'townhouses', 'industrial', 'houses', 'park', 'school', 'community', 'crosswalk', 'driveway', 'car', 'curb', 'sidewalk', 'over-limit', 'limit-segment', 'air-limit-segment', 'tag', 'disclaimer']) {
+        expect(svg, f).toContain(`data-feature="${f}"`)
+      }
+      expect(count(svg, 'data-feature="tag"')).toBe(scene.tags.length)
+      expect(scene.tags.map((t) => t.title)).toEqual(['Street', 'Sidewalks', 'Crossing', 'Transit', 'Parking', 'Bicycle parking', 'Loading and access', 'Servicing', 'Frontage', 'New roads', 'New services'])
+      // nothing drawn above the top of the picture, even the 80-storey tower with its roof
+      const ys = [...svg.matchAll(/ y="(-?[\d.]+)"/g)].map((m) => Number(m[1]))
+      expect(Math.min(...ys)).toBeGreaterThanOrEqual(0)
+    })
+  }
+})
+
+describe('streetscape: real projects and edge cases', () => {
+  it('Mock A: one tower over a single zoning line, by the subway', () => {
+    const scene = sceneFor(mockAJson.input as Node, mockAJson.attributes as Attributes)
+    expect(scene.uniformLimit).toBe(20)
+    expect(scene.over.map((x) => x.storeys)).toEqual([38])
+    for (const style of ['sketch', 'blueprint'] as const) {
+      const svg = render(scene, style, 'Mock A')
+      write(`mock-a-${style}`, svg)
+      expect(svg).toContain('data-feature="limit-line"')
+      expect(svg).toContain('data-feature="subway-station"')
+    }
+  })
+
+  it('Mock B: a Durham master plan with no mapped limits draws no limit lines', () => {
+    const scene = sceneFor(mockB, mockBMeta.attributes as Attributes)
+    const svg = render(scene, 'sketch', 'Mock B')
+    write('mock-b-sketch', svg)
+    expect(svg).not.toContain('limit-line')
+    expect(svg).not.toContain('limit-segment')
+    expect(count(svg, 'data-building=')).toBe(projectsUnder(mockB).length)
+  })
+
+  it('one uniform airport limit draws a single blue line across', () => {
+    const scene = sceneFor(b('solo', 30, 3, [rental]), { 'site.aeronauticalLimitM': 60, 'zoning.heightLimitStoreys': 25 })
+    expect(scene.uniformAirLimit).toBe(20)
+    const svg = render(scene, 'blueprint', 'Solo')
+    write('airport-blueprint', svg)
+    expect(svg).toContain('data-feature="air-limit-line"')
+    expect(svg).toContain('data-feature="limit-line"')
+  })
+})

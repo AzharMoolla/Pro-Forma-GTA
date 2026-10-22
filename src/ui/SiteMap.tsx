@@ -7,6 +7,7 @@ import registry from '../../data/geo/layers.json'
 import { Button, Card, Chip, TableWrap, td, th } from './components'
 import { projectsUnder } from './coverage'
 import { variableInfo } from './data'
+import { scoped, scopedKey } from './streetscapeScene'
 import { useWorkspace } from './workspace'
 
 interface SiteMessage extends StreetContext { type: 'planning-map:site'; name: string; point: Position; matches: SiteMatch[] }
@@ -29,8 +30,13 @@ const loadLayers = () => (layersPromise ??= Promise.all((registry.layers as Laye
 const show = (v: unknown) => (v === undefined || v === null || v === '' ? '—' : typeof v === 'boolean' ? (v ? 'yes' : 'no') : String(v))
 
 export function SiteMap() {
-  const { state, dispatch, demo, draft } = useWorkspace()
+  const { state, dispatch, demo, draft, node } = useWorkspace()
   const attributes = state.projects[state.projectId]!.attributes
+  // With a phase or building selected, values can apply to it alone (scoped), e.g. one block by a station
+  const [scope, setScope] = useState<'project' | 'selection'>('project')
+  const path = scope === 'selection' ? state.path : []
+  const current = (id: string) => scoped(attributes, path, id)
+  const target = path.length ? node.name : demo.name.split(':')[0]
   const frame = useRef<HTMLIFrameElement>(null)
   const [available, setAvailable] = useState<boolean | null>(null)
   const [site, setSite] = useState<SiteMessage | null>(null)
@@ -87,16 +93,19 @@ export function SiteMap() {
     return () => { live = false }
   }, [site, proposedStoreys])
 
-  const changed = rows.filter((r) => attributes[r.variable] !== r.value)
+  const changed = rows.filter((r) => current(r.variable) !== r.value)
   const apply = () => {
     const chosen = rows.filter((r) => !skip.has(r.variable))
     const sources: SourceMap = { ...readSources(attributes) }
     for (const r of chosen) {
-      dispatch({ type: 'attribute', id: r.variable, value: r.value })
-      sources[r.variable] = { value: r.value, layer: r.layer, url: r.sourceUrl, retrievedAt: r.retrievedAt }
+      const id = scopedKey(path, r.variable)
+      dispatch({ type: 'attribute', id, value: r.value })
+      sources[id] = { value: r.value, layer: r.layer, url: r.sourceUrl, retrievedAt: r.retrievedAt }
     }
     dispatch({ type: 'attribute', id: SOURCES_KEY, value: JSON.stringify(sources) })
-    setApplied(`${chosen.length} values applied to ${demo.name.split(':')[0]}. The cost checklist, streetscape and analysis now use them.`)
+    setApplied(path.length
+      ? `${chosen.length} values applied to ${target} only. The streetscape uses them for this building; project-wide checklists still use the project's values.`
+      : `${chosen.length} values applied to ${target}. The cost checklist, streetscape and analysis now use them.`)
   }
 
   return (
@@ -125,20 +134,27 @@ export function SiteMap() {
               <thead><tr>{['Apply', 'Variable', 'From the map', 'Now in the project', 'Source'].map((h) => <th key={h} scope="col" className={th}>{h}</th>)}</tr></thead>
               <tbody>{rows.map((r) => {
                 const info = variableInfo.get(r.variable)
-                const same = attributes[r.variable] === r.value
+                const same = current(r.variable) === r.value
                 return (
                   <tr key={r.variable}>
                     <td className={td}><input type="checkbox" className="size-5 accent-[var(--accent)]" aria-label={`Apply ${info?.label ?? r.variable}`} checked={!skip.has(r.variable)} onChange={(e) => setSkip((s) => { const n = new Set(s); if (e.target.checked) n.delete(r.variable); else n.add(r.variable); return n })} /></td>
                     <td className={td}>{info?.label ?? r.variable}{info?.unit ? <span className="text-ink-mute"> ({info.unit})</span> : ''}</td>
                     <td className={td}><span className="num">{show(r.value)}</span>{r.label !== info?.label && <span className="block text-xs text-ink-soft">{r.label}</span>}{r.note && <span className="block text-xs text-warn">{r.note}</span>}</td>
-                    <td className={td}>{same ? <Chip tone="good">same</Chip> : <span className="num">{show(attributes[r.variable])}</span>}</td>
+                    <td className={td}>{same ? <Chip tone="good">same</Chip> : <span className="num">{show(current(r.variable))}</span>}</td>
                     <td className={`${td} text-xs text-ink-soft`}>{r.sourceUrl ? <a className="text-accent underline" href={r.sourceUrl} target="_blank" rel="noreferrer">{r.layer}</a> : r.layer}{r.retrievedAt && ` · ${r.retrievedAt}`}</td>
                   </tr>
                 )
               })}</tbody>
             </TableWrap>
+            {state.path.length > 0 && (
+              <fieldset className="mt-3 flex flex-wrap items-center gap-3 text-sm">
+                <legend className="mb-1 text-xs text-ink-soft">Apply to</legend>
+                <label className="flex min-h-9 items-center gap-2"><input type="radio" name="map-scope" className="size-4 accent-[var(--accent)]" checked={scope === 'project'} onChange={() => setScope('project')} />the whole project</label>
+                <label className="flex min-h-9 items-center gap-2"><input type="radio" name="map-scope" className="size-4 accent-[var(--accent)]" checked={scope === 'selection'} onChange={() => setScope('selection')} />{node.name} only (e.g. a different zoning area or a station nearby)</label>
+              </fieldset>
+            )}
             <div className="mt-3 flex flex-wrap items-center gap-3">
-              <Button variant="primary" onClick={apply} disabled={rows.length === skip.size}>Apply {rows.length - skip.size} to {demo.name.split(':')[0]}</Button>
+              <Button variant="primary" onClick={apply} disabled={rows.length === skip.size}>Apply {rows.length - skip.size} to {target}</Button>
               <span className="text-xs text-ink-mute">{changed.length} differ from the project now.</span>
               {applied && <p role="status" className="text-sm text-good">{applied}</p>}
             </div>

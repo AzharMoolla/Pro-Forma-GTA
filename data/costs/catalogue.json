@@ -435,6 +435,15 @@
       "source": "Transport Canada AZR maps, airport authority"
     },
     {
+      "id": "site.aeronauticalLimitM",
+      "group": "site",
+      "label": "Aeronautical height limit above ground (AZR surface elevation − site elevation)",
+      "type": "number",
+      "unit": "m",
+      "source": "Transport Canada Airport Zoning Regulation plans; NAV CANADA land use review",
+      "ref": "https://tc.canada.ca/en/aviation/operating-airports-aerodromes/airport-zoning-regulations"
+    },
+    {
       "id": "site.nearMajorFacility",
       "group": "site",
       "label": "Near a major facility (tank farm, heavy industry, rail yard) needing land-use compatibility",
