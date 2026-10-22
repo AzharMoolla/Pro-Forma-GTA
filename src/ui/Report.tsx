@@ -99,7 +99,7 @@ export function Report() {
           <section className="break-inside-avoid">
             <h3 className="mb-2 text-base font-semibold">Streetscape</h3>
             <div className="h-[340px] rounded border border-line">
-              <StreetscapeSvg scene={scene} style="sketch" stats={[['Homes', metricValue(m.totalUnits)], ['Total cost', metricValue(m.totalDevelopmentCost)], ['Profit on cost', metricValue(m.profitOnCost)]]} title={node.name} uid="report" />
+              <StreetscapeSvg scene={scene} style="sketch" stats={[['Units', metricValue(m.totalUnits)], ['Total cost', metricValue(m.totalDevelopmentCost)], ['Profit on cost', metricValue(m.profitOnCost)]]} title={node.name} uid="report" />
             </div>
           </section>
         )}
