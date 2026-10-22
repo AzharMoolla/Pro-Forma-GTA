@@ -11,3 +11,4 @@ Playbook §5.3. Every external service that receives project or user data.
 No analytics, advertising, session replay or AI providers receive data. Fonts are bundled locally (no Google Fonts calls).
 
 Before any public launch (playbook §4.2, §7): a Privacy Policy matching this table, a retention and deletion process for accounts and receipts (receipts are deliberately kept for the audit trail, which must be disclosed), and Terms. Not needed for local development.
+| Cloudflare Workers (static assets), Worker `gta-proforma`, domains plangta.ca and www.plangta.ca | Serves the built app | Standard request metadata (IP, user agent, URL); no project data (that goes browser → Supabase directly) | Cloudflare global network | Footer "Privacy and data" | Yes: the app also runs locally | Azhar Moolla |

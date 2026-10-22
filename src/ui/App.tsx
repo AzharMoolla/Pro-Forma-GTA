@@ -61,9 +61,12 @@ export function App() {
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-10 focus:rounded focus:bg-surface focus:p-2">Skip to content</a>
       <header className="border-b border-line bg-surface print:hidden">
         <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-x-6 gap-y-3 px-4 py-3">
-          <div>
-            <p className="text-xs tracking-wide text-ink-mute uppercase">GTA development pro forma</p>
-            <h1 className="text-lg font-semibold">{demo.name}</h1>
+          <div className="flex items-center gap-3">
+            <img src="/favicon.svg" alt="" width={36} height={36} className="size-9 shrink-0 rounded-lg" />
+            <div>
+              <p className="text-xs text-ink-mute"><span className="font-semibold tracking-wide text-accent">PlanGTA</span> · planning and pro forma for the GTA</p>
+              <h1 className="text-lg font-semibold">{demo.name}</h1>
+            </div>
           </div>
           <div className="flex w-full min-w-0 items-center gap-2 text-sm sm:w-auto">
             <label htmlFor="project-select" className="text-ink-soft">Project</label>
@@ -174,6 +177,16 @@ export function App() {
           </aside>
         )}
       </div>
+      <footer className="mx-auto max-w-[1600px] px-4 pb-6 text-xs text-ink-mute print:hidden">
+        <details>
+          <summary className="cursor-pointer">Privacy and data</summary>
+          <div className="mt-2 flex max-w-3xl flex-col gap-1">
+            <p>Without an account, your work stays in this browser only. With an account, your projects, scenarios, project variables, tracker notes and amounts, and receipt files are stored in Supabase (Canada Central) and are visible only to your account.</p>
+            <p>The site is served by Cloudflare, which sees standard request information such as your IP address. There is no analytics, advertising or tracking. Map searches run against data held by this service, not a third-party geocoder.</p>
+            <p>Demo projects use synthetic figures. Nothing here is financial, tax, lending, legal or planning advice. Source code and data notes: github.com/AzharMoolla/Pro-Forma-GTA.</p>
+          </div>
+        </details>
+      </footer>
     </WorkspaceContext.Provider>
   )
 }

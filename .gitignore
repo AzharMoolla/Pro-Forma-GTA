@@ -14,3 +14,6 @@ data/planning-map/*
 !data/planning-map/regional-policy-sources.json
 # Research downloads (third-party page copies, screenshots, seeds): local only
 data/research/
+
+# Wrangler local state
+.wrangler/

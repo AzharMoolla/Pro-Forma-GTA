@@ -46,7 +46,8 @@ export function SiteMap() {
 
   useEffect(() => {
     let live = true
-    fetch('map/api/manifest').then((r) => live && setAvailable(r.ok)).catch(() => live && setAvailable(false))
+    // A static host answers any path with the app itself, so only a JSON manifest means the map service is here
+    fetch('map/api/manifest').then((r) => live && setAvailable(r.ok && (r.headers.get('content-type') ?? '').includes('json'))).catch(() => live && setAvailable(false))
     return () => { live = false }
   }, [])
 
@@ -117,7 +118,7 @@ export function SiteMap() {
         </p>
         {available === false ? (
           <p role="status" className="rounded border border-warn bg-warn-soft p-3 text-sm text-warn">
-            Map data isn't on this machine yet. Run <code>npm run map:collect</code> and <code>npm run map:collect:regional</code>, then reload.
+            The map service isn't available here yet. On the hosted site it is coming (the map data moves to Cloudflare storage next). Running the app locally, collect the data with <code>npm run map:collect</code> and <code>npm run map:collect:regional</code>, then reload.
           </p>
         ) : (
           <iframe ref={frame} title="Planning map" src="map/" className="h-[calc(100vh-150px)] min-h-[640px] w-full rounded border border-line bg-sunken" />

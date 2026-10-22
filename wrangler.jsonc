@@ -1,0 +1,18 @@
+{
+  // Static site on Cloudflare Workers (static assets). The planning map's API and data (R2 + a Worker) come later;
+  // until then /map/ is not served here and the Site map section says so.
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "gta-proforma",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
+  },
+  // plangta.ca must be an active zone in the same Cloudflare account; Cloudflare creates DNS and certificates
+  "routes": [
+    { "pattern": "plangta.ca", "custom_domain": true },
+    { "pattern": "www.plangta.ca", "custom_domain": true }
+  ],
+  "workers_dev": true,
+  "observability": { "enabled": true }
+}
