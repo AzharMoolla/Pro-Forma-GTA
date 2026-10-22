@@ -263,8 +263,8 @@ function industrial(p:Palette,height=6){
     for(const dx of [.2,4.64])s+=rect(x+dx,-.65,.16,.65,p.warm,p.ink,LW.fine)
   }
   // Office corner: ribbon window, entrance, canopy and its shadow
-  s+=pane(14,-3.1,7,1.3,p,false)
-  for(let x=14.7;x<21;x+=1.1)s+=line(x,-3.08,x,-1.82,p.fine,LW.fine)
+  s+=pane(14,-3.1,4.3,1.3,p,false) // ribbon window stops short of the entrance
+  for(let x=15.1;x<18.3;x+=1.1)s+=line(x,-3.08,x,-1.82,p.fine,LW.fine)
   s+=pane(19,-2.2,1.3,2.2,p,false,false)+shade(18.6,-2.3,2.5,.2,p,.3)+path('M18.6,-2.5 h2.2 l.3,.2 h-2.2Z',p.roof,p.ink,LW.detail)
   for(const x of [17.6,21.6])s+=rect(x,-.85,.18,.85,p.warm,p.ink,LW.fine)
   s+=rect(0,-height+saw,w,height-saw,'none',p.ink,LW.outline)
