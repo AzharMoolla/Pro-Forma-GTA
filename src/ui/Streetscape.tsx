@@ -64,7 +64,9 @@ export const StreetscapeSvg = forwardRef<SVGSVGElement, SvgProps>(function Stree
   const L = LOOKS[style]
   const { K, W, perRow, tagsTop, H } = heightOf(scene)
   // The spotlit building gets an id so the window shine can be masked to its silhouette
-  const art = selected ? kitArt(scene, skinOf(style), uid, K).replace(`data-building="${selected}"`, `data-building="${selected}" id="${uid}-spot"`) : kitArt(scene, skinOf(style), uid, K)
+  // Built once per scene and style (it is large); panning, zooming and the spotlight reuse it
+  const base = useMemo(() => kitArt(scene, skinOf(style), uid, K), [scene, style, uid]) // eslint-disable-line react-hooks/exhaustive-deps -- K follows from scene
+  const art = selected ? base.replace(`data-building="${selected}"`, `data-building="${selected}" id="${uid}-spot"`) : base
   const buildings = K.placed.filter((q): q is typeof q & { part: Extract<Scene['parts'][number], { kind: 'building' }> } => q.part.kind === 'building')
   const stations = K.placed.filter((q) => q.part.kind === 'station')
   const uniformY = (storeys: number | null, metres: number | null) => { const m = limitMetresOf(storeys, metres); return m === null ? null : py(K, m) }

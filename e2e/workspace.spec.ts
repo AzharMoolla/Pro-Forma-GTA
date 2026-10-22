@@ -339,9 +339,30 @@ test('streetscape: spotlight a building from the picker and see its numbers', as
   await page.getByLabel('Project', { exact: true }).selectOption({ label: 'Mock B: Durham waterfront master plan' })
   await page.getByLabel('Spotlight').selectOption({ label: 'Block E: condo towers' })
   const card = page.getByRole('dialog', { name: 'Block E: condo towers: key numbers' })
-  await expect(card).toBeVisible()
   await expect(card.getByText('Units')).toBeVisible()
   await expect(page.locator('[data-feature="spotlight"]')).toHaveCount(1)
   await card.getByRole('button', { name: 'Close' }).click()
   await expect(page.locator('[data-feature="spotlight"]')).toHaveCount(0)
+})
+
+test('phasing: phase starts are collected with the program, and spacing phases clears the overlap warning', async ({ page }) => {
+  await fresh(page)
+  await page.getByLabel('Project', { exact: true }).selectOption({ label: 'Mock B: Durham waterfront master plan' })
+  await openSection(page, 'Site & program')
+  await expect(page.getByRole('heading', { name: /Phasing plan \(3 phases\)/ })).toBeVisible()
+  await expect(page.getByText(/Phase 3 starts building 2 months before Phase 2 finishes/)).toBeVisible()
+  const start = page.getByLabel('Phase 3 starts, months after the plan')
+  await start.fill('120')
+  await start.press('Enter')
+  await expect(page.getByText(/starts building .* before Phase 2 finishes/)).toHaveCount(0)
+  await expect(page.getByRole('cell', { name: 'M120', exact: true })).toHaveCount(2) // Phase 3 and its first building
+})
+
+test('phasing: a single building can be set up in phases and given a second phase', async ({ page }) => {
+  await fresh(page)
+  await openSection(page, 'Site & program')
+  await page.getByRole('button', { name: 'Set up phases' }).click()
+  await expect(page.getByRole('heading', { name: /Phasing plan \(1 phase\)/ })).toBeVisible()
+  await page.getByRole('button', { name: 'Add a phase' }).click()
+  await expect(page.getByRole('heading', { name: /Phasing plan \(2 phases\)/ })).toBeVisible()
 })

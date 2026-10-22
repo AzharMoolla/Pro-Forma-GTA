@@ -11,6 +11,7 @@ import { Audit, Finance, Returns, Revenue, Scenarios } from './sections2'
 import { CostBuckets, DecisionSummary, Progress } from './sections3'
 import { readSources, SiteMap } from './SiteMap'
 import { Streetscape } from './Streetscape'
+import { Phasing } from './Phasing'
 import { Visuals } from './Visuals'
 import { Feasibility } from './Feasibility'
 import { Assumptions } from './Assumptions'
@@ -201,6 +202,7 @@ function Program() {
           </dl>
         </Card>
       )}
+      <Phasing />
       <Card title={`Project variables (${catalogue.variables.length})`}>
         <p className="mb-3 text-sm text-ink-soft">
           These switches decide which costs apply ({demo.projectType}). Change one and <strong>Sources &amp; audit</strong> immediately lists the costs it adds or removes, flagging any the model does not carry yet.

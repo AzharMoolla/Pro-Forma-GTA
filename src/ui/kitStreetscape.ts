@@ -13,6 +13,9 @@ import { controllingLimit, type Building, type Part, type Scene } from './street
 export const GROUND_Y = 384 // drawing units: the street front, as before
 const MARGIN = 40
 const GAP = 3 // metres between pieces
+// The widest frame the picture is shown in (aspect) at the drawing's usual height: the street bleeds this far past
+// each edge so it always runs to the frame, and no further (more would only add work)
+const FRAME_ASPECT = 3, FRAME_H = 600
 
 export interface Placed { part: Part; x: number; w: number; top: number } // metres: left, width, height above ground
 export interface KitLayout { S: number; placed: Placed[]; Wm: number; W: number; streetM: number; streetBottom: number; padding: number; /** metres drawn past each edge, so the street and city run to the frame however wide it is */ bleed: number }
@@ -69,7 +72,7 @@ export function kitLayout(scene: Scene): KitLayout {
   const fullM = (W - (2 * MARGIN)) / S
   const shift = (fullM - Wm) / 2
   if (shift > 0) for (const q of placed) q.x += shift
-  return { S, placed, Wm: fullM, W, streetM, streetBottom: GROUND_Y + (streetM * S) + 4, padding: shift > 6 ? shift : 0, bleed: W / S }
+  return { S, placed, Wm: fullM, W, streetM, streetBottom: GROUND_Y + (streetM * S) + 4, padding: shift > 6 ? shift : 0, bleed: (MARGIN + Math.max(0, ((FRAME_ASPECT * FRAME_H) - W) / 2)) / S }
 }
 
 /** Kit pieces drawn through the lab's catalogue (the ones not exported one by one). */
@@ -181,8 +184,9 @@ export function kitArt(scene: Scene, skin: Skin, uid: string, L: KitLayout = kit
   let context = ''
   for (let x = 4 - (Math.ceil(L.bleed / 9) * 9); x < L.padding - 4; x += 9) context += at(x, tree(p, 0, 0, .55, Math.round(x) % 3)) + at(L.Wm - x, tree(p, 0, 0, .55, (Math.round(x) + 1) % 3))
   // A soft city backdrop behind everything, tiled across the width (atmosphere, not the actual neighbours)
-  let backdrop = ''
-  for (let x = -L.bleed - 10; x < L.Wm + L.bleed; x += 178) backdrop += at(x, background(p))
+  // One tile defined once and reused: drawn out in full per tile it was most of the picture's size
+  let backdrop = `<defs><g id="kit-${uid}-backdrop">${background(p)}</g></defs>`
+  for (let x = -L.bleed - 10; x < L.Wm + L.bleed; x += 178) backdrop += `<use href="#kit-${uid}-backdrop" x="${x}"/>`
   // A rail corridor beside the site: track behind the buildings, on the GO train's line (3 m back on the shared projection)
   let rail = ''
   if (scene.street.rail) for (let x = -L.bleed; x < L.Wm + L.bleed; x += 20) rail += at(x, piece(p, '61'), -3 * RISE)

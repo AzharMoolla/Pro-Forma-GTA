@@ -181,13 +181,13 @@ export function validateReceipt(file: { name: string; type: string; size: number
 
 // ---------------------------------------------------------------- plan changes
 
-const uniqueId = (base: string, taken: Set<string>) => {
+export const uniqueId = (base: string, taken: Set<string>) => {
   let id = `${base}-copy`
   for (let n = 2; taken.has(id); n++) id = `${base}-copy-${n}`
   return id
 }
 
-function allIds(node: Node, out = new Set<string>()): Set<string> {
+export function allIds(node: Node, out = new Set<string>()): Set<string> {
   out.add(node.id)
   if (isPortfolio(node)) node.children.forEach((c) => allIds(c.node, out))
   return out
