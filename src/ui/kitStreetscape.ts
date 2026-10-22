@@ -3,7 +3,7 @@
 // Only what the data says is drawn; everything is illustrative, not a surveyed layout or a building envelope.
 
 import {
-  amenityBadge, background, building, creek, lakeEdge, pond, ravine, bus, car, civic, definitions, existingBuilding, greenRoof, industrial, lamp, landPlot, office,
+  RISE, amenityBadge, background, building, creek, lakeEdge, pond, ravine, bus, car, civic, definitions, existingBuilding, greenRoof, industrial, lamp, landPlot, office,
   palettes, park, playgroundPiece, railPlatform, roofTerrace, schoolSite, solar, subway, townhouses, train, tree, uniqueSvg,
   type Palette, type Skin,
 } from '../design-lab/components'
@@ -34,7 +34,7 @@ function size(part: Part): { w: number; top: number } {
     if (b.kind === 'lots') return { w: 22 + extra, top: 3 }
     return { w: (b.retail || b.podium ? 19.4 : 16.7) + extra, top: h + 3 }
   }
-  if (part.kind === 'station') return part.transit === 'subway' ? { w: 7.5, top: 5 } : { w: 25.5, top: 6.5 }
+  if (part.kind === 'station') return part.transit === 'subway' ? { w: 7.5, top: 5 } : { w: 29.5, top: 7 }
   if (part.kind === 'tree') return { w: 5, top: 10 }
   if (part.kind === 'park') return { w: 18, top: 9 }
   if (part.kind === 'school') return { w: 23.5, top: 3.5 }
@@ -103,7 +103,8 @@ function partArt(p: Palette, placed: Placed): string {
   if (part.kind === 'building') return buildingArt(p, part.b, x)
   if (part.kind === 'station') return part.transit === 'subway'
     ? wrap('subway-station', at(x, subway(p)))
-    : wrap('go-station', at(x, railPlatform(p)) + at(x + 1, `<g transform="scale(.92)">${train(p)}</g>`, -1.1))
+    // Train first, set back by the platform's 3 m depth on the shared projection, so the platform floor hides its wheels
+    : wrap('go-station', at(x + 3.4, train(p), -3 * RISE) + at(x, railPlatform(p, 26, false)))
   if (part.kind === 'tree') return at(x + 2.5, tree(p, 0, 0, .7, Math.round(x) % 3))
   if (part.kind === 'park') return wrap('park', at(x, park(p)))
   if (part.kind === 'school') return wrap('school', at(x, schoolSite(p)))
@@ -137,9 +138,14 @@ function streetArt(p: Palette, scene: Scene, L: KitLayout): string {
   const laneMid = (k: number) => road0 + (k * 3.2) + 2.4
   for (let i = 0, cx = 8; cx < Wm - 10; i++, cx += 23) s += wrap('car', at(cx, car(p), laneMid(i % st.lanes)))
   if (scene.buildings.some((b) => b.transit) || st.stopM) s += at(Math.min(Wm - 16, Wm * .55), bus(p), laneMid(0))
-  // Street lamps along the near sidewalk
-  for (let lx = 6; lx < Wm - 4; lx += 30) s += at(0, lamp(p, lx), .2)
   return s
+}
+
+/** Street lamps on the near sidewalk, drawn last so they stand in front of buildings and trains. */
+const lamps = (p: Palette, L: KitLayout) => {
+  let s = ''
+  for (let lx = 6; lx < L.Wm - 4; lx += 30) s += at(0, lamp(p, lx), .2)
+  return `<g data-feature="street-lamps">${s}</g>`
 }
 
 /** Kit art for the whole scene, in metres; the caller places it with translate(MARGIN, GROUND_Y) scale(S). */
@@ -151,7 +157,7 @@ export function kitArt(scene: Scene, skin: Skin, uid: string, L: KitLayout = kit
   // A soft city backdrop behind everything, tiled across the width (atmosphere, not the actual neighbours)
   let backdrop = ''
   for (let x = -10; x < L.Wm; x += 178) backdrop += at(x, background(p))
-  const art = definitions(skin) + backdrop + `<g data-feature="street">${streetArt(p, scene, L)}</g>` + `<g data-feature="context" opacity=".85">${context}</g>` + L.placed.map((q) => partArt(p, q)).join('')
+  const art = definitions(skin) + backdrop + `<g data-feature="street">${streetArt(p, scene, L)}</g>` + `<g data-feature="context" opacity=".85">${context}</g>` + L.placed.map((q) => partArt(p, q)).join('') + lamps(p, L)
   return uniqueSvg(art, `kit-${uid}`)
 }
 

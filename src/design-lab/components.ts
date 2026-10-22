@@ -515,14 +515,17 @@ function busStopPole(p:Palette){
   s+=rect(.25,-1.9,.5,.65,p.paper,p.ink,LW.fine)+line(.32,-1.75,.68,-1.75,p.fine,LW.fine)+line(.32,-1.6,.6,-1.6,p.fine,LW.fine)
   return s
 }
-export function railPlatform(p:Palette){
-  const w=20, d=3
-  let s=groundShadow(w,1,p)+rect(0,-1.1,w,1.1,p.shade,p.ink,LW.edge)+sideWall(p,w,0,-1.1,1)
+/** A side platform: front face, floor receding 3 m, edge strip. The canopy is optional (left off where a train stands behind). */
+export function railPlatform(p:Palette,w=20,canopy=true){
+  const d=3
+  let s=groundShadow(w,d,p)+rect(0,-1.1,w,1.1,p.shade,p.ink,LW.edge)+sideWall(p,w,0,-1.1,d)
   s+=path(`M0,-1.1 H${w} l${d},${-d*RISE} H${d}Z`,p.wall,p.ink,LW.edge)+path(`M0,-1.1 H${w} l.35,-.2 H.35Z`,p.warm,'none',0) // tactile edge strip
   for(let x=1;x<w;x+=1.5)s+=line(x,-1.1,x+d,-1.1-(d*RISE),p.fine,LW.fine)
   // Canopy on columns, a bench and a stair down at the end
-  for(let x=2;x<w;x+=4)s+=rect(x+1.2,-4.6,.18,3.5-(1.2*RISE),p.wall,p.ink,LW.detail)
-  s+=path(`M.6,-4.6 H${w-.6} l${d*.8},${-d*.8*RISE} H${.6+(d*.8)}Z`,p.roof,p.ink,LW.edge)+rect(.6,-4.6,w-1.2,.2,p.wall,p.ink,LW.edge)+shade(.6,-4.4,w-1.2,.3,p,.22)
+  if(canopy){
+    for(let x=2;x<w;x+=4)s+=rect(x+1.2,-4.6,.18,3.5-(1.2*RISE),p.wall,p.ink,LW.detail)
+    s+=path(`M.6,-4.6 H${w-.6} l${d*.8},${-d*.8*RISE} H${.6+(d*.8)}Z`,p.roof,p.ink,LW.edge)+rect(.6,-4.6,w-1.2,.2,p.wall,p.ink,LW.edge)+shade(.6,-4.4,w-1.2,.3,p,.22)
+  }
   s+=`<g transform="translate(9 -1.1)">${bench(p)}</g>`
   for(let i=0;i<5;i++)s+=path(`M${-1.2+(i*.24)},${-(i*.22)} h.24 v-.22`,'none',p.ink,LW.detail)
   return s
