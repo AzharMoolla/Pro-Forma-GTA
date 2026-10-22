@@ -8,7 +8,8 @@ import { runNode, type Node } from '../../src/engine/portfolio'
 import { simulate } from '../../src/engine/uncertainty'
 import { flatten, workbookSheets } from '../../src/export/workbook'
 import { xlsx } from '../../src/export/xlsx'
-import { equityByYear, fundingByYear, scaleNode, sensitivityGrid, timeline, toCsv } from '../../src/ui/chartData'
+import { equityByYear, fundingByYear, sensitivityGrid, timeline, toCsv } from '../../src/ui/chartData'
+import { stress } from '../../src/engine/stress'
 import { tinyProject } from './fixtures'
 
 const mockA = mockAJson.input as Node
@@ -81,7 +82,7 @@ describe('chart data', () => {
     expect(g.cells[2]![2]).toBeCloseTo(runNode(mockA).metrics.profitOnCost!.value!, 10)
     expect(g.cells[4]![2]!).toBeGreaterThan(g.cells[0]![2]!)
     expect(g.cells[2]![0]!).toBeGreaterThan(g.cells[2]![4]!)
-    expect(scaleNode(tinyProject(), 1, 0)).toEqual(tinyProject())
+    expect(stress(tinyProject(), { revenue: 1, capBps: 0 })).toEqual(tinyProject())
   })
 
   it('timeline covers every month to exit and follows plan offsets', () => {

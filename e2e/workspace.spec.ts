@@ -1,7 +1,7 @@
 import { AxeBuilder } from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
 
-const sections = ['Overview', 'Site map', 'Market evidence', 'People & affordability', 'Site & program', 'Cost & budget', 'Revenue & operations', 'Finance & ledger', 'Returns & range', 'Charts', 'Scenarios', 'Sources & audit', 'Report & export']
+const sections = ['Overview', 'Site map', 'Market evidence', 'People & affordability', 'Site & program', 'Cost & budget', 'Revenue & operations', 'Finance & ledger', 'Returns & range', 'Feasibility & stress', 'Charts', 'Scenarios', 'Sources & audit', 'Report & export']
 
 async function fresh(page: Page) {
   await page.goto('/')
@@ -272,4 +272,18 @@ test('people & affordability: income drives the 30% test; Indigenous context on 
   await openSection(page, 'Report & export')
   await expect(page.getByRole('heading', { name: 'Indigenous context: treaty and territory' })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Mississaugas of the Credit First Nation' })).toBeVisible()
+})
+
+test('feasibility solves residual land, shows the funding gap and combined downside', async ({ page }) => {
+  await fresh(page)
+  await openSection(page, 'Feasibility & stress')
+  await expect(page.getByText(/Funding gap \$|No funding gap/)).toBeVisible()
+  const land = page.getByRole('row', { name: /residual land value/ })
+  await expect(land.getByRole('cell').nth(1)).toHaveText(/^\$\d/)
+  const before = await land.getByRole('cell').nth(1).textContent()
+  await page.getByLabel('of (%)').fill('20')
+  await expect(land.getByRole('cell').nth(1)).not.toHaveText(before!)
+  await expect(page.getByRole('row', { name: /^All together/ })).toBeVisible()
+  await page.getByLabel('Rebate').selectOption('none')
+  await expect(page.getByText(/is a permanent cost not yet in total development cost/)).toBeVisible()
 })

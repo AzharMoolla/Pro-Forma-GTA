@@ -2,7 +2,8 @@
 // calculation path (the sensitivity grid re-runs the engine on scaled inputs).
 
 import { isPortfolio, runNode, type Node, type NodeResult } from '../engine/portfolio'
-import type { ProjectInput, ProjectResult } from '../engine/project'
+import type { ProjectResult } from '../engine/project'
+import { stress } from '../engine/stress'
 
 export interface Series { id: string; label: string; colour: string; sign: 1 | -1 }
 export interface StackedRow { label: string; values: Record<string, number> }
@@ -43,27 +44,12 @@ export function equityByYear(r: NodeResult): { series: Series[]; rows: StackedRo
   return { series, rows }
 }
 
-/** Scale revenue (rents, prices, land sales) and shift exit cap rates, for the sensitivity grid. */
-export function scaleNode(node: Node, revenue: number, capBps: number): Node {
-  if (isPortfolio(node)) return { ...node, children: node.children.map((c) => ({ ...c, node: scaleNode(c.node, revenue, capBps) })) }
-  const p: ProjectInput = node
-  return {
-    ...p,
-    components: p.components.map((c) => {
-      if (c.kind === 'rental') return { ...c, unitMix: c.unitMix.map((u) => ({ ...u, monthlyRent: u.monthlyRent * revenue })), otherIncomeMonthly: c.otherIncomeMonthly * revenue, exitCapRate: c.exitCapRate + (capBps / 1e4) }
-      if (c.kind === 'commercial') return { ...c, rentPerSqftYear: c.rentPerSqftYear * revenue, exitCapRate: c.exitCapRate + (capBps / 1e4) }
-      if (c.kind === 'condo') return { ...c, units: c.units.map((u) => ({ ...u, pricePerSqft: u.pricePerSqft * revenue })) }
-      return { ...c, sales: c.sales.map((s) => ({ ...s, amount: s.amount * revenue })) }
-    }),
-  }
-}
-
 export interface Grid { rows: number[]; cols: number[]; cells: Array<Array<number | null>>; base: number | null }
 
 /** Metric across revenue multipliers (rows) and exit-cap shifts in bps (columns). Unavailable results stay null. */
 export function sensitivityGrid(node: Node, metric: string, rows = [0.9, 0.95, 1, 1.05, 1.1], cols = [-50, -25, 0, 25, 50]): Grid {
   const run = (m: number, bps: number) => {
-    try { return runNode(scaleNode(node, m, bps)).metrics[metric]?.value ?? null } catch { return null }
+    try { return runNode(stress(node, { revenue: m, capBps: bps })).metrics[metric]?.value ?? null } catch { return null }
   }
   return { rows, cols, cells: rows.map((m) => cols.map((bps) => run(m, bps))), base: run(1, 0) }
 }

@@ -12,6 +12,7 @@ import { CostBuckets, DecisionSummary, Progress } from './sections3'
 import { readSources, SiteMap } from './SiteMap'
 import { Streetscape } from './Streetscape'
 import { Visuals } from './Visuals'
+import { Feasibility } from './Feasibility'
 import { People } from './People'
 import { Report } from './Report'
 import { PrivacyPolicy, Terms } from './Legal'
@@ -24,6 +25,7 @@ export function Sections({ section }: { section: SectionId }) {
     case 'overview': return <Overview />
     case 'map': return <SiteMap />
     case 'charts': return <Visuals />
+    case 'feasibility': return <Feasibility />
     case 'people': return <People />
     case 'report': return <Report />
     case 'privacy': return <PrivacyPolicy />

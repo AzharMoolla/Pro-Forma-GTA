@@ -31,7 +31,7 @@ export function listUncertainties(node: Node, path = node.id, isChild = false): 
   return list
 }
 
-function scaleDriver(d: Driver, k: number): Driver {
+export function scaleDriver(d: Driver, k: number): Driver {
   switch (d.kind) {
     case 'lumpSum': return { ...d, amount: d.amount * k }
     case 'percentOf': return { ...d, rate: d.rate * k }
