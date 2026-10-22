@@ -41,7 +41,8 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       - name: Keep the free Supabase project active (a read the database answers; no data returned)
         if: always()
-        run: curl -s -o /dev/null -w "supabase %{http_code}\n" "$URL/rest/v1/projects?select=id&limit=1" -H "apikey: $KEY"
+        run: |
+          curl -s -o /dev/null -w "supabase %{http_code}\n" "$URL/rest/v1/projects?select=id&limit=1" -H "apikey: $KEY"
         env:
           URL: ${{ vars.VITE_SUPABASE_URL }}
           KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
