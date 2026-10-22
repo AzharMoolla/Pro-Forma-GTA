@@ -47,7 +47,10 @@ export function SiteMap() {
   useEffect(() => {
     let live = true
     // A static host answers any path with the app itself, so only a JSON manifest means the map service is here
-    fetch('map/api/manifest').then((r) => live && setAvailable(r.ok && (r.headers.get('content-type') ?? '').includes('json'))).catch(() => live && setAvailable(false))
+    const isJson = (r: Response) => r.ok && (r.headers.get('content-type') ?? '').includes('json')
+    // hosted: packed static data; local: the data server
+    Promise.all([fetch('map/data/manifest.json').then(isJson).catch(() => false), fetch('map/api/manifest').then(isJson).catch(() => false)])
+      .then(([packed, server]) => live && setAvailable(packed || server))
     return () => { live = false }
   }, [])
 

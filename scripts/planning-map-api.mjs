@@ -51,6 +51,7 @@ export function planningMapHandler({ root = 'data/planning-map', prefix = '' } =
         if (prefix && url.pathname === prefix) { res.writeHead(301, { Location: `${prefix}/${url.search}` }); return res.end() }
         return send(res, await readFile('scripts/planning-map-preview.html'), 200, 'text/html; charset=utf-8')
       }
+      if (path === '/static-api.js') return send(res, await readFile('scripts/planning-map-static.js'), 200, 'application/javascript')
       if (path === '/fonts/plex.woff2') return send(res, await readFile('node_modules/@fontsource/ibm-plex-sans/files/ibm-plex-sans-latin-400-normal.woff2'), 200, 'font/woff2')
       if (path.startsWith('/leaflet/')) {
         const base = resolve('node_modules/leaflet/dist')

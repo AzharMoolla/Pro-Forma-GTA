@@ -17,7 +17,8 @@
     "map:collect:regional": "node scripts/collect-planning-map-arcgis.mjs",
     "map:preview": "node --import tsx scripts/planning-map-preview.mjs",
     "map:verify": "node --import tsx scripts/verify-planning-map.mjs",
-    "deploy": "npm run build && wrangler deploy"
+    "deploy": "npm run build && wrangler deploy",
+    "map:pack": "node scripts/pack-planning-map.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",

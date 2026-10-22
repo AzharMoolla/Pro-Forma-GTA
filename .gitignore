@@ -17,3 +17,6 @@ data/research/
 
 # Wrangler local state
 .wrangler/
+
+# Packed planning-map data for hosting (npm run map:pack): large, regenerated from data/planning-map
+public/map/

@@ -1,0 +1,31 @@
+# Nightly: dump the Supabase database (schema and data), encrypt it, and keep it in a private R2 bucket.
+# Receipt files in Supabase Storage are not in the dump; see docs/OPERATIONS.md.
+name: Nightly database backup
+on:
+  schedule:
+    - cron: '30 7 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.19.0
+      - name: Dump, encrypt, upload
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx --yes supabase@2.120.0 db dump --db-url "$SUPABASE_DB_URL" -f schema.sql
+          npx --yes supabase@2.120.0 db dump --db-url "$SUPABASE_DB_URL" --data-only -f data.sql
+          tar czf backup.tgz schema.sql data.sql
+          openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt -in backup.tgz -out backup.tgz.enc -pass env:BACKUP_PASSPHRASE
+          npx --yes wrangler@4.149.0 r2 object put "plangta-backups/db/$(date -u +%F).tgz.enc" --file backup.tgz.enc --remote
+          rm -f schema.sql data.sql backup.tgz backup.tgz.enc
