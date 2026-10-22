@@ -1,0 +1,67 @@
+import '@fontsource/ibm-plex-sans/400.css'
+import '@fontsource/ibm-plex-sans/500.css'
+import '@fontsource/ibm-plex-sans/600.css'
+import '@fontsource/ibm-plex-mono/400.css'
+import { strToU8, zipSync } from 'fflate'
+import { palettes, pieces, pieceSvg, sceneSvg, studySvg, podiumTypes, podiumSvg, type Skin } from './components'
+import { inventory } from './inventory'
+import './style.css'
+
+const root=document.querySelector<HTMLDivElement>('#lab')!
+let skin:Skin='watercolour', height=40
+const scalable:Record<string,[number,number,number]>={'01':[9,60,1],'02':[9,60,1],'04':[6,60,1],'05':[6,18,1],'06':[6.7,30.7,3]}
+let townhouseBays=4
+const buildingHeights:Record<string,number>={}
+const status=document.createElement('p'); status.className='toast'; status.setAttribute('role','status'); document.body.append(status)
+const dialog=document.createElement('dialog');dialog.className='inspector';document.body.append(dialog)
+const tell=(message:string)=>{status.textContent=message;window.setTimeout(()=>{status.textContent=''},3500)}
+const download=(data:BlobPart,name:string,type='image/svg+xml')=>{const url=URL.createObjectURL(new Blob([data],{type}));const a=document.createElement('a');a.href=url;a.download=name;a.click();window.setTimeout(()=>URL.revokeObjectURL(url),1000)}
+const label=(s:Skin)=>s==='watercolour'?'Watercolour / pencil':'Blueprint'
+const skinButtons=()=>`<div class="segmented" aria-label="Assembly style">${(['watercolour','blueprint'] as Skin[]).map(s=>`<button id="style-${s}" data-skin="${s}" aria-pressed="${skin===s}">${label(s)}</button>`).join('')}</div>`
+function render(){
+  root.innerHTML=`<a class="skip" href="#components">Skip to components</a><header><a class="brand" href="#top"><span class="mark" aria-hidden="true">▥</span><span>PlanGTA <small>DESIGN STUDIES / 001</small></span></a><span class="local">Local component lab · synthetic fixtures</span></header>
+  <main id="top"><section class="intro"><div><p class="eyebrow">THE ACCOUNTANT’S WAY OF BEING CREATIVE</p><h1>A street, built piece by piece.</h1><p class="lede">${pieces.length} original SVG components. One shared scale. Two visual languages.<br>Made to repeat, stack and belong together.</p></div><div class="progress"><strong>${pieces.length} <span>/ 60</span></strong><p>components in the lab<br><b>${60-pieces.length} remain</b> if we keep this direction</p></div></section>
+  <section aria-labelledby="assembly-heading" class="assembly"><div class="sectionbar"><div><p class="eyebrow">01 / IN CONTEXT</p><h2 id="assembly-heading">The assembly table</h2></div>${skinButtons()}</div><div class="scene" tabindex="0" role="region" aria-label="Scrollable assembled street strip" style="background:${palettes[skin].paper}">${sceneSvg(skin,height)}</div><div class="testbar"><label for="height">Scale check · middle apartment <output id="height-output">${height} m</output><input id="height" type="range" min="20" max="50" step="5" value="${height}" aria-describedby="height-help"></label><p id="height-help">The left block stays 50 m. This changes repeated floors, not a design style.<br>All objects share metre coordinates; horizontal placement is schematic.<br>Click a building to spotlight it. Click again or press Escape to clear.</p><button data-export-scene>Download strip .svg</button></div></section>
+  <section class="studies" aria-labelledby="studies-heading"><p class="eyebrow">DETAIL STUDIES / SECOND PASS</p><h2 id="studies-heading">The small things that finish the picture.</h2><div class="studygrid">${([
+    ['roof','A solid roof','Filled top plane, darker roof finish, parapet edge and fine surface texture.'],
+    ['trees','A little variety','Rounded, upright and irregular canopies; layered washes and fine leaf marks.'],
+    ['light','A warm pool of light','A faint, softly feathered downward cone. Illustration, not a lighting calculation.'],
+  ] as const).map(([kind,title,note])=>`<article><div class="detail-art ${skin}">${studySvg(kind,skin)}</div><h3>${title}</h3><p>${note}</p></article>`).join('')}</div></section>
+  <section aria-labelledby="podium-heading"><div class="sectionbar"><div><p class="eyebrow">PODIUM STUDIES / FOUR USES</p><h2 id="podium-heading">A base does not have to be a shop.</h2></div></div><p class="sectionnote">Fixed illustrative treatments: residential lobby and planting, retail awnings, office glazing, and a civic colonnade. Use follows the model; these are not proposed facade specifications.</p><div class="grid">${podiumTypes.map(kind=>`<article class="piece podium"><div class="piecehead"><h3>${kind.charAt(0).toUpperCase()+kind.slice(1)} podium</h3></div><div class="previews">${(['watercolour','blueprint'] as Skin[]).map(s=>`<div class="specimen ${s}"><div class="art">${podiumSvg(kind,s)}</div><span>${label(s)}</span><button data-podium="${kind}" data-look="${s}">↓ SVG</button></div>`).join('')}</div><div class="pieceinfo"><p class="dimension">17 m frontage · 5.5 m body height</p><p class="note">Same footprint and common roof anchor; substitute the base without changing the tower height.</p></div></article>`).join('')}</div></section>
+  <section id="components" aria-labelledby="components-heading"><div class="sectionbar"><div><p class="eyebrow">02 / TWO BATCHES OF TEN</p><h2 id="components-heading">A small, useful kit.</h2></div><button data-export-all>Download ${pieces.length*2+8} SVGs .zip</button></div><p class="sectionnote">Isolated previews fit each object to its panel. Compare actual relative size in the street above. SVG downloads have transparent backgrounds and self-contained colours. Individual downloads use the current preview controls; the ZIP contains the default kit.</p><div class="grid">${pieces.map(piece=>`<article class="piece"><div class="piecehead"><span class="index">${piece.id}</span><h3>${piece.name}</h3><button class="inspect" data-inspect="${piece.id}" aria-label="Inspect ${piece.name}">Inspect ↗</button></div><div class="previews">${(['watercolour','blueprint'] as Skin[]).map(s=>`<div class="specimen ${s}"><div class="art">${pieceSvg(piece,s,false,buildingHeights[piece.id],'piece',townhouseBays)}</div><span>${label(s)}</span><button data-download="${piece.id}" data-look="${s}" aria-label="Download ${piece.name}, ${label(s)} SVG">↓ SVG</button></div>`).join('')}</div><div class="pieceinfo"><p class="dimension">Base fixture · ${piece.size}</p>${piece.id==='03'?`<label class="building-scale" for="townhouse-bays">Homes along the street <output>${townhouseBays} bays · ${(townhouseBays*4.4).toFixed(1)} m</output><input id="townhouse-bays" type="range" min="2" max="12" step="1" value="${townhouseBays}"/></label>`:''}${scalable[piece.id]?`<label class="building-scale" for="scale-${piece.id}">Illustration height <output>${buildingHeights[piece.id]??piece.height} m</output><input id="scale-${piece.id}" data-building-height="${piece.id}" type="range" min="${scalable[piece.id]![0]}" max="${scalable[piece.id]![1]}" step="${scalable[piece.id]![2]}" value="${buildingHeights[piece.id]??piece.height}"/></label>`:''}<p><span class="fieldlabel">APPEARS FROM</span>${piece.trigger}</p><p class="note">${piece.note}</p></div></article>`).join('')}</div></section>
+  <section class="principles" aria-labelledby="principles-heading"><p class="eyebrow">03 / THE RULES OF THE KIT</p><h2 id="principles-heading">Illustrative, with a base level of sanity.</h2><div class="rules"><p><b>Stack, don’t sculpt.</b> A floor repeats. A roof caps it. No siding menu, custom floorplate or invented stepback geometry.</p><p><b>Facts choose the pieces.</b> Unknown stays unknown. A park is not automatically a playground; a station area is not an entrance.</p><p><b>One scene, two skins.</b> Identical geometry in both styles. Fine lines and gentle washes add character without distorting dimensions.</p><p><b>Small things stay small.</b> The car is 4.5 m long; a person is 1.7 m tall. These are labelled illustration defaults.</p></div></section>
+  <section class="inventory"><details><summary><span>04 / Full proposed inventory</span><b>60 base components · 120 styled versions</b></summary><p class="sectionnote">A planning budget, not a promise that all sources exist today. Compound templates contain smaller drawing primitives. Standalone variants are listed where independently useful.</p><div class="inventorygrid">${inventory.map(([group,...items])=>`<div><h3>${group}</h3><ul>${items.map(item=>`<li class="${pieces.some(p=>p.id===item.slice(0,2))?'done':''}">${item}${pieces.some(p=>p.id===item.slice(0,2))?' <span>trial</span>':''}</li>`).join('')}</ul></div>`).join('')}</div></details></section>
+  <footer>Original code-drawn artwork · no external image requests or AI at runtime · no project data used.<br>Design review only. The financial model and production streetscape are unchanged.</footer></main>`
+}
+function inspect(id:string){
+  const piece=pieces.find(p=>p.id===id)!
+  dialog.innerHTML=`<div class="sectionbar"><div><p class="eyebrow">COMPONENT ${piece.id} / ZOOM STUDY</p><h2>${piece.name}</h2></div><button data-close>Close ✕</button></div><div class="largepair">${(['watercolour','blueprint'] as Skin[]).map(s=>`<div class="specimen ${s}"><div class="largeart">${pieceSvg(piece,s,false,buildingHeights[piece.id],'inspect',townhouseBays)}</div><span>${label(s)}</span><button data-copy="${piece.id}" data-look="${s}">Copy SVG markup</button></div>`).join('')}</div><p class="dimension">${piece.size}</p><p>${piece.note}</p><p class="note">Each preview fits independently. Downloads preserve viewBox dimensions in metres and ground at y = 0.</p>`
+  dialog.showModal()
+}
+async function handle(e:Event){
+  const b=(e.target as HTMLElement).closest<HTMLButtonElement>('button');if(!b)return
+  if(b.dataset.skin){skin=b.dataset.skin as Skin;render();document.getElementById(`style-${skin}`)?.focus()}
+  if(b.dataset.inspect)inspect(b.dataset.inspect)
+  if(b.hasAttribute('data-close'))dialog.close()
+  if(b.dataset.podium && podiumTypes.includes(b.dataset.podium as typeof podiumTypes[number]))download(podiumSvg(b.dataset.podium as typeof podiumTypes[number],b.dataset.look as Skin),`plangta-podium-${b.dataset.podium}-${b.dataset.look}.svg`)
+  const id=b.dataset.download??b.dataset.copy
+  if(id){const piece=pieces.find(p=>p.id===id)!, look=b.dataset.look as Skin,svg=pieceSvg(piece,look,false,buildingHeights[piece.id],'piece',townhouseBays)
+    if(b.dataset.copy){try{await navigator.clipboard.writeText(svg);tell('SVG markup copied.')}catch{tell('Clipboard unavailable. Use the SVG download instead.')}}else download(svg,`plangta-${id}-${piece.name.toLowerCase().replaceAll(' ','-')}-${look}.svg`)
+  }
+  if(b.hasAttribute('data-export-scene'))download(sceneSvg(skin,height),`plangta-component-trial-${skin}.svg`)
+  if(b.hasAttribute('data-export-all')){
+    const files:Record<string,Uint8Array>={}
+    for(const piece of pieces)for(const look of ['watercolour','blueprint'] as Skin[])files[`${piece.id}-${piece.name.toLowerCase().replaceAll(' ','-')}-${look}.svg`]=strToU8(pieceSvg(piece,look))
+    for(const kind of podiumTypes)for(const look of ['watercolour','blueprint'] as Skin[])files[`podium-${kind}-${look}.svg`]=strToU8(podiumSvg(kind,look))
+    files['README.txt']=strToU8('PlanGTA component lab. Original SVG artwork. Drawing units are metres; y=0 is ground. Transparent background. Two styles share geometry. Synthetic fixtures, not site or policy evidence. 20 base components + four podium studies of a proposed 60-component kit.')
+    download(zipSync(files),'plangta-component-kit.zip','application/zip')
+  }
+}
+root.addEventListener('click',e=>void handle(e));dialog.addEventListener('click',e=>void handle(e))
+root.addEventListener('input',e=>{const input=e.target as HTMLInputElement;if(input.id==='townhouse-bays'){townhouseBays=Number(input.value);const card=input.closest('article')!;card.querySelector('output')!.textContent=`${townhouseBays} bays · ${(townhouseBays*4.4).toFixed(1)} m`;card.querySelectorAll('.art').forEach((el,i)=>{el.innerHTML=pieceSvg(pieces.find(p=>p.id==='03')!,i===0?'watercolour':'blueprint',false,undefined,'piece',townhouseBays)});return}if(input.dataset.buildingHeight){const id=input.dataset.buildingHeight;buildingHeights[id]=Number(input.value);const piece=pieces.find(p=>p.id===id)!;const card=input.closest('article')!;card.querySelector('output')!.textContent=`${input.value} m`;card.querySelectorAll('.art').forEach((el,i)=>{el.innerHTML=pieceSvg(piece,i===0?'watercolour':'blueprint',false,Number(input.value))});return}if(input.id!=='height')return;height=Number(input.value);spotlight(null);document.querySelector('.scene')!.innerHTML=sceneSvg(skin,height);document.querySelector('#height-output')!.textContent=`${height} m`})
+render()
+
+
+function spotlight(el:Element|null){const scene=document.querySelector('.scene')!;const current=scene.querySelector('[data-spotlight]');const next=current===el?null:el;scene.querySelectorAll('.selectable-building').forEach(n=>{n.removeAttribute('data-spotlight');n.setAttribute('aria-pressed','false')});scene.classList.toggle('has-spotlight',!!next);if(next){next.setAttribute('data-spotlight','true');next.setAttribute('aria-pressed','true')}}
+root.addEventListener('click',e=>{const el=(e.target as Element).closest('.selectable-building');if(el)spotlight(el)})
+root.addEventListener('keydown',e=>{const el=(e.target as Element).closest('.selectable-building');if(el&&(e.key==='Enter'||e.key===' ')){e.preventDefault();spotlight(el)}if(e.key==='Escape')spotlight(null)})

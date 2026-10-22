@@ -20,3 +20,6 @@ data/research/
 
 # Packed planning-map data for hosting (npm run map:pack): large, regenerated from data/planning-map
 public/map/
+
+# Component lab build output (npm run lab:build): regenerated, and copies public/ including the packed map
+output/

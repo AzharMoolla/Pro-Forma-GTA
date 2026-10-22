@@ -1,0 +1,234 @@
+{
+  "plannedComponents": 60,
+  "trialComponents": [
+    {
+      "id": "01",
+      "name": "Apartment block",
+      "size": "15 m frontage · adjustable height",
+      "trigger": "Storeys / building program",
+      "note": "A repeated floor template; no invented facade specification."
+    },
+    {
+      "id": "02",
+      "name": "Mixed-use podium",
+      "size": "17 m base · adjustable height",
+      "trigger": "Retail + podium + explicit roof flags",
+      "note": "Lab fixture includes balconies and a green roof; these are attachments, not inferred design."
+    },
+    {
+      "id": "03",
+      "name": "Townhouse row",
+      "size": "4 × 4.4 m illustrative bays · 9 m to the eaves, 10.7 m to the gable",
+      "trigger": "Confirmed townhouse program",
+      "note": "Repeat homes along the street at a fixed height. Rear rows need separate blocks; the strip does not infer site layout."
+    },
+    {
+      "id": "18",
+      "name": "Deciduous tree",
+      "size": "Approximately 9.7 m high",
+      "trigger": "Landscape input / mapped tree / scene dressing",
+      "note": "A small family of rounded, upright and irregular silhouettes; species and exact location are not asserted."
+    },
+    {
+      "id": "22",
+      "name": "Pocket park",
+      "size": "17 m illustrative strip",
+      "trigger": "Park program / mapped park",
+      "note": "Play equipment is a synthetic lab attachment; park area alone does not establish it."
+    },
+    {
+      "id": "39",
+      "name": "Bus shelter",
+      "size": "5.2 m long · 2.9 m high",
+      "trigger": "Mapped shelter / explicit proposal",
+      "note": "A bus stop without shelter evidence gets a stop marker, not this pavilion."
+    },
+    {
+      "id": "42",
+      "name": "Subway entrance",
+      "size": "6.9 m long · 4.95 m with marker",
+      "trigger": "Known entrance / explicitly proposed entrance",
+      "note": "Generic stair and elevator symbols; proximity to transit is not an entrance location."
+    },
+    {
+      "id": "45",
+      "name": "Small car",
+      "size": "4.5 m long · approximately 1.5 m high",
+      "trigger": "Decorative scale reference",
+      "note": "Side elevation shows vehicle length, not vehicle width. No traffic count is implied."
+    },
+    {
+      "id": "50",
+      "name": "Street furniture",
+      "size": "6.7 m lamp · 1.7 m person",
+      "trigger": "Documented public realm / illustrative dressing",
+      "note": "Lamp, bench, bin, cycle racks and person share one scale."
+    },
+    {
+      "id": "26",
+      "name": "Creek + footbridge",
+      "size": "16 m illustrative context segment",
+      "trigger": "Mapped water and independently known bridge",
+      "note": "Water proximity alone does not establish a bridge, access, or shoreline frontage."
+    },
+    {
+      "id": "04",
+      "name": "Office block",
+      "size": "17 m frontage · 15 m body height",
+      "trigger": "Confirmed office program",
+      "note": "Repeated office floors and continuous glazing scale with height; fins are illustrative template details."
+    },
+    {
+      "id": "05",
+      "name": "Industrial block",
+      "size": "23 m frontage · 6 m body height",
+      "trigger": "Industrial or warehouse program",
+      "note": "Generic loading doors and metal-panel marks; operational layout is illustrative."
+    },
+    {
+      "id": "06",
+      "name": "Civic block",
+      "size": "12 m frontage · 6.7 m illustrative roof peak",
+      "trigger": "Confirmed civic or community program",
+      "note": "Public portico and arched windows distinguish this generic template; no named institution or architectural proposal is implied."
+    },
+    {
+      "id": "12",
+      "name": "Shopfront attachment",
+      "size": "8 m illustrated frontage · 3.6 m high",
+      "trigger": "Retail component",
+      "note": "Reusable glazing, entrance and blank sign band. No tenant or shop category is assumed."
+    },
+    {
+      "id": "14",
+      "name": "Green roof attachment",
+      "size": "10 m illustrative planting strip",
+      "trigger": "Explicit green-roof input",
+      "note": "Drops onto a roof anchor; area and roof availability must come from the model."
+    },
+    {
+      "id": "15",
+      "name": "Solar attachment",
+      "size": "Approximately 6.5 m illustrated array",
+      "trigger": "Explicit solar PV input",
+      "note": "A visual array symbol, not a panel-count, energy-yield or roof-layout calculation."
+    },
+    {
+      "id": "41",
+      "name": "City bus",
+      "size": "12 m long · 3.1 m high",
+      "trigger": "Mode-confirmed bus context or illustrative vehicle",
+      "note": "Generic route display and livery; not a live vehicle, service frequency or capacity claim."
+    },
+    {
+      "id": "46",
+      "name": "Delivery van",
+      "size": "5.5 m long · 2.65 m high",
+      "trigger": "Illustrative servicing activity",
+      "note": "Generic scale reference; does not establish delivery access or loading approval."
+    },
+    {
+      "id": "48",
+      "name": "Pedestrian figures",
+      "size": "Adults around 1.7 m · three clean silhouettes",
+      "trigger": "Illustrative street life",
+      "note": "Walking, standing and wheelchair figures. No demographic or pedestrian-volume inference."
+    },
+    {
+      "id": "49",
+      "name": "Cyclist",
+      "size": "Approximately 2.1 m long · 1.8 m high",
+      "trigger": "Illustrative street life or cycling context",
+      "note": "Filled rider with clean bicycle geometry. No traffic volume or cycle-lane availability is implied."
+    }
+  ],
+  "inventory": [
+    [
+      "Buildings",
+      "01 Apartment block",
+      "02 Mixed-use podium block",
+      "03 Townhouse row",
+      "04 Office block",
+      "05 Industrial block",
+      "06 Civic block",
+      "07 Reserved school site",
+      "08 Existing building",
+      "09 Land plot",
+      "10 Future-phase block"
+    ],
+    [
+      "Building attachments",
+      "11 Balcony",
+      "12 Shopfront",
+      "13 Entrance",
+      "14 Green roof",
+      "15 Solar array",
+      "16 Roof terrace",
+      "17 Amenity badge"
+    ],
+    [
+      "Landscape",
+      "18 Tree",
+      "19 Tree cluster",
+      "20 Planting bed",
+      "21 Lawn",
+      "22 Pocket park",
+      "23 Plaza / POPS",
+      "24 Playground",
+      "25 Rain garden"
+    ],
+    [
+      "Water and nature",
+      "26 Creek / footbridge",
+      "27 Lake edge",
+      "28 Pond",
+      "29 Ravine / woodland",
+      "30 Water direction cue"
+    ],
+    [
+      "Street and active travel",
+      "31 Road segment",
+      "32 Sidewalk",
+      "33 Crossing",
+      "34 Intersection",
+      "35 Driveway",
+      "36 Cycle lane",
+      "37 Trail",
+      "38 Bicycle rack"
+    ],
+    [
+      "Transit",
+      "39 Bus shelter",
+      "40 Bus-stop pole",
+      "41 Bus",
+      "42 Subway entrance",
+      "43 Rail platform",
+      "44 Train"
+    ],
+    [
+      "Vehicles and people",
+      "45 Car",
+      "46 Van",
+      "47 Truck",
+      "48 Pedestrian",
+      "49 Cyclist"
+    ],
+    [
+      "Furniture",
+      "50 Street furniture set",
+      "51 Lamp",
+      "52 Bench",
+      "53 Bin",
+      "54 Bollard",
+      "55 Hydrant"
+    ],
+    [
+      "Servicing and information",
+      "56 Garage / loading module",
+      "57 Utility module",
+      "58 Construction-state kit",
+      "59 Policy-limit overlay",
+      "60 Phase / status badge"
+    ]
+  ]
+}

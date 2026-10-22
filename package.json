@@ -18,7 +18,11 @@
     "map:preview": "node --import tsx scripts/planning-map-preview.mjs",
     "map:verify": "node --import tsx scripts/verify-planning-map.mjs",
     "deploy": "npm run build && wrangler deploy",
-    "map:pack": "node scripts/pack-planning-map.mjs"
+    "map:pack": "node scripts/pack-planning-map.mjs",
+    "lab": "vite --config component-lab/vite.config.ts --port 5184 --open /component-lab/",
+    "lab:build": "vite build --config component-lab/vite.config.ts",
+    "lab:export": "tsx scripts/export-component-lab.ts",
+    "lab:verify": "node scripts/verify-component-lab.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",
