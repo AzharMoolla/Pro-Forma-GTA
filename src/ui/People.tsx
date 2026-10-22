@@ -68,6 +68,7 @@ export function People() {
         title="Can the people who live here afford it?"
         about={`Housing cost as a share of the ${rental ? 'median renter' : 'median'} household income, year by year from first occupancy, against CMHC's 30% affordability threshold. Rents grow at the model's rent growth and incomes at the income growth assumption. Ownership costs use 20% down, 5.0% compounded semi-annually over 25 years, $0.75/ft²/month condo fees and 0.7% property tax. A median is the middle household: above 30% at the median means most households here could not afford the home.`}
         csv={toCsv(['Unit', 'Tenure', 'Homes', 'Monthly cost (year 1)', 'Income needed at 30%', ...Array.from({ length: YEARS }, (_, k) => `Year ${k + 1} share`)], rows.map((r) => [r.unit, r.tenure, r.count, Math.round(r.monthlyCost), Math.round(r.incomeNeeded), ...r.shares.map((s) => Number(s.toFixed(4)))]))}
+        id="affordability"
         file={`${node.id}-affordability`}
         table={(
           <TableWrap caption="Affordability by unit type">

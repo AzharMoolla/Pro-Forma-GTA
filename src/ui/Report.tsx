@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { CONVENTION_VERSION, ENGINE_VERSION } from '../engine/project'
 import { workbookSheets } from '../export/workbook'
 import { xlsx } from '../export/xlsx'
@@ -17,6 +17,10 @@ import { getResult } from './tree'
 import { IndigenousCard } from './Indigenous'
 import { useWorkspace } from './workspace'
 import { GlossaryText } from './Glossary'
+import { Feasibility } from './Feasibility'
+import { People } from './People'
+import { fromCsv, pinnedOf, ReportChartsContext, type ReportCharts } from './pins'
+import { Visuals } from './Visuals'
 
 const KEY_METRICS = ['totalUnits', 'totalDevelopmentCost', 'totalRevenue', 'profit', 'profitOnCost', 'profitOnCostBeforeFinancing', 'yieldOnCost', 'unleveredIrr', 'leveredIrr', 'equityMultiple', 'equityContributed', 'peakDebt']
 const SITE_VARS = ['site.address', 'site.municipality', 'site.region', 'site.ward', 'site.treaty', 'zoning.code', 'zoning.heightLimitM', 'zoning.heightLimitStoreys', 'zoning.fsiLimit', 'zoning.exception', 'zoning.holding', 'site.secondaryPlan', 'site.mtsaType', 'site.heritage', 'site.regulatedArea', 'site.greenbelt', 'site.nearAerodrome', 'site.aeronauticalLimitM', 'site.frontageRoadClass', 'site.nearestTransitStop', 'planning.zba']
@@ -43,6 +47,11 @@ export function Report() {
     const projects = projectsUnder(node)
     return sceneOf(projects.map(({ path, project: p }) => ({ path: [...state.path, ...path], project: p, label: projects.length > 1 ? money((path.length ? getResult(nodeResult, path) : nodeResult).metrics.profit?.value) : undefined })), project.attributes)
   }, [node, nodeResult, state.path, project.attributes])
+  // Pinned charts draw in the report and hand their data over for the workbook
+  const pins = pinnedOf(project.attributes)
+  const collected = useRef(new Map<string, { title: string; csv: string }>())
+  const pinKey = pins.join('|')
+  const charts = useMemo<ReportCharts>(() => ({ only: new Set(pinKey.split('|')), collect: (id, title, csv) => { collected.current.set(id, { title, csv }) } }), [pinKey])
   if (!result || !nodeResult) return null
 
   const exportedAt = new Date().toISOString()
@@ -54,6 +63,7 @@ export function Report() {
       coverage: entries, readiness: { model: labels.model.text, scope: labels.scope.text, sources: labels.sources.text },
       insights, tracker, scenarios: project.scenarios, draftParentId: project.draftParentId, dataContext, exportedAt, synthetic,
       sensitivity: { metric: 'Profit on cost', ...sensitivityGrid(model, 'profitOnCost') }, feasibility: feas, assumptions,
+      charts: pins.flatMap((id) => { const c = collected.current.get(id); return c ? [{ title: c.title, rows: fromCsv(c.csv) }] : [] }),
     }))
     const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }))
     Object.assign(document.createElement('a'), { href: url, download: `${fileBase}.xlsx` }).click()
@@ -103,6 +113,21 @@ export function Report() {
             </div>
           </section>
         )}
+
+        <section data-feature="report-charts">
+          <h3 className="mb-2 text-base font-semibold">Charts</h3>
+          {pins.length === 0
+            ? <p className="text-sm text-ink-soft print:hidden">No charts pinned. Use ☆ Pin to report on any chart (Charts, Feasibility & stress, People & affordability) to add it here and to the workbook.</p>
+            : (
+              <ReportChartsContext.Provider value={charts}>
+                <div className="flex flex-col gap-4">
+                  <Visuals />
+                  {pins.includes('funding-gap') && <Feasibility />}
+                  {pins.includes('affordability') && <People />}
+                </div>
+              </ReportChartsContext.Provider>
+            )}
+        </section>
 
         <section>
           <h3 className="mb-2 text-base font-semibold">Observations</h3>

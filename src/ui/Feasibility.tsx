@@ -72,6 +72,7 @@ export function Feasibility() {
           title="Can it be funded?"
           about="The construction loan month by month against what a lender would commit (loan-to-cost × the full budget including capitalized interest), and how much equity is out of pocket. Anything above the commitment, any construction balance the refinance does not repay, and any loan the sale does not repay must come from more equity, mezzanine debt or a bigger facility."
           csv={toCsv(['Month', 'Construction loan', 'Commitment', 'Permanent loan', 'Equity out of pocket (net)', 'Equity contributed (gross)'], fund.months.map((m) => [m.month, Math.round(m.debt), Math.round(m.limit), Math.round(m.permanent), Math.round(m.equityNet), Math.round(m.equityGross)]))}
+          id="funding-gap"
           file={`${node.id}-funding-gap`}
           table={(
             <TableWrap caption="Funding by month">

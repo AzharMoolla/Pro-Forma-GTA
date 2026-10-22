@@ -14,15 +14,16 @@ import { tinyProject } from './fixtures'
 
 const mockA = mockAJson.input as Node
 
+const input = {
+  projectName: 'Mock A', projectType: 'rental-highrise', draft: mockA, result: runNode(mockA), catalogue: catalogueJson as unknown as Catalogue,
+  attributes: { ...mockAJson.attributes, 'phase-1|zoning.heightLimitStoreys': 12, 'location.sources': JSON.stringify({ 'zoning.code': { value: 'CR 5.0 (c4.0; r3.0) SS2  (x2507)', layer: 'Toronto zoning areas', url: 'https://open.toronto.ca/dataset/zoning-by-law/', retrievedAt: '2026-10-21' } }) },
+  coverage: [{ item: { id: 'x', label: '=HYPERLINK("http://evil")', stage: 's0', src: 'S' }, status: 'unaccounted', note: '<b>&' }],
+  readiness: { model: 'Model: calculates', scope: 'Scope: 8 known gaps', sources: 'Sources: 0/100 reviewed' },
+  insights: [], tracker: { stages: [], current: null, done: 0, total: 0, budget: 0, actual: { known: 0, unknown: 0 }, forecast: { known: 0, unknown: 0 } },
+  scenarios: [], draftParentId: null, dataContext: { catalogue: '0.1.0' }, exportedAt: '2026-10-21T00:00:00Z', synthetic: true,
+}
+
 describe('xlsx export', () => {
-  const input = {
-    projectName: 'Mock A', projectType: 'rental-highrise', draft: mockA, result: runNode(mockA), catalogue: catalogueJson as unknown as Catalogue,
-    attributes: { ...mockAJson.attributes, 'phase-1|zoning.heightLimitStoreys': 12, 'location.sources': JSON.stringify({ 'zoning.code': { value: 'CR 5.0 (c4.0; r3.0) SS2  (x2507)', layer: 'Toronto zoning areas', url: 'https://open.toronto.ca/dataset/zoning-by-law/', retrievedAt: '2026-10-21' } }) },
-    coverage: [{ item: { id: 'x', label: '=HYPERLINK("http://evil")', stage: 's0', src: 'S' }, status: 'unaccounted', note: '<b>&' }],
-    readiness: { model: 'Model: calculates', scope: 'Scope: 8 known gaps', sources: 'Sources: 0/100 reviewed' },
-    insights: [], tracker: { stages: [], current: null, done: 0, total: 0, budget: 0, actual: { known: 0, unknown: 0 }, forecast: { known: 0, unknown: 0 } },
-    scenarios: [], draftParentId: null, dataContext: { catalogue: '0.1.0' }, exportedAt: '2026-10-21T00:00:00Z', synthetic: true,
-  }
   const files = unzipSync(xlsx(workbookSheets(input)))
   const text = (name: string) => strFromU8(files[name]!)
 
@@ -104,5 +105,19 @@ describe('simulation outputs (R8)', () => {
     expect(s.metrics.profit!.valid + s.metrics.profit!.unavailable).toBe(200)
     expect(s.metrics.profit!.shareBelowZero).toBeGreaterThanOrEqual(0)
     expect(s.metrics.profit!.shareBelowZero).toBeLessThanOrEqual(1)
+  })
+})
+
+describe('pinned charts in the workbook', () => {
+  it('each pinned chart becomes its own sheet, from the chart\'s own CSV, with a safe unique name', async () => {
+    const { fromCsv } = await import('../../src/ui/pins')
+    const { toCsv } = await import('../../src/ui/chartData')
+    const csv = toCsv(['Year', 'Equity', 'Note'], [['Y1', 1200, 'a, "quoted" note'], ['Y2', -3.5, '=formula']])
+    expect(fromCsv(csv)).toEqual([['Year', 'Equity', 'Note'], ['Y1', 1200, 'a, "quoted" note'], ['Y2', -3.5, '=formula']])
+    const sheets = workbookSheets({ ...input, charts: [{ title: 'Can it be funded?', rows: fromCsv(csv) }, { title: 'Can it be funded?', rows: [] }, { title: 'A very long chart title that goes on and on', rows: [] }] })
+    const names = sheets.map((s) => s.name).filter((n) => n.startsWith('Chart'))
+    expect(names).toEqual(['Chart - Can it be funded', 'Chart - Can it be funded 2', 'Chart - A very long chart title'])
+    for (const n of names) expect(n.length).toBeLessThanOrEqual(31)
+    expect(sheets.find((s) => s.name === names[0])!.rows[2]).toEqual(['Y1', 1200, 'a, "quoted" note'])
   })
 })

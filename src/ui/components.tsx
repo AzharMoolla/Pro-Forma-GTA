@@ -1,5 +1,6 @@
 import { useId, useState, type ButtonHTMLAttributes, type ReactNode } from 'react'
 import { GlossaryText } from './Glossary'
+import { useReportCharts } from './pins'
 
 export const cx = (...parts: Array<string | false | null | undefined>) => parts.filter(Boolean).join(' ')
 
@@ -46,6 +47,8 @@ export const SourceChip = ({ tag }: { tag: string }) => {
 
 export function Card({ title, actions, children, className }: { title: string; actions?: ReactNode; children: ReactNode; className?: string }) {
   const id = useId()
+  // Inside the report's chart section only pinned charts draw; a page's other cards stay on their page
+  if (useReportCharts()) return null
   return (
     <section aria-labelledby={id} className={cx('rounded-lg border border-line bg-surface', className)}>
       <header className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3">

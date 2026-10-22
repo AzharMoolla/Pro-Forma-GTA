@@ -30,6 +30,8 @@ export interface WorkbookInput {
   sensitivity?: { metric: string; rows: number[]; cols: number[]; cells: Array<Array<number | null>> }
   feasibility?: Feasibility
   assumptions?: Assumption[]
+  /** Charts pinned to the report: each one's data, as its own sheet */
+  charts?: Array<{ title: string; rows: Cell[][] }>
 }
 
 /** Every leaf of an object as [path, value], arrays of objects with ids keyed by id. */
@@ -191,6 +193,15 @@ export function workbookSheets(w: WorkbookInput): Sheet[] {
   if (w.sensitivity) {
     const g = w.sensitivity
     sheets.push({ name: 'Sensitivity', rows: [[`${g.metric}: revenue × exit cap (bps)`, ...g.cols.map((c) => `${c >= 0 ? '+' : ''}${c} bps`)], ...g.rows.map((m, i): Cell[] => [`revenue ${m >= 1 ? '+' : ''}${Math.round((m - 1) * 100)}%`, ...g.cells[i]!])] })
+  }
+  // Pinned charts: Excel sheet names are at most 31 characters and cannot hold : \ / ? * [ ]
+  const names = new Set(sheets.map((x) => x.name))
+  for (const c of w.charts ?? []) {
+    const base = `Chart - ${c.title.replace(/[:\\/?*[\]]/g, '')}`.slice(0, 31)
+    let name = base
+    for (let k = 2; names.has(name); k++) name = `${base.slice(0, 28)} ${k}`
+    names.add(name)
+    sheets.push({ name, rows: [[c.title], ...c.rows] })
   }
   sheets.push({
     name: 'Licences & notes',

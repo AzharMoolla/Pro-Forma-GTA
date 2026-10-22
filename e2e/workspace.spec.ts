@@ -379,3 +379,19 @@ test('simple mode asks only the key questions; full detail shows the rest, with 
   await expect(page.getByRole('textbox', { name: 'Residential units' })).toHaveCount(0) // asked in the unit mix, shown here read-only
   await expect(page.getByText('from the pro forma').first()).toBeVisible()
 })
+
+test('pin charts: pinned charts appear in the report, unpinned ones leave it', async ({ page }) => {
+  await fresh(page)
+  await openSection(page, 'Feasibility & stress')
+  await page.getByRole('button', { name: '☆ Pin to report' }).first().click()
+  await openSection(page, 'Charts')
+  const costs = page.getByRole('heading', { name: 'What makes it expensive' }).locator('xpath=ancestor::section[1]')
+  await costs.getByRole('button', { name: '★ In report' }).click()
+  await expect(costs.getByRole('button', { name: '☆ Pin to report' })).toBeVisible()
+  await openSection(page, 'Report & export')
+  const charts = page.locator('[data-feature="report-charts"]')
+  await expect(charts.locator('[data-pinned-chart="funding-gap"]')).toBeVisible()
+  await expect(charts.locator('[data-pinned-chart="timeline"]')).toBeVisible()
+  await expect(charts.locator('[data-pinned-chart="costs"]')).toHaveCount(0)
+  await expect(charts.getByText('Residual land')).toHaveCount(0) // the rest of the Feasibility page stays there
+})
