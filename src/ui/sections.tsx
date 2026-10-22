@@ -13,6 +13,7 @@ import { readSources, SiteMap } from './SiteMap'
 import { Streetscape } from './Streetscape'
 import { Visuals } from './Visuals'
 import { Report } from './Report'
+import { PrivacyPolicy, Terms } from './Legal'
 import { atLeast, type SectionId } from './store'
 import { getResult } from './tree'
 import { useWorkspace } from './workspace'
@@ -23,6 +24,8 @@ export function Sections({ section }: { section: SectionId }) {
     case 'map': return <SiteMap />
     case 'charts': return <Visuals />
     case 'report': return <Report />
+    case 'privacy': return <PrivacyPolicy />
+    case 'terms': return <Terms />
     case 'progress': return <Progress />
     case 'market': return <Market />
     case 'program': return <Program />
@@ -195,14 +198,18 @@ function Program() {
                           : <> <Chip tone="warn" title={`Map said ${String(mapSources[v.id]!.value)} (${mapSources[v.id]!.layer})`}>changed from map</Chip></>)}
                       </span>
                       {v.type === 'boolean' ? (
-                        <input type="checkbox" aria-label={v.label} className="size-5 shrink-0 accent-[var(--accent)]" checked={value === true} onChange={(e) => dispatch({ type: 'attribute', id: v.id, value: e.target.checked })} />
+                        <select aria-label={v.label} className="rounded border border-line-strong bg-surface px-1 py-1" value={value === true ? 'yes' : value === false ? 'no' : ''} onChange={(e) => dispatch({ type: 'attribute', id: v.id, value: e.target.value === '' ? null : e.target.value === 'yes' })}>
+                          <option value="">unknown</option><option value="yes">yes</option><option value="no">no</option>
+                        </select>
                       ) : v.type === 'enum' ? (
                         <select aria-label={v.label} className="rounded border border-line-strong bg-surface px-1 py-1" value={String(value ?? '')} onChange={(e) => dispatch({ type: 'attribute', id: v.id, value: e.target.value || null })}>
                           <option value="">not set</option>
                           {v.options!.map((o) => <option key={o} value={o}>{o}</option>)}
                         </select>
                       ) : v.type === 'number' ? (
-                        <div className="w-28 shrink-0"><NumberField compact label={v.label} value={typeof value === 'number' ? value : 0} onCommit={(n) => dispatch({ type: 'attribute', id: v.id, value: n })} /></div>
+                        <input aria-label={v.label} inputMode="decimal" placeholder="unknown" className="num min-h-9 w-28 shrink-0 rounded border border-line-strong bg-surface px-2 text-right" defaultValue={typeof value === 'number' ? String(value) : ''} key={String(value)}
+                          onBlur={(e) => { const t = e.target.value.replace(/[,$\s]/g, ''); const n = t === '' ? null : Number(t); if (n !== null && !Number.isFinite(n)) { e.target.value = typeof value === 'number' ? String(value) : ''; return } if (n !== (typeof value === 'number' ? value : null)) dispatch({ type: 'attribute', id: v.id, value: n }) }}
+                          onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }} />
                       ) : v.type === 'text' ? (
                         <input aria-label={v.label} className="min-h-9 w-44 shrink-0 rounded border border-line-strong bg-surface px-2" defaultValue={typeof value === 'string' ? value : ''} key={String(value)} onBlur={(e) => { const t = e.target.value.trim(); if (t !== (value ?? '')) dispatch({ type: 'attribute', id: v.id, value: t || null }) }} />
                       ) : (

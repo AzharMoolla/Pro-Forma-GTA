@@ -7,7 +7,7 @@ import { demoProjects } from './data'
 import { updateNode, type NodePath } from './tree'
 
 export type Mode = 'quick' | 'professional' | 'institutional'
-export type SectionId = 'overview' | 'map' | 'charts' | 'report' | 'progress' | 'market' | 'program' | 'costs' | 'revenue' | 'finance' | 'returns' | 'scenarios' | 'audit'
+export type SectionId = 'overview' | 'map' | 'charts' | 'report' | 'privacy' | 'terms' | 'progress' | 'market' | 'program' | 'costs' | 'revenue' | 'finance' | 'returns' | 'scenarios' | 'audit'
 
 export const SECTIONS: Array<{ id: SectionId; label: string; minMode: Mode }> = [
   { id: 'overview', label: 'Overview', minMode: 'quick' },
@@ -33,7 +33,20 @@ export type Inspect =
   | { kind: 'line'; path: NodePath; lineId: string }
   | null
 
-interface ProjectState {
+/** What a project is, apart from its numbers. Demo projects are templates; a user's projects copy one. */
+export interface ProjectMeta {
+  name: string
+  projectType: string
+  reference: string
+  notes: string[]
+  coverage: Record<string, string> // where applicable catalogue items are carried (from the template)
+  templateId: string // demo the project started from; "Reset draft" returns to it
+}
+
+export const metaOf = (demo: (typeof demoProjects)[number]): ProjectMeta => ({ name: demo.name, projectType: demo.projectType, reference: demo.reference, notes: demo.notes, coverage: demo.coverage, templateId: demo.id })
+
+export interface ProjectState {
+  meta: ProjectMeta
   draft: Node
   draftParentId: string | null
   scenarios: Snapshot[]
@@ -52,7 +65,10 @@ export interface State {
 }
 
 export type Action =
-  | { type: 'account'; userId: string | null }
+  | { type: 'account'; userId: string | null; seed?: 'guest' | 'pristine' | { cloud: Record<string, ProjectState> } }
+  | { type: 'createProject'; id: string; project: ProjectState }
+  | { type: 'renameProject'; id: string; name: string }
+  | { type: 'deleteProject'; id: string }
   | { type: 'selectProject'; id: string }
   | { type: 'section'; id: SectionId }
   | { type: 'mode'; mode: Mode }
@@ -69,18 +85,26 @@ export type Action =
 
 const STORAGE_KEY = 'gta-proforma:v1'
 
+/** The three demo projects, untouched. */
+export function pristineProjects(): Record<string, ProjectState> {
+  return Object.fromEntries(demoProjects.map((p) => [p.id, { meta: metaOf(p), draft: p.input, draftParentId: null, scenarios: [] as Snapshot[], attributes: p.attributes, tracker: {} as TrackerState }]))
+}
+
 export function initialState(): State {
-  const projects: Record<string, ProjectState> = Object.fromEntries(
-    demoProjects.map((p) => [p.id, { draft: p.input, draftParentId: null, scenarios: [] as Snapshot[], attributes: p.attributes, tracker: {} as TrackerState }]),
-  )
+  const projects = pristineProjects()
   const base: State = { account: null, projectId: demoProjects[0]!.id, projects, section: 'overview', mode: 'professional', path: [], inspect: null }
   // Per-viewer convenience only (ADR-001: durable storage moves to Supabase). Must work when storage is unavailable.
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null') as Partial<State> | null
     if (!saved?.projects) return base
+    const removed = new Set((saved as { removed?: string[] }).removed ?? [])
+    for (const id of removed) delete projects[id]
     for (const [id, p] of Object.entries(saved.projects)) {
-      if (projects[id]) projects[id] = { ...projects[id], ...p, scenarios: (p.scenarios ?? []).map((s) => (s.locked ? Object.freeze(s) : s)) }
+      const scenarios = (p.scenarios ?? []).map((s) => (s.locked ? Object.freeze(s) : s))
+      if (projects[id]) projects[id] = { ...projects[id], ...p, meta: p.meta ?? projects[id].meta, scenarios }
+      else if (p.meta && p.draft) projects[id] = { ...p, scenarios } // a project the user created in this browser
     }
+    if (!Object.keys(projects).length) Object.assign(projects, pristineProjects())
     return { ...base, projectId: saved.projectId && projects[saved.projectId] ? saved.projectId : base.projectId, mode: saved.mode ?? base.mode }
   } catch {
     return base
@@ -94,9 +118,25 @@ export function reducer(state: State, action: Action): State {
     case 'account': {
       // A different account (or signing out) never inherits the previous account's projects: start again from the
       // guest workspace saved in this browser; the signed-in account then loads its own copies from the cloud.
-      if (action.userId === state.account) return state
+      if (action.userId === state.account && !action.seed) return state
+      // seed: the guest workspace (copied into a new account), the demos (start fresh), or the account's own projects
       const guest = initialState()
-      return { ...guest, account: action.userId, section: state.section, mode: state.mode, projectId: state.projectId in guest.projects ? state.projectId : guest.projectId }
+      const projects = action.seed === 'pristine' ? pristineProjects() : typeof action.seed === 'object' ? action.seed.cloud : guest.projects
+      const ids = Object.keys(projects)
+      return { ...guest, projects, account: action.userId, section: state.section, mode: state.mode, path: [], inspect: null, projectId: state.projectId in projects ? state.projectId : ids[0]! }
+    }
+    case 'createProject': return { ...state, projects: { ...state.projects, [action.id]: action.project }, projectId: action.id, path: [], inspect: null }
+    case 'renameProject': {
+      const target = state.projects[action.id]
+      const name = action.name.trim()
+      return target && name ? { ...state, projects: { ...state.projects, [action.id]: { ...target, meta: { ...target.meta, name } } } } : state
+    }
+    case 'deleteProject': {
+      const ids = Object.keys(state.projects)
+      if (!state.projects[action.id] || ids.length <= 1) return state // always keep one project
+      const { [action.id]: _gone, ...rest } = state.projects
+      void _gone
+      return { ...state, projects: rest, projectId: state.projectId === action.id ? Object.keys(rest)[0]! : state.projectId, path: [], inspect: null }
     }
     case 'selectProject': return { ...state, projectId: action.id, path: [], inspect: null }
     case 'section': return { ...state, section: action.id }
@@ -111,7 +151,7 @@ export function reducer(state: State, action: Action): State {
       return s ? { ...withProject({ draft: structuredClone(s.input), draftParentId: s.id, ...(s.attributes ? { attributes: structuredClone(s.attributes) } : {}) }), path: [] } : state
     }
     case 'resetDraft': {
-      const demo = demoProjects.find((p) => p.id === state.projectId)!
+      const demo = demoProjects.find((p) => p.id === project.meta.templateId) ?? demoProjects[0]!
       return { ...withProject({ draft: demo.input, draftParentId: null, attributes: demo.attributes }), path: [] }
     }
     case 'attribute': return withProject({ attributes: { ...project.attributes, [action.id]: action.value } })
@@ -132,7 +172,9 @@ export function useStore() {
   useEffect(() => {
     if (state.account) return // signed-in work lives in the account, not in this browser's guest cache
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ projectId: state.projectId, mode: state.mode, projects: state.projects }))
+      // demos the user deleted are remembered, so they don't come back on reload
+      const removed = demoProjects.map((d) => d.id).filter((id) => !state.projects[id])
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ projectId: state.projectId, mode: state.mode, projects: state.projects, removed }))
     } catch {
       // storage unavailable (private window, blocked): the app still works for this session
     }

@@ -55,15 +55,79 @@ export function toTracker(tasks: TaskRow[], receipts: ReceiptRow[]): TrackerStat
   return state
 }
 
-/** Loads the signed-in user's copy of a demo project, creating it from the local state the first time. */
-export async function loadOrCreateProject(args: { demoId: string; name: string; projectType: string; local: Omit<CloudProject, 'id'> }): Promise<CloudProject> {
+/** Project metadata kept with each cloud project (name, type, template, notes, coverage). */
+export interface CloudMeta { name: string; projectType: string; reference: string; notes: string[]; coverage: Record<string, string>; templateId: string }
+
+/** Every live (not archived) project in the account, keyed by the app's project id (column demo_id). */
+export async function listProjects(): Promise<Array<{ clientId: string; meta: CloudMeta; draft: Node; attributes: Attributes; draftParentId: string | null }>> {
+  const { data, error } = await need().from('projects').select('demo_id, name, project_type, meta, draft, attributes, draft_parent_client_id').is('archived_at', null).order('created_at')
+  fail(error, 'Listing projects')
+  return (data ?? []).filter((r) => r.demo_id).map((r) => {
+    const m = (r.meta ?? {}) as Partial<CloudMeta>
+    return {
+      clientId: r.demo_id as string,
+      meta: { name: r.name as string, projectType: r.project_type as string, reference: m.reference ?? '', notes: m.notes ?? [], coverage: m.coverage ?? {}, templateId: m.templateId ?? (r.demo_id as string) },
+      draft: r.draft as Node, attributes: r.attributes as Attributes, draftParentId: r.draft_parent_client_id as string | null,
+    }
+  })
+}
+
+export async function renameProject(clientId: string, name: string): Promise<void> {
+  const { data, error } = await need().from('projects').update({ name }).eq('demo_id', clientId).select('id')
+  fail(error, 'Renaming project')
+  if (!data?.length) throw new Error('Renaming project: not found in this account')
+}
+
+/** Calls the account Edge Function, which checks who is asking and runs the erase with server-side rights. */
+async function accountAction(body: Record<string, unknown>): Promise<void> {
+  const { error } = await need().functions.invoke('account', { body })
+  if (error) {
+    const detail = await (error as { context?: Response }).context?.json?.().catch(() => null) as { error?: string } | null
+    throw new Error(detail?.error ?? error.message)
+  }
+}
+
+/** Permanently erases a project: draft, scenarios, tracker and its history, receipt records and files. */
+export const eraseProject = (clientId: string) => accountAction({ action: 'erase-project', clientId })
+/** Permanently deletes the account and everything in it. */
+export const deleteAccount = () => accountAction({ action: 'delete-account' })
+
+/** Everything the account holds, as one JSON document (receipt files are listed with their storage paths). */
+export async function exportAccount(): Promise<Record<string, unknown>> {
   const db = need()
-  const found = await db.from('projects').select('id, draft, attributes, draft_parent_client_id').eq('demo_id', args.demoId).maybeSingle()
+  const user = (await db.auth.getUser()).data.user
+  const tables = ['projects', 'scenarios', 'tracker_tasks', 'tracker_history', 'receipts'] as const
+  const out: Record<string, unknown> = { exportedAt: new Date().toISOString(), account: { id: user?.id, email: user?.email, createdAt: user?.created_at } }
+  for (const t of tables) {
+    const { data, error } = await db.from(t).select('*')
+    fail(error, `Exporting ${t}`)
+    out[t] = data
+  }
+  return out
+}
+
+export async function requestPasswordReset(email: string): Promise<void> {
+  const { error } = await need().auth.resetPasswordForEmail(email, { redirectTo: window.location.origin })
+  fail(error, 'Sending reset email')
+}
+export async function setPassword(password: string): Promise<void> {
+  const { error } = await need().auth.updateUser({ password })
+  fail(error, 'Setting password')
+}
+export async function changeEmail(email: string): Promise<void> {
+  const { error } = await need().auth.updateUser({ email }, { emailRedirectTo: window.location.origin })
+  fail(error, 'Changing email')
+}
+
+/** Loads the signed-in user's copy of a project, creating it from the local state the first time. */
+export async function loadOrCreateProject(args: { demoId: string; name: string; projectType: string; meta?: CloudMeta; local: Omit<CloudProject, 'id'> }): Promise<CloudProject> {
+  const db = need()
+  const found = await db.from('projects').select('id, draft, attributes, draft_parent_client_id').eq('demo_id', args.demoId).is('archived_at', null).maybeSingle()
   fail(found.error, 'Loading project')
   let id: string
   if (!found.data) {
     const created = await db.from('projects')
-      .insert({ demo_id: args.demoId, name: args.name, project_type: args.projectType, draft: args.local.draft, attributes: args.local.attributes, draft_parent_client_id: args.local.draftParentId })
+      .insert({ demo_id: args.demoId, name: args.name, project_type: args.projectType, meta: args.meta ?? {}, draft: args.local.draft, attributes: args.local.attributes, draft_parent_client_id: args.local.draftParentId })
       .select('id').single()
     fail(created.error, 'Creating project')
     id = created.data!.id as string

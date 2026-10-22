@@ -27,8 +27,13 @@ export function rezoneProject(p: ProjectInput, a: RezoningAssumptions): ProjectI
   const holding = (l: CostLine) => (l.catalogueId ?? l.id).startsWith('holding')
   const costLines: CostLine[] = p.costLines.map((l) => {
     const t = l.timing
-    // carrying costs run longer; other dated pre-construction work moves later; construction-relative timing follows
-    if (t.kind === 'spread' && holding(l)) return { ...l, timing: { ...t, to: t.to + m } }
+    // carrying costs are recurring: the same monthly amount for more months (a lump sum is scaled by the new length)
+    if (t.kind === 'spread' && holding(l)) {
+      const months = t.to - t.from + 1
+      const scale = (months + m) / months
+      const driver = l.driver?.kind === 'lumpSum' ? { ...l.driver, amount: l.driver.amount * scale } : l.driver
+      return { ...l, driver, timing: { ...t, to: t.to + m } }
+    }
     if (t.kind === 'spread' && t.from > 0) return { ...l, timing: { kind: 'spread', from: t.from + m, to: t.to + m } }
     if (t.kind === 'month' && t.month > 0) return { ...l, timing: { kind: 'month', month: t.month + m } }
     return l

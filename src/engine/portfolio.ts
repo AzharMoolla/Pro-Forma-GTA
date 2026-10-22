@@ -4,7 +4,7 @@
 import { lineTotals, scheduleLine, validateCostLines, type CostLine } from './costs'
 import { annualizeMonthly, irr, monthlyFromEffectiveAnnual, npv } from './finance'
 import { roundCents, sumCents } from './money'
-import { runProject, type Metric, type ProjectInput, type ProjectResult } from './project'
+import { runProject, type Metric, type ProjectInput, type ProjectResult, nonFinitePaths } from './project'
 
 export interface PortfolioInput {
   id: string
@@ -42,6 +42,8 @@ export function runNode(node: Node): NodeResult {
 
   const errors = validateCostLines(node.costLines, false)
   if (!(node.costEscalation > -1)) errors.push('costEscalation must be > -100%')
+  if (!(node.discountRate > -1)) errors.push('discountRate must be > -100%')
+  errors.push(...nonFinitePaths({ discountRate: node.discountRate, costEscalation: node.costEscalation, offsets: node.children.map((c) => c.offsetMonths) }).map((at) => `${at} must be a finite number`))
   const childIds = new Set<string>()
   for (const child of node.children) {
     if (!(Number.isInteger(child.offsetMonths) && child.offsetMonths >= 0)) errors.push(`${child.node.id}: offsetMonths must be a whole number ≥ 0`)

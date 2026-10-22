@@ -52,7 +52,7 @@ test('switching a project variable surfaces the costs it triggers', async ({ pag
   await fresh(page)
   await openSection(page, 'Site & program')
   await page.getByText('program (19)').click()
-  await page.getByRole('checkbox', { name: 'Pool' }).check()
+  await page.getByRole('combobox', { name: 'Pool' }).selectOption('yes')
   await openSection(page, 'Sources & audit')
   await expect(page.getByRole('table', { name: 'Checklist coverage' })).toContainText('Pool (structure, mechanical, finishes)')
 })
@@ -170,7 +170,78 @@ test('analysis: zoning checks, and modelling the rezoning locks the as-of-right 
   await fresh(page)
   await expect(page.getByText(/over the zoning height/).first()).toBeVisible()
   const before = await page.getByRole('button', { name: /^Total development cost: / }).getAttribute('aria-label')
-  await page.getByRole('button', { name: 'Lock as-of-right and model the rezoning' }).click()
+  await page.getByRole('button', { name: 'Lock the current draft and model the rezoning' }).click()
   await expect(page.getByText(/Draft from scenario/)).toBeVisible()
   await expect(page.getByRole('button', { name: /^Total development cost: / })).not.toHaveAttribute('aria-label', before!)
+})
+
+test('projects: create, rename, duplicate, export, import and delete', async ({ page }) => {
+  await fresh(page)
+  const menu = () => page.getByRole('dialog', { name: 'Projects' })
+  const open = async () => { if (!(await menu().isVisible())) await page.getByRole('button', { name: 'Projects', exact: true }).click() }
+  const select = page.getByLabel('Project', { exact: true })
+
+  // create from a template
+  await open()
+  await menu().getByLabel('Name', { exact: true }).fill('12 Main St rental')
+  await menu().getByLabel('Start from').selectOption({ index: 1 })
+  await menu().getByRole('button', { name: 'Create project' }).click()
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('12 Main St rental')
+  await expect(select.locator('option')).toHaveCount(4)
+
+  // rename
+  await menu().getByLabel('New name').fill('12 Main Street')
+  await menu().getByRole('button', { name: 'Rename' }).click()
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('12 Main Street')
+
+  // duplicate
+  await menu().getByRole('button', { name: 'Duplicate' }).click()
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('12 Main Street (copy)')
+  await expect(select.locator('option')).toHaveCount(5)
+
+  // export, then import the file back
+  const [download] = await Promise.all([page.waitForEvent('download'), menu().getByRole('button', { name: 'Export project file' }).click()])
+  expect(download.suggestedFilename()).toBe('12-main-street-copy-.plangta.json')
+  const file = Buffer.concat(await (await download.createReadStream()).toArray())
+  await menu().locator('input[type=file]').setInputFiles({ name: 'p.plangta.json', mimeType: 'application/json', buffer: file })
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('12 Main Street (copy) (imported)')
+  await expect(select.locator('option')).toHaveCount(6)
+
+  // a broken file is refused with a message
+  await menu().locator('input[type=file]').setInputFiles({ name: 'x.json', mimeType: 'application/json', buffer: Buffer.from('{"format":"other"}') })
+  await expect(menu().getByRole('status')).toContainText('not a PlanGTA project file')
+
+  // delete needs a confirmation, and survives a reload
+  await menu().getByRole('button', { name: 'Delete project…' }).click()
+  await menu().getByRole('button', { name: 'Delete "12 Main Street (copy) (imported)"' }).click()
+  await expect(select.locator('option')).toHaveCount(5)
+  await expect(select.locator('option', { hasText: '(imported)' })).toHaveCount(0)
+  await page.reload()
+  await expect(select.locator('option')).toHaveCount(5)
+  await expect(select.locator('option', { hasText: '12 Main Street' })).toHaveCount(2)
+})
+
+test('privacy policy and terms open from the footer and by link', async ({ page }) => {
+  await fresh(page)
+  await page.getByText('Privacy and data').click()
+  await page.getByRole('link', { name: 'Privacy policy' }).click()
+  await expect(page.getByRole('heading', { name: 'Privacy policy' })).toBeVisible()
+  await expect(page.getByText(/Canada Central/).first()).toBeVisible()
+  await page.goto('/#terms')
+  await expect(page.getByRole('heading', { name: 'Terms of use' })).toBeVisible()
+  const { violations } = await new AxeBuilder({ page: page as never }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze()
+  expect(violations.map((v) => v.id)).toEqual([])
+})
+
+test('site variables: unset reads as unknown, never as No or 0', async ({ page }) => {
+  await fresh(page)
+  await openSection(page, 'Site & program')
+  const pool = page.getByRole('combobox', { name: 'Waterfront (shoreline works)' })
+  await expect(pool).toBeVisible()
+  await expect(page.getByRole('combobox', { name: 'Inside the Greenbelt Area' })).toHaveValue('no') // Mock A: set by the map
+  const unknown = page.getByRole('combobox', { name: 'Aeronautical height limit above ground (AZR surface elevation − site elevation)' })
+  await expect(unknown).toHaveCount(0) // numbers are text boxes…
+  const air = page.getByRole('textbox', { name: 'Aeronautical height limit above ground (AZR surface elevation − site elevation)' })
+  await expect(air).toHaveValue('') // …and an unset one is blank
+  await expect(air).toHaveAttribute('placeholder', 'unknown')
 })

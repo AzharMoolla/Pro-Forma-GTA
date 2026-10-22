@@ -39,10 +39,25 @@ function scopeType(node: Node, rootType: string, isRoot: boolean): string {
 export function siteFactsFor(node: Node, path: string[], a: Attributes): SiteFacts {
   const at = (id: string) => scoped(a, path, id)
   const sources = readSources(a)
+  /** The source recorded for the most specific scope that holds this variable (building, then phases, then project). */
+  const sourceAt = (scope: string[], id: string) => {
+    for (let i = scope.length; i >= 0; i--) {
+      const s = sources[i ? `${scope.slice(0, i).join('/')}|${id}` : id]
+      if (s) return `${s.layer} · ${s.retrievedAt}`
+    }
+    return undefined
+  }
   const buildings = projectsUnder(node).map(({ path: rel, project }) => {
-    const b = buildingOf(project, [...path, ...rel], a)
+    const full = [...path, ...rel]
+    const b = buildingOf(project, full, a)
     const prog = project.program
-    return { name: project.name, storeys: b.kind === 'lots' ? 0 : b.storeys, limitStoreys: b.limitStoreys, limitMetres: b.limitMetres, airLimitStoreys: b.airLimitStoreys, fsi: prog?.planningGfaSqft && prog.lotAreaSqft ? prog.planningGfaSqft / prog.lotAreaSqft : null }
+    const fsiLimit = scoped(a, full, 'zoning.fsiLimit')
+    return {
+      name: project.name, storeys: b.kind === 'lots' ? 0 : b.storeys, limitStoreys: b.limitStoreys, limitMetres: b.limitMetres, airLimitStoreys: b.airLimitStoreys,
+      fsi: prog?.planningGfaSqft && prog.lotAreaSqft ? prog.planningGfaSqft / prog.lotAreaSqft : null,
+      fsiLimit: typeof fsiLimit === 'number' ? fsiLimit : null,
+      source: (id: string) => sourceAt(full, id),
+    }
   })
   const residential = projectsUnder(node).some(({ project }) => project.components.some((c) => c.kind === 'rental' || c.kind === 'condo'))
   return {
@@ -58,14 +73,11 @@ export function siteFactsFor(node: Node, path: string[], a: Attributes): SiteFac
     nearAerodrome: at('site.nearAerodrome') === true,
     protectedStationArea: at('site.municipality') === 'toronto' && /protected/i.test(String(at('site.mtsaType') ?? '')),
     residential,
-    source: (id) => {
-      const s = sources[id] ?? Object.entries(sources).find(([k]) => k.endsWith(`|${id}`))?.[1]
-      return s ? `${s.layer} · ${s.retrievedAt}` : undefined
-    },
+    source: (id) => sourceAt(path, id),
   }
 }
 
-/** Lock the as-of-right draft as a scenario, then add the rezoning's time and costs to the over-limit buildings. */
+/** Lock the proposal as drawn as a scenario, then add the rezoning's time and costs to the over-limit buildings. */
 function ModelRezoning({ insight }: { insight: Insight }) {
   const { state, dispatch, draft, cloud } = useWorkspace()
   const project = state.projects[state.projectId]!
@@ -78,7 +90,7 @@ function ModelRezoning({ insight }: { insight: Insight }) {
   const run = async () => {
     setBusy(true)
     try {
-      const snapshot = lock(await createSnapshot({ input: draft, attributes: project.attributes, context: dataContext, label: 'As-of-right', note: `Locked automatically before modelling the rezoning: ${insight.title}`, createdAt: new Date().toISOString(), parentId: project.draftParentId, sequence: project.scenarios.length + 1 }))
+      const snapshot = lock(await createSnapshot({ input: draft, attributes: project.attributes, context: dataContext, label: 'Before rezoning (proposal as drawn)', note: `Locked automatically before modelling the rezoning: ${insight.title}`, createdAt: new Date().toISOString(), parentId: project.draftParentId, sequence: project.scenarios.length + 1 }))
       if (cloud.projectId) await saveScenario(cloud.projectId, snapshot)
       dispatch({ type: 'addSnapshot', snapshot })
       const paths = targets.map(({ path }) => [...state.path, ...path])
@@ -93,9 +105,9 @@ function ModelRezoning({ insight }: { insight: Insight }) {
   return (
     <div className="mt-2 flex flex-wrap items-end gap-2 border-t border-line pt-2">
       <div className="w-36"><NumberField label="Months added" suffix="mo" value={months} onCommit={(v) => setMonths(Math.max(0, Math.round(v)))} /></div>
-      <Button onClick={() => void run()} disabled={busy}>Lock as-of-right and model the rezoning</Button>
+      <Button onClick={() => void run()} disabled={busy}>Lock the current draft and model the rezoning</Button>
       <p className="w-full text-xs text-ink-soft">
-        Adds {months} months before construction (carrying costs run longer), a zoning by-law amendment fee if none is in the model, and {money(REZONING_DEFAULTS.studies)} of extra studies, all as class D assumptions to replace. The as-of-right draft is kept as a locked scenario to compare against. Returns can rise as well as fall with a delay when rents grow faster than costs escalate: check the escalation assumption.
+        Adds {months} months before construction (carrying costs run longer), a zoning by-law amendment fee if none is in the model, and {money(REZONING_DEFAULTS.studies)} of extra studies, all as class D assumptions to replace. The draft as it stands is kept as a locked scenario to compare against. It is the same proposal without the rezoning's time and cost, not an as-of-right scheme: a program that fits the limits needs its own scenario. Returns can rise as well as fall with a delay when rents grow faster than costs escalate: check the escalation assumption.
       </p>
       {error && <p role="alert" className="text-sm text-bad">{error}</p>}
     </div>
@@ -126,7 +138,10 @@ export function Analysis() {
       <div className="grid gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
         <div>
           <h3 className="mb-1 text-sm font-semibold">Where the money goes · {money(analysis.total)}</h3>
-          <p className="mb-2 text-xs text-ink-mute">Every cost dollar including all interest paid (total development cost counts only interest capitalized during construction).</p>
+          <p className="mb-2 text-xs text-ink-mute">
+            Every cost dollar including all interest paid.
+            {nodeResult!.metrics.totalDevelopmentCost?.value != null && <> Bridge: total development cost {money(nodeResult!.metrics.totalDevelopmentCost.value)} + {money(analysis.total - nodeResult!.metrics.totalDevelopmentCost.value)} of interest, loan fees and costs after construction (not in TDC) = {money(analysis.total)}.</>}
+          </p>
           <ul className="flex flex-col gap-2">
             {analysis.buckets.map((b) => {
               const s = SEVERITY[b.severity]

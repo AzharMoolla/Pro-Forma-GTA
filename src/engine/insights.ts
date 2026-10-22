@@ -67,6 +67,8 @@ export interface SiteBuilding {
   limitMetres: number | null
   airLimitStoreys: number | null
   fsi: number | null // proposed, by-law GFA ÷ lot area
+  fsiLimit?: number | null // this building's own mapped maximum (scoped), else the site's
+  source?: (variable: string) => string | undefined // citation from this building's own scope
 }
 
 /** Site facts from the map (or entered), for the zoning and site checks. All optional: unknown means no check. */
@@ -106,22 +108,23 @@ export function siteInsights(site: SiteFacts): Insight[] {
   if (overHeight.length) {
     const worst = overHeight.reduce((a, b) => (b.storeys - b.limitStoreys! > a.storeys - a.limitStoreys! ? b : a))
     const by = `${worst.storeys} storeys against a mapped limit of about ${worst.limitStoreys}${worst.limitMetres ? ` (${worst.limitMetres} m)` : ''}`
+    const cite = worst.source?.('zoning.heightLimitStoreys') ?? site.source('zoning.heightLimitStoreys')
     out.push(site.zbaPlanned
-      ? { id: 'height-rezoning-assumed', severity: 'watch', title: `${names(overHeight)} over the zoning height: rezoning assumed`, detail: `${by}. The project variables say a zoning by-law amendment is planned. Check its fees, studies and the extra months are in the model; an appeal to the Ontario Land Tribunal adds more.`, drivers: [], action: 'model-rezoning', source: site.source('zoning.heightLimitStoreys') }
-      : { id: 'height-over', severity: 'concern', title: `${names(overHeight)} over the zoning height`, detail: `${by}. As drawn this needs a zoning by-law amendment (or a minor variance for a small overage), which the model does not include yet: fees, studies and 12–24+ months of carry.`, drivers: [], action: 'model-rezoning', source: site.source('zoning.heightLimitStoreys') })
+      ? { id: 'height-rezoning-assumed', severity: 'watch', title: `${names(overHeight)} over the zoning height: rezoning assumed`, detail: `${by}. The project variables say a zoning by-law amendment is planned. Check its fees, studies and the extra months are in the model; an appeal to the Ontario Land Tribunal adds more.`, drivers: [], action: 'model-rezoning', source: cite }
+      : { id: 'height-over', severity: 'concern', title: `${names(overHeight)} over the zoning height`, detail: `${by}. As drawn this needs a zoning by-law amendment (or a minor variance for a small overage), which the model does not include yet: fees, studies and 12–24+ months of carry.`, drivers: [], action: 'model-rezoning', source: cite })
   }
   const overAir = site.buildings.filter((b) => b.airLimitStoreys !== null && b.storeys > b.airLimitStoreys)
   if (overAir.length) {
-    out.push({ id: 'airport-over', severity: 'concern', title: `${names(overAir)} above the airport height limit`, detail: 'Airport Zoning Regulations are federal: a city rezoning cannot raise them. The building (and its cranes) must stay below the surface, or the design changes. NAV CANADA and Transport Canada reviews apply regardless.', drivers: [], source: site.source('site.aeronauticalLimitM') })
+    out.push({ id: 'airport-over', severity: 'concern', title: `${names(overAir)} above the airport height limit`, detail: 'Airport Zoning Regulations are federal: a city rezoning cannot raise them. The building (and its cranes) must stay below the surface, or the design changes. NAV CANADA and Transport Canada reviews apply regardless.', drivers: [], source: overAir[0]!.source?.('site.aeronauticalLimitM') ?? site.source('site.aeronauticalLimitM') })
   } else if (site.nearAerodrome && site.buildings.some((b) => b.airLimitStoreys === null)) {
     out.push({ id: 'airport-check', severity: 'watch', title: 'Near an aerodrome: airport height limit not checked', detail: 'Within the 6 nautical mile screen. Check the Airport Zoning Regulation plan for this airport and enter the limit above ground (surface elevation minus site elevation), then file with NAV CANADA for the building and cranes.', drivers: [], source: site.source('site.nearAerodrome') })
   }
-  if (site.fsiLimit !== null) {
-    const overFsi = site.buildings.filter((b) => b.fsi !== null && b.fsi > site.fsiLimit! + 1e-9)
-    if (overFsi.length) {
-      const b = overFsi[0]!
-      out.push({ id: 'fsi-over', severity: site.zbaPlanned ? 'watch' : 'concern', title: `Density ${b.fsi!.toFixed(2)} FSI against ${site.fsiLimit} as-of-right`, detail: `${names(overFsi)} exceed${overFsi.length === 1 ? 's' : ''} the mapped maximum FSI. Additional density needs a rezoning; in Toronto it may also bring community benefits charges and parkland on the extra GFA.`, drivers: ['fsi'], action: 'model-rezoning', source: site.source('zoning.fsiLimit') })
-    }
+  // each building against its own limit (a block can sit in a different zone from the rest of the plan)
+  const limitOf = (b: SiteBuilding) => (b.fsiLimit !== undefined && b.fsiLimit !== null ? b.fsiLimit : site.fsiLimit)
+  const overFsi = site.buildings.filter((b) => b.fsi !== null && limitOf(b) !== null && b.fsi > limitOf(b)! + 1e-9)
+  if (overFsi.length) {
+    const b = overFsi[0]!
+    out.push({ id: 'fsi-over', severity: site.zbaPlanned ? 'watch' : 'concern', title: `Density ${b.fsi!.toFixed(2)} FSI against ${limitOf(b)} as-of-right`, detail: `${names(overFsi)} exceed${overFsi.length === 1 ? 's' : ''} the mapped maximum FSI. Additional density needs a rezoning; in Toronto it may also bring community benefits charges and parkland on the extra GFA.`, drivers: ['fsi'], action: 'model-rezoning', source: b.source?.('zoning.fsiLimit') ?? site.source('zoning.fsiLimit') })
   }
   if (site.holding) out.push({ id: 'holding', severity: 'watch', title: 'Holding (H) symbol on the zoning', detail: 'The permissions only take effect once the holding symbol is lifted, usually after conditions such as servicing or agreements are met. Plan for the application and the time before a building permit.', drivers: [], source: site.source('zoning.holding') })
   if (site.exception) out.push({ id: 'exception', severity: 'info', title: `Site-specific zoning exception ${site.exception}`, detail: 'Exceptions can add or remove permissions (height, density, uses, setbacks). Read the exception text before relying on the base zone.', drivers: [], source: site.source('zoning.exception') })
@@ -255,6 +258,10 @@ export function analyze(input: AnalysisInput): Analysis {
   const unlev = value('unleveredIrr')
   if (lev !== null && unlev !== null && lev < unlev) {
     add({ id: 'negative-leverage', severity: 'watch', title: 'Negative leverage', detail: `Levered IRR (${pct(lev)}) is below unlevered (${pct(unlev)}): debt costs more than the project earns, so borrowing reduces equity returns.`, drivers: ['leveredIrr', 'unleveredIrr'] })
+  }
+  const profitValue = value('profit')
+  if (profitValue !== null && profitValue > 0 && lev !== null && lev < 0) {
+    add({ id: 'profit-vs-irr', severity: 'info', title: 'Positive profit, negative levered IRR', detail: `The ${M(profitValue)} profit is undiscounted and before financing. Levered IRR counts interest, loan fees and timing: equity goes in early and comes back late, so investors can lose money in present-value terms while the project shows a profit.`, drivers: ['profit', 'leveredIrr'] })
   }
   const em = value('equityMultiple')
   if (em !== null && em < 1) add({ id: 'equity-loss', severity: 'concern', title: `Equity multiple ${em.toFixed(2)}×`, detail: 'Investors get back less than they put in on these inputs.', drivers: ['equityMultiple'] })

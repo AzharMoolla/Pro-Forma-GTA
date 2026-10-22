@@ -1,6 +1,7 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { isPortfolio, runNode } from '../engine/portfolio'
-import { Chip, cx } from './components'
+import { Button, Chip, cx } from './components'
+import { ProjectMenu } from './ProjectMenu'
 import { demoProjects } from './data'
 import { metricValue } from './format'
 import { Account } from './Account'
@@ -29,8 +30,13 @@ function ReadinessChips({ onOpen }: { onOpen: () => void }) {
 export function App() {
   const [state, dispatch] = useStore()
   const cloudState = useCloud(state, dispatch)
-  const demo = demoProjects.find((p) => p.id === state.projectId)!
-  const draft = state.projects[state.projectId]!.draft
+  const current = state.projects[state.projectId]!
+  // The open project, in the shape the sections expect: its own name and notes, its template's starting values
+  const demo = useMemo(() => {
+    const template = demoProjects.find((p) => p.id === current.meta.templateId) ?? demoProjects[0]!
+    return { ...template, id: state.projectId, name: current.meta.name, projectType: current.meta.projectType, reference: current.meta.reference, notes: current.meta.notes, coverage: current.meta.coverage }
+  }, [state.projectId, current.meta])
+  const draft = current.draft
 
   const { result, error } = useMemo(() => {
     try {
@@ -53,8 +59,18 @@ export function App() {
   const ws: Workspace = { state: { ...state, path }, dispatch, demo, draft, result, error, node, nodeResult, cloud: cloudState }
   const tree = isPortfolio(draft) ? flatten(draft) : []
   const visible = SECTIONS.filter((s) => atLeast(state.mode, s.minMode))
-  const section = visible.some((s) => s.id === state.section) ? state.section : 'overview'
+  const section = visible.some((s) => s.id === state.section) || state.section === 'privacy' || state.section === 'terms' ? state.section : 'overview'
+
+  // #privacy and #terms open those pages (links from emails, the sign-in form and the footer)
+  useEffect(() => {
+    const go = () => { const h = window.location.hash.slice(1); if (h === 'privacy' || h === 'terms') dispatch({ type: 'section', id: h }) }
+    go()
+    window.addEventListener('hashchange', go)
+    return () => window.removeEventListener('hashchange', go)
+  }, [dispatch])
   const parent = state.projects[state.projectId]!.draftParentId
+  // the inspector opens when a number or line is selected, and otherwise gives its width to the content
+  const showInspector = section !== 'map' && state.inspect !== null
 
   return (
     <WorkspaceContext.Provider value={ws}>
@@ -69,6 +85,7 @@ export function App() {
             </div>
           </div>
           <div className="flex w-full min-w-0 items-center gap-2 text-sm sm:w-auto">
+            <ProjectMenu />
             <label htmlFor="project-select" className="text-ink-soft">Project</label>
             <select
               id="project-select"
@@ -76,7 +93,7 @@ export function App() {
               value={state.projectId}
               onChange={(e) => dispatch({ type: 'selectProject', id: e.target.value })}
             >
-              {demoProjects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              {Object.entries(state.projects).map(([id, p]) => <option key={id} value={id}>{p.meta.name}</option>)}
             </select>
           </div>
           <fieldset className="flex items-center gap-1 text-sm">
@@ -100,6 +117,15 @@ export function App() {
         </p>
       </header>
 
+      {cloudState.askImport && (
+        <div role="alertdialog" aria-label="Copy this browser's work into your account?" className="border-b border-accent bg-accent-soft print:hidden">
+          <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-3 px-4 py-3 text-sm">
+            <p className="flex-1">Your account is new. Copy the projects in this browser into it, or start your account with the demo projects?</p>
+            <Button variant="primary" onClick={() => cloudState.chooseImport(true)}>Copy this browser's projects</Button>
+            <Button onClick={() => cloudState.chooseImport(false)}>Start fresh</Button>
+          </div>
+        </div>
+      )}
       {nodeResult && (
         <div className="border-b border-line bg-surface">
           <ul className="mx-auto grid max-w-[1600px] grid-cols-2 gap-px bg-line sm:grid-cols-4 xl:grid-cols-8 print:hidden" aria-label={`Headline results for ${node.name}`}>
@@ -122,7 +148,7 @@ export function App() {
       )}
 
       {/* The site map takes the full width: no inspector column, no max width */}
-      <div className={cx('mx-auto grid gap-4 px-4 py-4 lg:grid-cols-[220px_minmax(0,1fr)] print:block print:p-0', section === 'map' ? 'xl:grid-cols-[200px_minmax(0,1fr)]' : 'max-w-[1600px] xl:grid-cols-[200px_minmax(0,1fr)_340px]')}>
+      <div className={cx('mx-auto grid gap-4 px-4 py-4 lg:grid-cols-[220px_minmax(0,1fr)] print:block print:p-0', section === 'map' ? 'xl:grid-cols-[200px_minmax(0,1fr)]' : showInspector ? 'max-w-[1600px] xl:grid-cols-[200px_minmax(0,1fr)_340px]' : 'max-w-[1600px] xl:grid-cols-[200px_minmax(0,1fr)]')}>
         <nav aria-label="Workspace sections" className="flex min-w-0 flex-col gap-4 print:hidden">
           <ul className="flex gap-1 overflow-x-auto lg:flex-col">
             {visible.map((s) => (
@@ -171,7 +197,7 @@ export function App() {
           )}
         </main>
 
-        {section !== 'map' && (
+        {showInspector && (
           <aside aria-label="Inspector" className="min-w-0 lg:col-start-2 xl:col-start-3 xl:row-start-1 print:hidden">
             <Inspector />
           </aside>
@@ -184,6 +210,7 @@ export function App() {
             <p>Without an account, your work stays in this browser only. With an account, your projects, scenarios, project variables, tracker notes and amounts, and receipt files are stored in Supabase (Canada Central) and are visible only to your account.</p>
             <p>The site is served by Cloudflare, which sees standard request information such as your IP address. There is no analytics, advertising or tracking. Map searches run against data held by this service, not a third-party geocoder.</p>
             <p>Demo projects use synthetic figures. Nothing here is financial, tax, lending, legal or planning advice. Source code and data notes: github.com/AzharMoolla/Pro-Forma-GTA.</p>
+            <p><a className="text-accent underline" href="#privacy">Privacy policy</a> · <a className="text-accent underline" href="#terms">Terms of use</a></p>
           </div>
         </details>
       </footer>
