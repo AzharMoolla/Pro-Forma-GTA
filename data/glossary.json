@@ -76,13 +76,10 @@
       "id": "irr",
       "acronym": "IRR",
       "term": "Internal rate of return",
-      "metrics": [
-        "unleveredIrr",
-        "leveredIrr"
-      ],
+      "metrics": [],
       "definition": "The annual rate at which the project's cash flows break even in present-value terms. Unlevered uses project cash flows before debt; levered uses the investor's equity cash flows.",
       "formula": "IRR = r such that Σ(CFₜ ÷ (1 + r)^t) = 0; annual = ((1 + monthly IRR)^12) − 1",
-      "note": "Solved numerically. Shown as unavailable when cash flows never change sign, no root exists, or more than one rate gives NPV = 0 (then use NPV at a stated discount rate).",
+      "note": "This tool shows two: unlevered IRR (the project before any loan) and levered IRR (the investors' equity after the loans). Solved numerically; unavailable when cash flows never change sign or more than one rate gives NPV = 0 (then use NPV).",
       "source": "Investopedia: Internal Rate of Return",
       "url": "https://www.investopedia.com/terms/i/irr.asp"
     },
@@ -126,9 +123,7 @@
       "id": "ltc",
       "acronym": "LTC",
       "term": "Loan-to-cost",
-      "metrics": [
-        "peakDebt"
-      ],
+      "metrics": [],
       "definition": "The construction loan as a share of total project cost. Construction lenders cap it; equity funds the rest first.",
       "formula": "LTC = loan ÷ TDC; equity required = (1 − LTC) × budget",
       "aliases": [
@@ -152,9 +147,7 @@
       "id": "poc",
       "term": "Profit on cost (margin on cost)",
       "metrics": [
-        "profitOnCost",
-        "profitOnCostBeforeFinancing",
-        "profit"
+        "profitOnCost"
       ],
       "definition": "Profit as a share of total development cost (TDC), with numerator and denominator on the same basis. The headline figure is after capitalized construction interest, over TDC including that interest; the before-financing figure excludes financing from both. Different from margin on revenue: always check the denominator.",
       "formula": "Profit on cost = (total revenue − TDC) ÷ TDC, where TDC includes capitalized construction interest",
@@ -609,6 +602,71 @@
       ],
       "definition": "A household is in core housing need if its home is unaffordable (30%+ of income), too small or in poor repair, and it couldn't afford a suitable local home.",
       "source": "CMHC"
+    },
+    {
+      "id": "unlevered",
+      "term": "Unlevered",
+      "aliases": [
+        "unlevered"
+      ],
+      "definition": "Before any borrowing: the project's own cash flows, as if it were paid for entirely with equity. Shows whether the project itself makes money, whatever the financing."
+    },
+    {
+      "id": "levered",
+      "term": "Levered",
+      "aliases": [
+        "levered",
+        "leveraged"
+      ],
+      "definition": "After borrowing: the investors' equity cash flows, once loan draws, interest and repayments are counted. Debt can raise returns when the project earns more than the interest rate, and deepen losses when it earns less."
+    },
+    {
+      "id": "unlevered-irr",
+      "term": "Unlevered IRR",
+      "metrics": [
+        "unleveredIrr"
+      ],
+      "definition": "The annual return on the project itself, before any loan: the rate that makes the present value of all project costs and revenues zero.",
+      "formula": "IRR of project cash flows; annual = ((1 + monthly IRR)^12) − 1",
+      "note": "Compare with the discount rate or a target; it does not depend on how the project is financed."
+    },
+    {
+      "id": "levered-irr",
+      "term": "Levered IRR",
+      "metrics": [
+        "leveredIrr"
+      ],
+      "definition": "The annual return on the investors' equity, after the construction loan and any refinance: equity in, distributions and sale proceeds out.",
+      "formula": "IRR of equity cash flows; annual = ((1 + monthly IRR)^12) − 1",
+      "note": "Higher than unlevered IRR when the project earns more than the interest rate; lower, even negative, when it earns less or equity waits a long time."
+    },
+    {
+      "id": "unlevered-profit",
+      "term": "Unlevered profit",
+      "metrics": [
+        "profit"
+      ],
+      "definition": "Everything the project brings in (rents, sales and the exit value) less everything it costs, before any financing. Not discounted for time.",
+      "formula": "Σ project cash flows = total revenue − (costs excluding financing)",
+      "note": "Positive profit can still mean a negative levered IRR: interest and the wait for money back are not in this figure."
+    },
+    {
+      "id": "poc-before-financing",
+      "term": "Profit on cost before financing",
+      "metrics": [
+        "profitOnCostBeforeFinancing"
+      ],
+      "definition": "Unlevered profit divided by the cost excluding all financing: the margin the project earns on what it costs to build.",
+      "formula": "unlevered profit ÷ (TDC − capitalized interest)"
+    },
+    {
+      "id": "peak-loan",
+      "term": "Peak construction loan",
+      "metrics": [
+        "peakDebt"
+      ],
+      "definition": "The largest balance the construction loan reaches, including interest added to it, before it is repaid by sales or a refinance.",
+      "note": "Lenders size the facility as loan-to-cost × the budget; a peak above that is a funding gap."
     }
   ]
 }

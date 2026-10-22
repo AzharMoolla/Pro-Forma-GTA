@@ -91,7 +91,7 @@ test('glossary: definitions and formulas on hover and keyboard focus', async ({ 
   await page.keyboard.press('Escape')
   await expect(page.getByRole('tooltip')).toHaveCount(0)
   await kpis.getByRole('button', { name: 'Levered IRR', exact: true }).hover()
-  await expect(page.getByRole('tooltip')).toContainText('Internal rate of return')
+  await expect(page.getByRole('tooltip')).toContainText("return on the investors' equity")
 })
 
 test('tracker: close tasks, record an actual with a receipt, push it into the model', async ({ page }) => {
@@ -332,4 +332,16 @@ test('verification: every check passes and your own numbers match the model', as
   await ltt.getByLabel('Price ($)').fill('62000000')
   await expect(ltt.getByText('Match', { exact: true })).toBeVisible()
   await expect(ltt.getByText('$1,236,475').first()).toBeVisible()
+})
+
+test('streetscape: spotlight a building from the picker and see its numbers', async ({ page }) => {
+  await fresh(page)
+  await page.getByLabel('Project', { exact: true }).selectOption({ label: 'Mock B: Durham waterfront master plan' })
+  await page.getByLabel('Spotlight').selectOption({ label: 'Block E: condo towers' })
+  const card = page.getByRole('dialog', { name: 'Block E: condo towers: key numbers' })
+  await expect(card).toBeVisible()
+  await expect(card.getByText('Units')).toBeVisible()
+  await expect(page.locator('[data-feature="spotlight"]')).toHaveCount(1)
+  await card.getByRole('button', { name: 'Close' }).click()
+  await expect(page.locator('[data-feature="spotlight"]')).toHaveCount(0)
 })

@@ -95,7 +95,7 @@ function buildingArt(p: Palette, b: Building, x: number): string {
     if (b.pool) s += wrap('pool', at(roofX + 9.5, `<g transform="scale(.8)">${amenityBadge(p)}</g>`, roofY))
   }
   if (b.childcare) s += wrap('playground', at(x + size({ kind: 'building', b, x: 0, w: 0 }).w - 12.6, `<g transform="scale(.95)">${playgroundPiece(p)}</g>`))
-  return `<g data-building="${b.id.replace(/[^\w-]/g, '')}">${s}</g>`
+  return `<g data-building="${buildingKey(b.id)}">${s}</g>`
 }
 
 function partArt(p: Palette, placed: Placed): string {
@@ -162,6 +162,8 @@ export function kitArt(scene: Scene, skin: Skin, uid: string, L: KitLayout = kit
 }
 
 export const KIT_MARGIN = MARGIN
+/** The id a building carries in the drawing (data-building), safe for attribute selectors. */
+export const buildingKey = (id: string) => id.replace(/[^\w-]/g, '')
 /** Drawing-unit x of a metre position, and y of a height above ground. */
 export const px = (L: KitLayout, xm: number) => MARGIN + (xm * L.S)
 export const py = (L: KitLayout, hm: number) => GROUND_Y - (hm * L.S)

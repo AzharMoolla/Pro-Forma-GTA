@@ -4,9 +4,10 @@ import type { Node, NodeResult } from '../engine/portfolio'
 import { Button, cx } from './components'
 import { projectsUnder } from './coverage'
 import { metricValue, money, num } from './format'
-import { GROUND_Y, KIT_MARGIN, kitArt, kitLayout, limitMetresOf, metresOf, px, py, type KitLayout } from './kitStreetscape'
+import { buildingKey, GROUND_Y, KIT_MARGIN, kitArt, kitLayout, limitMetresOf, metresOf, px, py, type KitLayout } from './kitStreetscape'
 import { controllingLimit, sceneOf, type Building, type Scene } from './streetscapeScene'
 import { getResult } from './tree'
+import { useWorkspace } from './workspace'
 
 // A picture of the project assembled from the component kit (src/design-lab/components.ts): buildings, podiums,
 // storefronts, roofs, stations, parks and schools come from the pro forma; zoning limits and street facts from the site
@@ -26,7 +27,7 @@ const LOOKS = {
 } as const
 const skinOf = (style: ArtStyle) => (style === 'sketch' ? 'watercolour' : 'blueprint')
 
-export interface SvgProps { scene: Scene; style: ArtStyle; stats: Array<[string, string]>; title: string; uid: string; viewBox?: string }
+export interface SvgProps { scene: Scene; style: ArtStyle; stats: Array<[string, string]>; title: string; uid: string; viewBox?: string; /** data-building key of the spotlit building */ selected?: string | null }
 
 /** Zoning notes wrapped to the picture width (about 6.3 drawing units per character at 11.5 px). */
 export function noteLines(scene: Scene, W = kitLayout(scene).W): string[] {
@@ -55,11 +56,15 @@ export function summaryOf(scene: Scene, style: ArtStyle, title: string, stats: A
   return `${ART_STYLES.find((s) => s.id === style)!.label} streetscape of ${title}: ${scene.buildings.map(describe).join(', ')}.${limits}${over} ${stats.map(([k, v]) => `${k} ${v}`).join(', ')}.${scene.tags.length ? ` ${scene.tags.map((t) => `${t.title}: ${t.text}`).join('. ')}.` : ''}`
 }
 
+/** Spotlight glow: warm window-light gold, the same in both styles. */
+const GLOW = '#ffd36b'
+
 /** The drawing alone (no interaction): used by the interactive view, the report and the stress tests. */
-export const StreetscapeSvg = forwardRef<SVGSVGElement, SvgProps>(function StreetscapeSvg({ scene, style, stats, title, uid, viewBox }, ref) {
+export const StreetscapeSvg = forwardRef<SVGSVGElement, SvgProps>(function StreetscapeSvg({ scene, style, stats, title, uid, viewBox, selected = null }, ref) {
   const L = LOOKS[style]
   const { K, W, perRow, tagsTop, H } = heightOf(scene)
-  const art = kitArt(scene, skinOf(style), uid, K)
+  // The spotlit building gets an id so the window shine can be masked to its silhouette
+  const art = selected ? kitArt(scene, skinOf(style), uid, K).replace(`data-building="${selected}"`, `data-building="${selected}" id="${uid}-spot"`) : kitArt(scene, skinOf(style), uid, K)
   const buildings = K.placed.filter((q): q is typeof q & { part: Extract<Scene['parts'][number], { kind: 'building' }> } => q.part.kind === 'building')
   const stations = K.placed.filter((q) => q.part.kind === 'station')
   const uniformY = (storeys: number | null, metres: number | null) => { const m = limitMetresOf(storeys, metres); return m === null ? null : py(K, m) }
@@ -73,7 +78,33 @@ export const StreetscapeSvg = forwardRef<SVGSVGElement, SvgProps>(function Stree
         </pattern>
       </defs>
       <rect width={W} height={H} fill={L.bg} />
-      <g transform={`translate(${KIT_MARGIN} ${GROUND_Y}) scale(${K.S})`} dangerouslySetInnerHTML={{ __html: art }} />
+      {/* Spotlight: the night falls on everything else; the selected building glows and a light sweeps across its glass */}
+      {selected && <style>{`#${uid}-art > :not([data-building="${selected}"]):not(defs) { filter: brightness(.4) saturate(.55); transition: filter .25s }
+#${uid}-art > [data-building="${selected}"] { filter: drop-shadow(0 0 .25px ${GLOW}) drop-shadow(0 0 1.6px ${GLOW}cc) }
+@media (prefers-reduced-motion: reduce) { .${uid}-shine { display: none } }`}</style>}
+      {selected && <rect width={W} height={H} fill="#050a14" opacity={0.45} pointerEvents="none" />}
+      <g id={`${uid}-art`} transform={`translate(${KIT_MARGIN} ${GROUND_Y}) scale(${K.S})`} dangerouslySetInnerHTML={{ __html: art }} />
+      {selected && (() => {
+        const q = buildings.find(({ part }) => buildingKey(part.b.id) === selected)
+        if (!q) return null
+        return (
+          <g data-feature="spotlight" transform={`translate(${KIT_MARGIN} ${GROUND_Y}) scale(${K.S})`} pointerEvents="none">
+            <defs>
+              <mask id={`${uid}-spot-mask`} maskUnits="userSpaceOnUse"><use href={`#${uid}-spot`} style={{ filter: 'brightness(0) invert(1)' }} /></mask>
+              {/* Diagonal in the building's own box, so the sweep spans its full height however tall it is */}
+              <linearGradient id={`${uid}-shine`} x1="0" y1="1" x2="1" y2="0">
+                <stop offset=".38" stopColor="#fff" stopOpacity={0} />
+                <stop offset=".5" stopColor="#fff" stopOpacity={0.6} />
+                <stop offset=".62" stopColor="#fff" stopOpacity={0} />
+                <animateTransform attributeName="gradientTransform" type="translate" values="-1 0;1 0;1 0" keyTimes="0;.55;1" dur="3.6s" repeatCount="indefinite" />
+              </linearGradient>
+            </defs>
+            <g mask={`url(#${uid}-spot-mask)`}>
+              <rect className={`${uid}-shine`} x={q.x} y={-q.top} width={q.w} height={q.top} fill={`url(#${uid}-shine)`} style={{ mixBlendMode: 'screen' }} />
+            </g>
+          </g>
+        )
+      })()}
 
       {/* Over the controlling limit: the part of each building above it is hatched */}
       {buildings.map(({ part: { b }, x, w }) => {
@@ -169,11 +200,50 @@ const readStyle = (): ArtStyle => {
   try { const s = localStorage.getItem('gta-proforma:art'); return ART_STYLES.some((x) => x.id === s) ? (s as ArtStyle) : 'sketch' } catch { return 'sketch' }
 }
 
+const KIND_LABEL: Record<Building['kind'], string> = { tower: 'Tower', midrise: 'Mid-rise', townhouse: 'Townhouses', office: 'Office', industrial: 'Industrial', institutional: 'Civic', lots: 'Serviced lots' }
+
+/** Key numbers for the spotlit building: what it is, how it sits against its limits, and what it earns. */
+function BuildingCard({ b, r, onClose, onEdit }: { b: Building; r: NodeResult; onClose: () => void; onEdit: () => void }) {
+  const limit = controllingLimit(b)
+  const over = limit !== null && b.storeys > limit ? b.storeys - limit : 0
+  const m = r.metrics
+  const features = [b.retail && 'retail at grade', b.balconies && 'balconies', b.greenRoof && 'green roof', b.solar && 'solar', b.pool && 'pool', b.rooftopAmenity && 'rooftop amenity', b.childcare && 'childcare', b.heritage && 'heritage', b.transit === 'subway' && 'by the subway', b.transit === 'go' && 'by GO'].filter(Boolean) as string[]
+  const rows: Array<[string, string]> = [
+    ['Units', num(m.totalUnits?.value)],
+    ['Total development cost', metricValue(m.totalDevelopmentCost)],
+    ['Profit', metricValue(m.profit)],
+    ['Profit on cost', metricValue(m.profitOnCost)],
+  ]
+  return (
+    <div role="dialog" aria-label={`${b.name}: key numbers`} className="absolute top-2 left-2 z-10 w-72 rounded-lg border border-[#ffd36b]/40 bg-[#0b1220]/95 p-3 text-sm text-white shadow-[0_0_24px_rgba(255,211,107,.25)] backdrop-blur" onPointerDown={(e) => e.stopPropagation()}>
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <p className="font-semibold">{b.name}</p>
+          <p className="text-xs text-white/70">{KIND_LABEL[b.kind]}{b.kind === 'lots' ? '' : ` · ${b.storeys} storeys · about ${b.storeys * 3} m`}{b.podium ? ` · ${b.podium}-storey podium` : ''}</p>
+        </div>
+        <button type="button" className="min-h-8 rounded px-2 text-white/70 hover:bg-white/10" aria-label="Close" onClick={onClose}>×</button>
+      </div>
+      {limit !== null && b.kind !== 'lots' && (
+        <p className={cx('mt-2 rounded px-2 py-1 text-xs', over ? 'bg-white/10 text-[#ffa391]' : 'bg-white/10 text-[#8ee6a8]')}>
+          {over ? `${over} storeys over the ${limit}-storey limit: a rezoning is needed` : `Fits under the ${limit}-storey limit`}
+        </p>
+      )}
+      <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1">
+        {rows.map(([k, v]) => <div key={k} className="contents"><dt className="text-xs text-white/70">{k}</dt><dd className="num text-right text-sm font-semibold text-[#ffd36b] [text-shadow:0_0_8px_rgba(255,211,107,.65)]">{v}</dd></div>)}
+      </dl>
+      {features.length > 0 && <p className="mt-2 text-xs text-white/70">{features.join(' · ')}</p>}
+      <button type="button" className="mt-2 text-xs text-[#7dd3fc] underline" onClick={onEdit}>Edit this building</button>
+    </div>
+  )
+}
+
 export function Streetscape({ node, result, attributes }: { node: Node; result: NodeResult; attributes: Attributes }) {
   const uid = useId().replace(/:/g, '')
   const svgRef = useRef<SVGSVGElement>(null)
   const boxRef = useRef<HTMLDivElement>(null)
-  const drag = useRef<{ cx: number; cy: number; x: number; y: number } | null>(null)
+  const drag = useRef<{ cx: number; cy: number; x: number; y: number; moved: boolean } | null>(null)
+  const [selected, setSelected] = useState<string | null>(null)
+  const { state, dispatch } = useWorkspace()
   const [dragging, setDragging] = useState(false)
   const [view, setView] = useState({ x: 0, y: 0, k: 1 })
   const [style, setStyle] = useState<ArtStyle>(readStyle)
@@ -185,8 +255,9 @@ export function Streetscape({ node, result, attributes }: { node: Node; result: 
     return sceneOf(projects.map(({ path, project }) => ({ path, project, label: multi ? money((path.length ? getResult(result, path) : result).metrics.profit?.value) : undefined })), attributes)
   }, [node, result, attributes])
   const { W, H } = heightOf(scene)
+  const spot = scene.buildings.find((b) => buildingKey(b.id) === selected) ?? null
   const m = result.metrics
-  const stats: Array<[string, string]> = [['Homes', num(m.totalUnits?.value)], ['Total cost', metricValue(m.totalDevelopmentCost)], ['Profit', metricValue(m.profit)], ['Profit on cost', metricValue(m.profitOnCost)]]
+  const stats: Array<[string, string]> = [['Units', num(m.totalUnits?.value)], ['Total cost', metricValue(m.totalDevelopmentCost)], ['Profit', metricValue(m.profit)], ['Profit on cost', metricValue(m.profitOnCost)]]
 
   // Zoom and pan: the view is a window (x, y, zoom k ≥ 1) onto the whole W × H drawing
   const clampView = (v: { x: number; y: number; k: number }) => {
@@ -209,19 +280,20 @@ export function Streetscape({ node, result, attributes }: { node: Node; result: 
   const onPointerDown = (e: React.PointerEvent) => {
     if (e.button !== 0) return
     ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
-    drag.current = { cx: e.clientX, cy: e.clientY, x: view.x, y: view.y }
+    drag.current = { cx: e.clientX, cy: e.clientY, x: view.x, y: view.y, moved: false }
     setDragging(true)
   }
   const onPointerMove = (e: React.PointerEvent) => {
     const d = drag.current
     if (!d) return
+    if (Math.hypot(e.clientX - d.cx, e.clientY - d.cy) > 4) d.moved = true
     const u = unitsPerPx()
     setView((v) => clampView({ ...v, x: d.x - ((e.clientX - d.cx) * u), y: d.y - ((e.clientY - d.cy) * u) }))
   }
   const onKey = (e: React.KeyboardEvent) => {
     const step = 60 / view.k
     const moves: Record<string, () => void> = {
-      '+': () => zoomBy(1.4), '=': () => zoomBy(1.4), '-': () => zoomBy(1 / 1.4), '0': () => setView({ x: 0, y: 0, k: 1 }),
+      Escape: () => setSelected(null), '+': () => zoomBy(1.4), '=': () => zoomBy(1.4), '-': () => zoomBy(1 / 1.4), '0': () => setView({ x: 0, y: 0, k: 1 }),
       ArrowLeft: () => setView((v) => clampView({ ...v, x: v.x - step })), ArrowRight: () => setView((v) => clampView({ ...v, x: v.x + step })),
       ArrowUp: () => setView((v) => clampView({ ...v, y: v.y - step })), ArrowDown: () => setView((v) => clampView({ ...v, y: v.y + step })),
     }
@@ -261,6 +333,12 @@ export function Streetscape({ node, result, attributes }: { node: Node; result: 
             {s.label}
           </label>
         ))}
+        <label className="ml-auto flex items-center gap-2 text-ink-soft">Spotlight
+          <select className="min-h-9 rounded border border-line-strong bg-surface px-2 text-ink" value={selected ?? ''} onChange={(e) => setSelected(e.target.value || null)}>
+            <option value="">None</option>
+            {scene.buildings.map((b) => <option key={b.id} value={buildingKey(b.id)}>{b.name}</option>)}
+          </select>
+        </label>
       </fieldset>
       <div
         ref={boxRef}
@@ -272,7 +350,15 @@ export function Streetscape({ node, result, attributes }: { node: Node; result: 
         onKeyDown={onKey}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
-        onPointerUp={() => { drag.current = null; setDragging(false) }}
+        onPointerUp={(e) => {
+          // A click (not a drag) spotlights the building under the pointer, or clears the spotlight on empty space
+          if (drag.current && !drag.current.moved) {
+            const hit = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-building]')?.getAttribute('data-building') ?? null
+            setSelected((cur) => (hit && hit !== cur ? hit : null))
+          }
+          drag.current = null
+          setDragging(false)
+        }}
         onPointerCancel={() => { drag.current = null; setDragging(false) }}
       >
         <div className="absolute right-2 bottom-2 z-10 flex gap-1" onPointerDown={(e) => e.stopPropagation()}>
@@ -280,10 +366,11 @@ export function Streetscape({ node, result, attributes }: { node: Node; result: 
           <Button aria-label="Zoom out" onClick={() => zoomBy(1 / 1.4)}>−</Button>
           <Button onClick={() => setView({ x: 0, y: 0, k: 1 })}>Reset</Button>
         </div>
-        <StreetscapeSvg ref={svgRef} scene={scene} style={style} stats={stats} title={node.name} uid={uid} viewBox={`${view.x} ${view.y} ${W / view.k} ${H / view.k}`} />
+        {spot && <BuildingCard b={spot} r={spot.path.length ? getResult(result, spot.path) : result} onClose={() => setSelected(null)} onEdit={() => { dispatch({ type: 'path', path: [...state.path, ...spot.path] }); dispatch({ type: 'section', id: 'program' }) }} />}
+        <StreetscapeSvg ref={svgRef} scene={scene} style={style} stats={stats} title={node.name} uid={uid} selected={selected} viewBox={`${view.x} ${view.y} ${W / view.k} ${H / view.k}`} />
       </div>
       <figcaption className="flex flex-wrap items-center justify-between gap-2 text-xs text-ink-mute">
-        <span>Drag to move, scroll or use + and − to zoom. Illustration, not to scale; lanes are drawn by street class, not counted. Buildings, roofs, storefronts and stations come from the pro forma; the dashed lines and notes come from the site map's zoning (hatched where a building is over), and they are not a legal building envelope.</span>
+        <span>Click a building to spotlight it and see its numbers (Escape clears). Drag to move, scroll or use + and − to zoom. Illustration, not to scale; lanes are drawn by street class, not counted. Buildings, roofs, storefronts and stations come from the pro forma; the dashed lines and notes come from the site map's zoning (hatched where a building is over), and they are not a legal building envelope.</span>
         <Button onClick={download}>Download .svg</Button>
       </figcaption>
     </figure>

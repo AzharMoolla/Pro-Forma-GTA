@@ -21,3 +21,15 @@ describe('glossary', () => {
     expect(ambiguous.map((t) => t.id)).toEqual([])
   })
 })
+
+describe('glossary: each headline figure has its own definition', () => {
+  const termOf = (metric: string) => glossary.terms.find((t) => (t.metrics ?? []).includes(metric))?.id
+  it('unlevered and levered IRR, unlevered profit and profit on cost are explained separately', () => {
+    const ids = ['unleveredIrr', 'leveredIrr', 'profit', 'profitOnCost', 'profitOnCostBeforeFinancing', 'peakDebt'].map(termOf)
+    expect(new Set(ids).size).toBe(ids.length)
+    expect(ids.every(Boolean)).toBe(true)
+  })
+  it('levered and unlevered are themselves defined', () => {
+    for (const id of ['levered', 'unlevered']) expect(glossary.terms.some((t) => t.id === id)).toBe(true)
+  })
+})
