@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { CALCULATORS, runAll, type Calculator } from '../verification/cases'
-import { Card, Chip, TableWrap, td, tdNum, th } from './components'
+import { FITTED_RENTAL_SPREAD, NBLC_PEEL_2021, type BenchmarkRow } from '../verification/benchmarks'
+import { Button, Card, Chip, TableWrap, td, tdNum, th } from './components'
 import { money, pct } from './format'
 import { GlossaryText } from './Glossary'
 
@@ -39,7 +40,62 @@ export function Verification() {
         <p className="mb-3 text-sm text-ink-soft">Enter any inputs. The expected answer comes from the formula written out here; the model's answer comes from the engine itself. They should match to the cent.</p>
         <div className="grid gap-4 lg:grid-cols-2">{CALCULATORS.map((c) => <Calc key={c.id} c={c} />)}</div>
       </Card>
+      <Benchmark />
     </div>
+  )
+}
+
+/** The model against a published pro forma with known answers: NBLC's residual land values for 15 Peel sites. */
+function Benchmark() {
+  const [rows, setRows] = useState<{ condo: BenchmarkRow[]; rental: BenchmarkRow[] } | null>(null)
+  const [state, setState] = useState<'idle' | 'running' | string>('idle')
+  const worker = useRef<Worker | null>(null)
+  useEffect(() => () => worker.current?.terminate(), [])
+  const run = () => {
+    setState('running')
+    worker.current?.terminate()
+    worker.current = new Worker(new URL('./benchmark.worker.ts', import.meta.url), { type: 'module' })
+    worker.current.onmessage = (e: MessageEvent<{ ok: boolean; condo: BenchmarkRow[]; rental: BenchmarkRow[]; error?: string }>) => {
+      if (e.data.ok) { setRows({ condo: e.data.condo, rental: e.data.rental }); setState('idle') } else setState(e.data.error ?? 'failed')
+    }
+    worker.current.postMessage(null)
+  }
+  const revenue = (i: number) => { const s = NBLC_PEEL_2021[i]!; return (s.units * s.unitSqft * s.condoPsf) + (Math.round(s.units * s.parkingRes) * s.stallPrice) }
+  const within = rows ? rows.condo.filter((r, i) => r.error !== null && Math.abs(r.error) / revenue(i) <= 0.02).length : 0
+  return (
+    <Card title="Benchmark: published pro formas">
+      <p className="text-sm text-ink-soft">
+        The model rebuilds each of the 15 transit-area sites in NBLC's 2021 Inclusionary Zoning Evaluation for Peel from the study's own published inputs (site, units, prices, rents, hard and soft costs, development charges, financing), then solves the land value the way the study does: the price at which profit after financing is 15% of revenue (condo), or the stabilized value at the cap rate plus a profit spread covers every cost (rental). It compares that with the study's stated land values. A residual magnifies small differences: missing by 1% of revenue moves land by about 1% of revenue.
+      </p>
+      <p className="mt-2 text-xs text-ink-mute">Where the study is silent, one assumption applies to every site: 375 ft² of underground parking per stall, 18 months before construction, 20–36 months to build by height, HST remitted net of the Ontario rebate, deposits held in trust. The rental profit spread is unpublished; {pct(FITTED_RENTAL_SPREAD, 2)} is the one value fitted to the study. Full method and results: docs/implementation/BENCHMARK.md.</p>
+      <div className="mt-3 flex flex-wrap items-center gap-3">
+        <Button variant="primary" onClick={run} disabled={state === 'running'}>{state === 'running' ? 'Running 30 land solves…' : rows ? 'Run again' : 'Run the benchmark'}</Button>
+        {rows && <Chip tone={within >= 9 ? 'good' : 'warn'}>Condo: {within} of 15 within 2% of revenue</Chip>}
+        {state !== 'idle' && state !== 'running' && <span role="alert" className="text-sm text-bad">{state}</span>}
+      </div>
+      {rows && (
+        <div className="mt-3">
+          <TableWrap caption="Residual land value: study vs this model">
+            <thead><tr>{['Site', 'Condo: study', 'Condo: model', 'Miss (% of revenue)', 'Rental: study', 'Rental: model', 'Miss'].map((h, i) => <th key={h} scope="col" className={i ? `${th} text-right` : th}>{h}</th>)}</tr></thead>
+            <tbody>{NBLC_PEEL_2021.map((site, i) => {
+              const c = rows.condo[i]!, r = rows.rental[i]!
+              const share = c.error === null ? null : c.error / revenue(i)
+              return (
+                <tr key={site.name}>
+                  <td className={td}>{site.name}</td>
+                  <td className={tdNum}>{money(c.stated)}</td>
+                  <td className={tdNum}>{c.ours === null ? 'n/a' : money(c.ours)}</td>
+                  <td className={tdNum}><span className={share !== null && Math.abs(share) <= 0.02 ? 'text-good' : 'text-warn'}>{share === null ? 'n/a' : pct(share, 1)}</span></td>
+                  <td className={tdNum}>{money(r.stated)}</td>
+                  <td className={tdNum}>{r.ours === null ? 'n/a' : money(r.ours)}</td>
+                  <td className={tdNum}>{r.error === null ? 'n/a' : money(r.error)}</td>
+                </tr>
+              )
+            })}</tbody>
+          </TableWrap>
+        </div>
+      )}
+    </Card>
   )
 }
 
