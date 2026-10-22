@@ -7,6 +7,7 @@ import { Button, Card, TableWrap, td, tdNum, th } from './components'
 import { catalogueItem } from './data'
 import { metricValue, money, pct } from './format'
 import { useTrackerView } from './sections3'
+import { Gantt, HeatmapChart, ScenarioBars, StackedBars, Waterfall } from './chartViews'
 import { useWorkspace } from './workspace'
 
 // Charts: named views over the same results as the tables. Every chart has a table view and CSV/SVG downloads, and
@@ -46,95 +47,12 @@ const Legend = ({ items }: { items: Array<{ label: string; colour: string; dashe
   </ul>
 )
 
-/** Diverging stacked bars: positive series stack up from zero, negative ones down. One axis, money. */
-function StackedBars({ series, rows, label }: { series: Series[]; rows: StackedRow[]; label: string }) {
-  const [hover, setHover] = useState<number | null>(null)
-  const W = 760
-  const H = 260
-  const pad = { l: 64, r: 8, t: 10, b: 26 }
-  const up = (r: StackedRow) => series.filter((s) => s.sign > 0).reduce((t, s) => t + (r.values[s.id] ?? 0), 0)
-  const down = (r: StackedRow) => series.filter((s) => s.sign < 0).reduce((t, s) => t + (r.values[s.id] ?? 0), 0)
-  const top = Math.max(1, ...rows.map(up))
-  const bottom = Math.max(0, ...rows.map(down))
-  const y = (v: number) => pad.t + (((top - v) / (top + bottom)) * (H - pad.t - pad.b))
-  const band = (W - pad.l - pad.r) / Math.max(1, rows.length)
-  const barW = Math.max(3, Math.min(30, band - 4))
-  return (
-    <div className="relative">
-      <Legend items={series.map((s) => ({ label: `${s.label} (${s.sign > 0 ? 'up' : 'down'})`, colour: s.colour }))} />
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label={`${label}. Table view available.`} onMouseLeave={() => setHover(null)}>
-        {[top, top / 2, 0, -bottom / 2, -bottom].filter((v, i, a) => a.indexOf(v) === i).map((t) => (
-          <g key={t}>
-            <line x1={pad.l} x2={W - pad.r} y1={y(t)} y2={y(t)} stroke="var(--border)" strokeWidth={t === 0 ? 1.5 : 1} />
-            <text x={pad.l - 6} y={y(t) + 4} textAnchor="end" fontSize="11" fill="var(--ink-mute)">{money(t)}</text>
-          </g>
-        ))}
-        {rows.map((r, i) => {
-          const x = pad.l + (i * band) + ((band - barW) / 2)
-          const before = (k: number, sign: number) => series.slice(0, k).filter((x) => x.sign === sign).reduce((t, x) => t + Math.max(0, r.values[x.id] ?? 0), 0)
-          return (
-            <g key={r.label} opacity={hover === null || hover === i ? 1 : 0.5}>
-              {series.map((s, k) => {
-                const v = r.values[s.id] ?? 0
-                if (v <= 0) return null
-                const from = s.sign > 0 ? before(k, 1) : -before(k, -1)
-                const to = s.sign > 0 ? from + v : from - v
-                // 1-unit surface gap between stacked segments
-                return <rect key={s.id} x={x} y={Math.min(y(from), y(to)) + 0.5} width={barW} height={Math.max(0.5, Math.abs(y(to) - y(from)) - 1)} fill={s.colour} rx={1.5} />
-              })}
-              <rect x={pad.l + (i * band)} y={pad.t} width={band} height={H - pad.t - pad.b} fill="transparent" onMouseEnter={() => setHover(i)} />
-              {(rows.length <= 16 || i % 2 === 0) && <text x={x + (barW / 2)} y={H - 8} textAnchor="middle" fontSize="11" fill="var(--ink-mute)">{r.label}</text>}
-            </g>
-          )
-        })}
-      </svg>
-      {hover !== null && (
-        <div className="pointer-events-none absolute top-8 right-2 rounded border border-line bg-surface px-2 py-1 text-xs shadow-sm" role="status">
-          <p className="font-medium">{rows[hover]!.label}</p>
-          {series.map((s) => <p key={s.id}>{s.label}: <span className="num">{money(rows[hover]!.values[s.id] ?? 0)}</span></p>)}
-        </div>
-      )}
-    </div>
-  )
-}
-
 const stackedTable = (series: Series[], rows: StackedRow[], caption: string) => (
   <TableWrap caption={caption}>
     <thead><tr><th scope="col" className={th}>Year</th>{series.map((s) => <th key={s.id} scope="col" className={`${th} text-right`}>{s.label}</th>)}</tr></thead>
     <tbody>{rows.map((r) => <tr key={r.label}><td className={td}>{r.label}</td>{series.map((s) => <td key={s.id} className={tdNum}>{money(r.values[s.id] ?? 0, false)}</td>)}</tr>)}</tbody>
   </TableWrap>
 )
-
-/** Horizontal waterfall: each cost bucket adds to the running total. */
-function Waterfall({ steps }: { steps: Array<{ label: string; value: number }> }) {
-  const total = steps.reduce((s, x) => s + x.value, 0)
-  const W = 760
-  const rowH = 26
-  const pad = { l: 190, r: 90 }
-  const x = (v: number) => pad.l + ((v / Math.max(1, total)) * (W - pad.l - pad.r))
-  const starts = steps.map((_, i) => steps.slice(0, i).reduce((s, v) => s + v.value, 0))
-  return (
-    <svg viewBox={`0 0 ${W} ${(steps.length + 1) * rowH + 8}`} className="w-full" role="img" aria-label={`Cost build-up to ${money(total)}. Table view available.`}>
-      {steps.map((s, i) => {
-        const from = starts[i]!
-        const acc = from + s.value
-        return (
-          <g key={s.label}>
-            <text x={pad.l - 8} y={(i * rowH) + 17} textAnchor="end" fontSize="11.5" fill="var(--ink-soft)">{s.label}</text>
-            <rect x={Math.min(x(from), x(acc))} y={(i * rowH) + 5} width={Math.max(1, Math.abs(x(acc) - x(from)))} height={rowH - 10} rx={2} fill="var(--chart-out)" />
-            {i > 0 && <line x1={x(from)} x2={x(from)} y1={(i * rowH) - 5} y2={(i * rowH) + 5} stroke="var(--ink-mute)" strokeDasharray="2 2" />}
-            <text x={Math.max(x(from), x(acc)) + 6} y={(i * rowH) + 17} fontSize="11" fill="var(--ink-soft)">{money(s.value)} · {pct(s.value / total, 0)}</text>
-          </g>
-        )
-      })}
-      <g>
-        <text x={pad.l - 8} y={(steps.length * rowH) + 17} textAnchor="end" fontSize="11.5" fontWeight={600} fill="var(--ink)">Total</text>
-        <rect x={x(0)} y={(steps.length * rowH) + 5} width={x(total) - x(0)} height={rowH - 10} rx={2} fill="var(--ink-mute)" />
-        <text x={x(total) + 6} y={(steps.length * rowH) + 17} fontSize="11" fontWeight={600} fill="var(--ink)">{money(total)}</text>
-      </g>
-    </svg>
-  )
-}
 
 /** Grid of values with the value written in each cell; colour (diverging around the base case) is secondary. */
 function Heatmap({ rows, cols, cells, base, format, rowLabel, colLabel }: { rows: string[]; cols: string[]; cells: Array<Array<number | null>>; base: number | null; format: (v: number) => string; rowLabel: string; colLabel: string }) {
@@ -160,69 +78,6 @@ function Heatmap({ rows, cols, cells, base, format, rowLabel, colLabel }: { rows
           </tr>
         ))}</tbody>
       </table>
-    </div>
-  )
-}
-
-function Gantt({ bars }: { bars: ReturnType<typeof timeline> }) {
-  const end = Math.max(1, ...bars.map((b) => b.start + b.segments.reduce((s, x) => s + x.months, 0)))
-  const W = 760
-  const rowH = 24
-  const pad = { l: 170, r: 10, t: 22 }
-  const x = (m: number) => pad.l + ((m / end) * (W - pad.l - pad.r))
-  const segs = [...new Map(bars.flatMap((b) => b.segments).map((s) => [s.id, s])).values()]
-  return (
-    <>
-      <Legend items={segs.map((s) => ({ label: s.label, colour: s.colour }))} />
-      <svg viewBox={`0 0 ${W} ${pad.t + (bars.length * rowH) + 6}`} className="w-full" role="img" aria-label={`Schedule of ${bars.length} buildings over ${end} months. Table view available.`}>
-        {Array.from({ length: Math.floor(end / 12) + 1 }, (_, yr) => (
-          <g key={yr}>
-            <line x1={x(yr * 12)} x2={x(yr * 12)} y1={pad.t - 4} y2={pad.t + (bars.length * rowH)} stroke="var(--border)" />
-            {(end <= 180 || yr % 2 === 0) && <text x={x(yr * 12) + 2} y={pad.t - 8} fontSize="10.5" fill="var(--ink-mute)">Y{yr + 1}</text>}
-          </g>
-        ))}
-        {bars.map((b, i) => {
-          const startOf = (k: number) => b.start + b.segments.slice(0, k).reduce((t, x) => t + x.months, 0)
-          return (
-            <g key={`${b.name}-${i}`}>
-              <text x={pad.l - 8} y={pad.t + (i * rowH) + 16} textAnchor="end" fontSize="11.5" fill="var(--ink-soft)">{b.name.length > 26 ? `${b.name.slice(0, 25)}…` : b.name}</text>
-              {b.segments.map((s, k) => {
-                const from = startOf(k)
-                const at = from + s.months
-                return <rect key={s.id} x={x(from) + 0.5} y={pad.t + (i * rowH) + 5} width={Math.max(1, x(at) - x(from) - 1)} height={rowH - 10} rx={2} fill={s.colour}><title>{`${b.name}: ${s.label}, months ${from}–${at}`}</title></rect>
-              })}
-            </g>
-          )
-        })}
-      </svg>
-    </>
-  )
-}
-
-/** Small multiples: one bar chart per metric (each on its own axis), scenarios as rows. */
-function ScenarioBars({ names, metrics }: { names: string[]; metrics: Array<{ label: string; values: Array<number | null>; format: (v: number) => string }> }) {
-  return (
-    <div className="grid gap-4 md:grid-cols-2">
-      {metrics.map((m) => {
-        const max = Math.max(1e-9, ...m.values.map((v) => Math.abs(v ?? 0)))
-        return (
-          <div key={m.label}>
-            <p className="mb-1 text-sm font-medium">{m.label}</p>
-            <ul className="flex flex-col gap-1">
-              {names.map((n, i) => {
-                const v = m.values[i] ?? null
-                return (
-                  <li key={n} className="grid grid-cols-[minmax(0,8rem)_1fr_auto] items-center gap-2 text-xs">
-                    <span className="truncate text-ink-soft" title={n}>{n}</span>
-                    <span className="h-3 rounded-sm bg-sunken" aria-hidden><span className="block h-full rounded-sm" style={{ width: `${v === null ? 0 : Math.max(1, (Math.abs(v) / max) * 100)}%`, background: v !== null && v < 0 ? 'var(--chart-out)' : i === names.length - 1 ? 'var(--chart-3)' : 'var(--chart-in)' }} /></span>
-                    <span className="num">{v === null ? 'n/a' : m.format(v)}</span>
-                  </li>
-                )
-              })}
-            </ul>
-          </div>
-        )
-      })}
     </div>
   )
 }
@@ -293,7 +148,7 @@ export function Visuals() {
             <option value="leveredIrr">Levered IRR</option>
           </select>
         </label>
-        <Heatmap rows={grid.rows.map((r) => `${r >= 1 ? '+' : ''}${Math.round((r - 1) * 100)}%`)} cols={grid.cols.map((c) => `${c >= 0 ? '+' : ''}${c} bps`)} cells={grid.cells} base={grid.base} format={pctFmt} rowLabel="revenue" colLabel="exit cap rate" />
+        <HeatmapChart rows={grid.rows.map((r) => `${r >= 1 ? '+' : ''}${Math.round((r - 1) * 100)}%`)} cols={grid.cols.map((c) => `${c >= 0 ? '+' : ''}${c} bps`)} cells={grid.cells} base={grid.base} format={pctFmt} rowLabel="revenue" colLabel="exit cap rate" />
       </ChartFigure>
 
       <ChartFigure

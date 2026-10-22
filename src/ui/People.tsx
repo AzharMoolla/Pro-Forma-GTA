@@ -1,10 +1,11 @@
-import { AFFORDABLE_SHARE, affordability, implications, type AffordabilityRow, type AreaProfile } from '../engine/affordability'
+import { AFFORDABLE_SHARE, affordability, implications, type AreaProfile } from '../engine/affordability'
 import { toCsv } from './chartData'
 import { Card, Chip, TableWrap, td, tdNum, th } from './components'
 import { projectsUnder } from './coverage'
 import { catalogue } from './data'
 import { money, num, pct } from './format'
 import { ChartFigure } from './Visuals'
+import { AffordabilityChart } from './chartViews'
 import { useWorkspace } from './workspace'
 
 // People & affordability: who the homes are for, whether they can afford them over time, and what the new residents
@@ -12,36 +13,6 @@ import { useWorkspace } from './workspace'
 
 const YEARS = 10
 const n = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : null)
-
-function AffordabilityChart({ rows, startLabel }: { rows: AffordabilityRow[]; startLabel: string }) {
-  const W = 760
-  const H = 260
-  const pad = { l: 46, r: 120, t: 12, b: 26 }
-  const max = Math.max(0.45, ...rows.flatMap((r) => r.shares)) * 1.05
-  const x = (y: number) => pad.l + ((y / (YEARS - 1)) * (W - pad.l - pad.r))
-  const y = (v: number) => pad.t + ((1 - (v / max)) * (H - pad.t - pad.b))
-  const colours = ['var(--chart-in)', 'var(--chart-3)', 'var(--chart-4)', 'var(--chart-out)']
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label={`Share of household income spent on housing over ${YEARS} years, by unit type, against the 30% threshold. Table view available.`}>
-      {[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6].filter((t) => t <= max).map((t) => (
-        <g key={t}>
-          <line x1={pad.l} x2={W - pad.r} y1={y(t)} y2={y(t)} stroke="var(--border)" />
-          <text x={pad.l - 6} y={y(t) + 4} textAnchor="end" fontSize="11" fill="var(--ink-mute)">{Math.round(t * 100)}%</text>
-        </g>
-      ))}
-      <line x1={pad.l} x2={W - pad.r} y1={y(AFFORDABLE_SHARE)} y2={y(AFFORDABLE_SHARE)} stroke="var(--bad)" strokeWidth={2} strokeDasharray="8 5" />
-      <text x={W - pad.r + 6} y={y(AFFORDABLE_SHARE) + 4} fontSize="11" fontWeight={600} fill="var(--bad)">30% threshold</text>
-      {rows.map((r, i) => (
-        <g key={r.unit}>
-          <polyline fill="none" stroke={colours[i % colours.length]} strokeWidth={2} points={r.shares.map((s, k) => `${x(k)},${y(s)}`).join(' ')} />
-          {r.shares.map((s, k) => <circle key={k} cx={x(k)} cy={y(s)} r={3} fill={colours[i % colours.length]}><title>{`${r.unit}, year ${k + 1}: ${pct(s, 1)} of income`}</title></circle>)}
-          <text x={x(YEARS - 1) + 6} y={y(r.shares.at(-1)!) + 4} fontSize="11" fill="var(--ink-soft)">{r.unit}</text>
-        </g>
-      ))}
-      {Array.from({ length: YEARS }, (_, k) => <text key={k} x={x(k)} y={H - 8} textAnchor="middle" fontSize="11" fill="var(--ink-mute)">{k === 0 ? startLabel : `+${k}`}</text>)}
-    </svg>
-  )
-}
 
 export function People() {
   const { state, dispatch, node } = useWorkspace()

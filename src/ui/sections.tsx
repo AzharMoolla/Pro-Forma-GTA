@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { CostLine, Driver } from '../engine/costs'
 import { isPortfolio } from '../engine/portfolio'
-import { CashFlowChart } from './charts'
+import { CashFlowChart } from './chartViews'
 import { Button, Card, Chip, NumberField, SourceChip, TableWrap, cx, td, tdNum, th } from './components'
 import { projectsUnder } from './coverage'
 import { catalogue, catalogueItem, variableInfo } from './data'

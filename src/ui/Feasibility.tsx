@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import type { FundingMonth } from '../engine/funding'
 import { isPortfolio } from '../engine/portfolio'
 import { DOWNSIDE, landTotal, solve, type Lever } from '../engine/stress'
@@ -8,57 +8,27 @@ import { Card, Chip, TableWrap, td, tdNum, th } from './components'
 import { money, pct } from './format'
 import { useAnalysis } from './sections3'
 import { ChartFigure } from './Visuals'
+import { axis, EChart, type EChartsOption, type Tokens } from './EChart'
 import { useWorkspace } from './workspace'
 
 // Feasibility: can the project be funded, what land price and revenue it supports, how it holds up when several
 // things go wrong at once, and what HST does to cash. Every figure re-runs the same engine on a changed input.
 
-const LINES = [
-  { id: 'debt', label: 'Construction loan', colour: 'var(--chart-out)' },
-  { id: 'limit', label: 'Lender commitment (LTC × budget)', colour: 'var(--ink-mute)', dashed: true },
-  { id: 'equityNet', label: 'Equity out of pocket', colour: 'var(--chart-in)' },
-] as const
-
 function FundingChart({ months }: { months: FundingMonth[] }) {
-  const [hover, setHover] = useState<number | null>(null)
-  const W = 760
-  const H = 260
-  const pad = { l: 64, r: 8, t: 10, b: 26 }
-  const top = Math.max(1, ...months.flatMap((m) => [m.debt, m.limit, m.equityNet]))
-  const bottom = Math.min(0, ...months.map((m) => m.equityNet))
-  const x = (i: number) => pad.l + ((i / Math.max(1, months.length - 1)) * (W - pad.l - pad.r))
-  const y = (v: number) => pad.t + (((top - v) / (top - bottom)) * (H - pad.t - pad.b))
-  const step = Math.max(1, Math.ceil(months.length / 12 / 10)) * 12
-  const h = hover === null ? null : months[hover]!
-  return (
-    <div className="relative">
-      <ul className="mb-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-soft">
-        {LINES.map((l) => <li key={l.id} className="flex items-center gap-1.5"><svg width="18" height="6" aria-hidden><line x1="0" x2="18" y1="3" y2="3" stroke={l.colour} strokeWidth="2" strokeDasharray={'dashed' in l ? '5 3' : undefined} /></svg>{l.label}</li>)}
-      </ul>
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Construction loan against the lender's commitment, and equity out of pocket, by month. Table view available." onMouseLeave={() => setHover(null)}>
-        {[top, top / 2, 0, bottom].filter((v, i, a) => a.indexOf(v) === i).map((t) => (
-          <g key={t}>
-            <line x1={pad.l} x2={W - pad.r} y1={y(t)} y2={y(t)} stroke="var(--border)" strokeWidth={t === 0 ? 1.5 : 1} />
-            <text x={pad.l - 6} y={y(t) + 4} textAnchor="end" fontSize="11" fill="var(--ink-mute)">{money(t)}</text>
-          </g>
-        ))}
-        {LINES.map((l) => {
-          const pts = months.map((m, i) => (l.id === 'limit' && m.limit === 0 ? null : `${x(i)},${y(m[l.id])}`)).filter(Boolean)
-          return <polyline key={l.id} fill="none" stroke={l.colour} strokeWidth={2} strokeDasharray={'dashed' in l ? '6 4' : undefined} points={pts.join(' ')} />
-        })}
-        {months.map((m, i) => (m.month % step === 0 ? <text key={m.month} x={x(i)} y={H - 8} textAnchor="middle" fontSize="11" fill="var(--ink-mute)">Y{(m.month / 12) + 1}</text> : null))}
-        {hover !== null && <line x1={x(hover)} x2={x(hover)} y1={pad.t} y2={H - pad.b} stroke="var(--ink-mute)" strokeDasharray="2 3" />}
-        {months.map((m, i) => <rect key={m.month} x={x(i) - ((W - pad.l - pad.r) / months.length / 2)} y={pad.t} width={(W - pad.l - pad.r) / months.length} height={H - pad.t - pad.b} fill="transparent" onMouseEnter={() => setHover(i)} />)}
-      </svg>
-      {h && (
-        <div className="pointer-events-none absolute top-8 right-2 rounded border border-line bg-surface px-2 py-1 text-xs shadow-sm" role="status">
-          <p className="font-medium">Month {h.month}</p>
-          <p>Loan: <span className="num">{money(h.debt)}</span>{h.limit ? <> of <span className="num">{money(h.limit)}</span></> : null}</p>
-          <p>Equity out: <span className="num">{money(h.equityNet)}</span></p>
-        </div>
-      )}
-    </div>
-  )
+  const option = useCallback((t: Tokens): EChartsOption => {
+    const line = (name: string, data: Array<number | null>, color: string, dashed = false) => ({ name, type: 'line', data, showSymbol: false, symbolSize: 8, lineStyle: { width: 2, color, type: dashed ? 'dashed' : 'solid' }, itemStyle: { color }, emphasis: { focus: 'series' } })
+    return {
+      tooltip: { trigger: 'axis', valueFormatter: (v: unknown) => (typeof v === 'number' ? money(v) : '—') },
+      xAxis: { type: 'category', data: months.map((m) => `M${m.month}`), ...axis(t), axisLabel: { color: t.mute, interval: 11, formatter: (_: string, i: number) => `Y${Math.floor(i / 12) + 1}` }, splitLine: { show: false } },
+      yAxis: { type: 'value', ...axis(t), axisLabel: { color: t.mute, formatter: (v: number) => money(v) } },
+      series: [
+        line('Construction loan', months.map((m) => m.debt), t.out),
+        line('Lender commitment (LTC × budget)', months.map((m) => (m.limit ? m.limit : null)), t.mute, true),
+        line('Equity out of pocket', months.map((m) => m.equityNet), t.in),
+      ],
+    }
+  }, [months])
+  return <EChart option={option} height={300} label="Construction loan against the lender's commitment, and equity out of pocket, by month." />
 }
 
 const METRICS = [

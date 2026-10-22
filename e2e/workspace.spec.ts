@@ -13,6 +13,7 @@ async function fresh(page: Page) {
 const openSection = (page: Page, name: string) => page.getByRole('navigation', { name: 'Workspace sections' }).getByRole('button', { name, exact: true }).click()
 
 test('every section renders without axe violations', async ({ page }) => {
+  test.setTimeout(120_000) // 17 sections, each with an axe scan
   await fresh(page)
   for (const name of sections) {
     await openSection(page, name)
