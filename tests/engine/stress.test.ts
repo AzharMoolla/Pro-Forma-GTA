@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest'
 import { funding } from '../../src/engine/funding'
 import { runNode } from '../../src/engine/portfolio'
 import { runProject } from '../../src/engine/project'
-import { downside, landTotal, solve, stress } from '../../src/engine/stress'
+import catalogueJson from '../../data/costs/catalogue.json'
+import { analyze, costItems } from '../../src/engine/insights'
+import { downside, feasibility, feasibilityFacts, landTotal, solve, stress } from '../../src/engine/stress'
+import { workbookSheets } from '../../src/export/workbook'
 import { hstTiming } from '../../src/engine/tax'
 import { tinyProject } from './fixtures'
 
@@ -86,5 +89,33 @@ describe('HST timing (rental self-supply)', () => {
     expect(h.netCost).toBe(0)
     expect(h.peakOutstanding).toBe(13_000)
     expect(h.carryCost).toBeGreaterThan(0)
+  })
+})
+
+describe('feasibility reaches the analysis and the workbook', () => {
+  it('funding gap is a concern; combined downside is graded', () => {
+    const f = feasibility(tinyProject())
+    expect(f.fundingGap).toBe(125)
+    const facts = feasibilityFacts(f)
+    const p = tinyProject()
+    const base = { items: costItems(p, runNode(p), () => undefined), isMasterPlan: false }
+    const ids = (poc: number, worst: number | null) => analyze({ ...base, metrics: { profitOnCost: { value: poc } }, feasibility: { ...facts, combined: { ...facts.combined, profitOnCost: worst } } }).insights.map((i) => `${i.id}:${i.severity}`)
+    expect(ids(0.2, 0.15)).toEqual(expect.arrayContaining(['funding-gap:concern', 'downside-holds:good']))
+    expect(ids(0.2, 0.05)).toContain('downside-thin:watch')
+    expect(ids(0.2, -0.01)).toContain('downside-loss:concern')
+    expect(ids(0.2, null).some((x) => x.startsWith('downside'))).toBe(false)
+  })
+
+  it('the workbook gets a Feasibility sheet', () => {
+    const p = tinyProject()
+    const sheets = workbookSheets({
+      projectName: 'Tiny', projectType: 'rental', draft: p, result: runNode(p), attributes: {}, catalogue: catalogueJson as never,
+      coverage: [], readiness: { model: '', scope: '', sources: '' }, insights: [],
+      tracker: { stages: [], current: null, done: 0, total: 0, budget: 0, actual: { known: 0, unknown: 0 }, forecast: { known: 0, unknown: 0 } } as never,
+      scenarios: [], draftParentId: null, dataContext: {}, exportedAt: '2026-10-22T00:00:00Z', synthetic: true, feasibility: feasibility(p),
+    })
+    const sheet = sheets.find((s) => s.name === 'Feasibility')!
+    expect(sheet.rows).toContainEqual(['Funding gap (total)', 125, 'construction + refinance + exit gaps'])
+    expect(sheet.rows.some((r) => r[0] === 'All together')).toBe(true)
   })
 })

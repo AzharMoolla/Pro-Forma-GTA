@@ -3,7 +3,8 @@
 // re-runs the same engine on a changed input. Pure.
 
 import { lineTotals, type CostLine } from './costs'
-import { funding } from './funding'
+import { funding, type Funding } from './funding'
+import type { FeasibilityFacts } from './insights'
 import { isPortfolio, runNode, type Node, type NodeResult } from './portfolio'
 import type { ProjectInput } from './project'
 import { scaleDriver } from './uncertainty'
@@ -122,4 +123,24 @@ export function downside(node: Node, cases: DownsideCase[] = DOWNSIDE): Downside
     const f = result?.project && !isPortfolio(input) ? funding(input, result.project) : null
     return { ...c, result, fundingGap: f ? f.constructionGap + (f.refinance?.gap ?? 0) + f.exitGap : null }
   })
+}
+
+export interface Feasibility { funding: Funding | null; fundingGap: number | null; downside: DownsideRow[] }
+
+/** Funding gap (single building) and the combined downside: what the Decision summary, report and workbook share. */
+export function feasibility(node: Node): Feasibility {
+  const rows = downside(node)
+  const base = rows[0]!.result
+  const f = base?.project && !isPortfolio(node) ? funding(node, base.project) : null
+  return { funding: f, fundingGap: rows[0]!.fundingGap, downside: rows }
+}
+
+/** The facts the analysis turns into findings. */
+export function feasibilityFacts(f: Feasibility): FeasibilityFacts {
+  const combined = f.downside.find((r) => r.id === 'combined')!
+  const shocks = DOWNSIDE.map((d) => d.label.toLowerCase()).join(', ')
+  return {
+    funding: f.funding ? { construction: f.funding.constructionGap, refinance: f.funding.refinance?.gap ?? 0, exit: f.funding.exitGap } : null,
+    combined: { profitOnCost: combined.result?.metrics.profitOnCost?.value ?? null, fundingGap: combined.fundingGap, shocks },
+  }
 }

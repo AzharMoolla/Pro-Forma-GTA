@@ -9,6 +9,7 @@ import { readSources } from './SiteMap'
 import { buildingOf, scoped } from './streetscapeScene'
 import { getNode } from './tree'
 import { isPortfolio, type Node } from '../engine/portfolio'
+import { feasibility, feasibilityFacts } from '../engine/stress'
 import type { ProjectInput } from '../engine/project'
 import { addBuilding, buildTracker, lineFromActual, lineFromItem, removeNode, validateReceipt, type Receipt, type Task, type TaskStatus } from '../tracker/tracker'
 import { Button, Card, Chip, NumberField, SourceChip, cx } from './components'
@@ -125,12 +126,13 @@ const SEVERITY: Record<Severity, { label: string; icon: string; tone: 'good' | '
 export function useAnalysis() {
   const { node, nodeResult, demo, state, draft } = useWorkspace()
   const attributes = state.projects[state.projectId]!.attributes
+  const feas = useMemo(() => feasibility(node), [node])
   return useMemo(() => {
     if (!nodeResult) return null
     const unaccounted = state.path.length ? 0 : coverage(demo.projectType, attributes, draft, demo.coverage).filter((e) => e.status === 'unaccounted').length
     const prog = isPortfolio(node) ? undefined : node.program
-    return analyze({ items: costItems(node, nodeResult, stageOf), metrics: nodeResult.metrics, isMasterPlan: isPortfolio(node), unaccountedItems: unaccounted, buildableSqft: prog ? (prog.planningGfaSqft ?? prog.gcaAboveSqft) : null, site: siteFactsFor(node, state.path, attributes) })
-  }, [node, nodeResult, demo, attributes, draft, state.path])
+    return { ...analyze({ items: costItems(node, nodeResult, stageOf), metrics: nodeResult.metrics, isMasterPlan: isPortfolio(node), unaccountedItems: unaccounted, buildableSqft: prog ? (prog.planningGfaSqft ?? prog.gcaAboveSqft) : null, site: siteFactsFor(node, state.path, attributes), feasibility: feasibilityFacts(feas) }), feasibility: feas }
+  }, [node, nodeResult, demo, attributes, draft, state.path, feas])
 }
 
 /** First sentence of a detail, for the collapsed line. */
@@ -238,6 +240,7 @@ export function DecisionSummary() {
     ...(has('height-over') || has('fsi-over') ? [{ label: 'Model the rezoning (time and cost) on a branch', run: () => document.getElementById('observations')?.scrollIntoView({ behavior: 'smooth' }) }] : []),
     ...(analysis.insights.some((i) => i.id === 'unaccounted') ? [{ label: 'Estimate the applicable costs that are not in the model', run: go({ type: 'section', id: 'audit' }) }] : []),
     ...(!nodeResult.complete ? [{ label: 'Fill the unknown cost lines', run: go({ type: 'section', id: 'costs' }) }] : []),
+    ...(has('funding-gap') || has('downside-loss') ? [{ label: has('funding-gap') ? 'Close the funding gap: check the loan, refinance and equity' : 'Check break-even rents and costs', run: go({ type: 'section', id: 'feasibility' }) }] : []),
     ...(project.scenarios.length ? [] : [{ label: 'Lock a scenario so this version can be cited', run: go({ type: 'section', id: 'scenarios' }) }]),
     { label: 'Test the assumptions that matter most', run: go({ type: 'section', id: 'charts' }) },
   ].slice(0, 4)

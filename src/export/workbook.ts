@@ -4,6 +4,7 @@
 import type { Attributes, Catalogue } from '../engine/catalogue'
 import { lineTotals, type CostLine } from '../engine/costs'
 import type { Insight } from '../engine/insights'
+import type { Feasibility } from '../engine/stress'
 import { isPortfolio, type Node, type NodeResult } from '../engine/portfolio'
 import { CONVENTION_VERSION, ENGINE_VERSION } from '../engine/project'
 import type { TrackerView } from '../tracker/tracker'
@@ -26,6 +27,7 @@ export interface WorkbookInput {
   exportedAt: string // ISO
   synthetic: boolean
   sensitivity?: { metric: string; rows: number[]; cols: number[]; cells: Array<Array<number | null>> }
+  feasibility?: Feasibility
 }
 
 /** Every leaf of an object as [path, value], arrays of objects with ids keyed by id. */
@@ -155,6 +157,29 @@ export function workbookSheets(w: WorkbookInput): Sheet[] {
   }
 
   const sheets = [summary, inputs, costs, ledger, site, checklist, tracker, analysis, scenarios]
+  if (w.feasibility) {
+    const f = w.feasibility
+    const m = (r: Feasibility['downside'][number], id: string) => r.result?.metrics[id]?.value ?? null
+    const fund = f.funding
+    sheets.push({
+      name: 'Feasibility',
+      rows: [
+        ['Funding (this building)', 'Value', 'Basis'],
+        ...(fund ? [
+          ['Funding gap (total)', f.fundingGap, 'construction + refinance + exit gaps'],
+          ['Lender commitment', fund.facilityLimit, 'LTC × (costs to completion + capitalized interest)'],
+          ['Peak construction loan', fund.peakDebt, `month ${fund.peakDebtMonth}`],
+          ['Construction gap', fund.constructionGap, 'peak loan above the commitment'],
+          ['Refinance gap', fund.refinance?.gap ?? null, fund.refinance ? `month ${fund.refinance.month}: balance ${Math.round(fund.refinance.constructionBalance)} vs net proceeds ${Math.round(fund.refinance.netProceeds)}` : 'no refinance modelled'],
+          ['Exit gap', fund.exitGap, 'loans the sale does not repay'],
+          ['Peak equity out of pocket', fund.peakEquity, `month ${fund.peakEquityMonth}`],
+        ] as Cell[][] : [['Each building carries its own loan', null, 'see the building-level export'] as Cell[]]),
+        [],
+        ['Combined downside', 'Profit on cost', 'Levered IRR', 'Unlevered profit', 'Funding gap'],
+        ...f.downside.map((r): Cell[] => [r.label, m(r, 'profitOnCost'), m(r, 'leveredIrr'), m(r, 'profit'), r.fundingGap]),
+      ],
+    })
+  }
   if (w.sensitivity) {
     const g = w.sensitivity
     sheets.push({ name: 'Sensitivity', rows: [[`${g.metric}: revenue × exit cap (bps)`, ...g.cols.map((c) => `${c >= 0 ? '+' : ''}${c} bps`)], ...g.rows.map((m, i): Cell[] => [`revenue ${m >= 1 ? '+' : ''}${Math.round((m - 1) * 100)}%`, ...g.cells[i]!])] })

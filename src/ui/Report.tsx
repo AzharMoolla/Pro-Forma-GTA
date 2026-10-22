@@ -1,16 +1,14 @@
 import { useMemo, useState } from 'react'
-import { analyze, costItems } from '../engine/insights'
-import { isPortfolio } from '../engine/portfolio'
 import { CONVENTION_VERSION, ENGINE_VERSION } from '../engine/project'
 import { workbookSheets } from '../export/workbook'
 import { xlsx } from '../export/xlsx'
 import { sensitivityGrid } from './chartData'
 import { Button, Card, Chip, TableWrap, td, tdNum, th } from './components'
 import { coverage, projectsUnder } from './coverage'
-import { catalogue, catalogueItem, dataContext, variableInfo } from './data'
+import { catalogue, dataContext, variableInfo } from './data'
 import { metricValue, money } from './format'
 import { readinessLabels, useReadiness } from './sections2'
-import { siteFactsFor, useTrackerView } from './sections3'
+import { useAnalysis, useTrackerView } from './sections3'
 import { readSources } from './SiteMap'
 import { StreetscapeSvg } from './Streetscape'
 import { sceneOf } from './streetscapeScene'
@@ -31,7 +29,9 @@ export function Report() {
   const [busy, setBusy] = useState(false)
   const synthetic = !project.draft || demo.notes.some((n) => /synthetic/i.test(n))
 
-  const insights = useMemo(() => (nodeResult ? analyze({ items: costItems(node, nodeResult, (id) => (id ? catalogueItem.get(id)?.stage : undefined)), metrics: nodeResult.metrics, isMasterPlan: isPortfolio(node), site: siteFactsFor(node, state.path, project.attributes) }).insights : []), [node, nodeResult, state.path, project.attributes])
+  const analysis = useAnalysis()
+  const insights = analysis?.insights ?? []
+  const feas = analysis?.feasibility
   const entries = useMemo(() => coverage(demo.projectType, project.attributes, draft, demo.coverage), [demo, project.attributes, draft])
   const sources = readSources(project.attributes)
   const scene = useMemo(() => {
@@ -49,7 +49,7 @@ export function Report() {
       projectName: demo.name, projectType: demo.projectType, draft, result, attributes: project.attributes, catalogue,
       coverage: entries, readiness: { model: labels.model.text, scope: labels.scope.text, sources: labels.sources.text },
       insights, tracker, scenarios: project.scenarios, draftParentId: project.draftParentId, dataContext, exportedAt, synthetic,
-      sensitivity: { metric: 'Profit on cost', ...sensitivityGrid(draft, 'profitOnCost') },
+      sensitivity: { metric: 'Profit on cost', ...sensitivityGrid(draft, 'profitOnCost') }, feasibility: feas,
     }))
     const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }))
     Object.assign(document.createElement('a'), { href: url, download: `${fileBase}.xlsx` }).click()
@@ -106,6 +106,26 @@ export function Report() {
             {insights.map((i) => <li key={i.id} className="break-inside-avoid"><strong>{i.severity === 'concern' ? '▲ Concern' : i.severity === 'watch' ? '! Watch' : i.severity === 'good' ? '✓ Strength' : 'i Note'}: {i.title}.</strong> <span className="text-ink-soft">{i.detail}</span>{i.source && <span className="text-xs text-ink-mute"> Source: {i.source}.</span>}</li>)}
           </ul>
         </section>
+
+        {feas && (
+          <section className="break-inside-avoid">
+            <h3 className="mb-2 text-base font-semibold">Funding and downside</h3>
+            {feas.funding && (
+              <p className="mb-2 text-sm">
+                {feas.fundingGap ? <strong>Funding gap {money(feas.fundingGap)}. </strong> : <strong>No funding gap. </strong>}
+                <span className="text-ink-soft">Construction loan peaks at {money(feas.funding.peakDebt)} (month {feas.funding.peakDebtMonth}) against a commitment of {money(feas.funding.facilityLimit)} (loan-to-cost × budget incl. capitalized interest){feas.funding.refinance ? `; the refinance in month ${feas.funding.refinance.month} nets ${money(feas.funding.refinance.netProceeds)} against a ${money(feas.funding.refinance.constructionBalance)} construction balance` : ''}{feas.funding.exitGap ? `; the sale falls ${money(feas.funding.exitGap)} short of the loans` : ''}. Peak equity out of pocket {money(feas.funding.peakEquity)}.</span>
+              </p>
+            )}
+            <TableWrap caption="Combined downside">
+              <thead><tr>{['Scenario', 'Profit on cost', 'Levered IRR', 'Unlevered profit', 'Funding gap'].map((h, i) => <th key={h} scope="col" className={i ? `${th} text-right` : th}>{h}</th>)}</tr></thead>
+              <tbody>{feas.downside.map((r) => {
+                const v = (id: string) => r.result?.metrics[id] ?? undefined
+                return <tr key={r.id}><td className={td}>{r.label}</td><td className={tdNum}>{metricValue(v('profitOnCost'))}</td><td className={tdNum}>{metricValue(v('leveredIrr'))}</td><td className={tdNum}>{metricValue(v('profit'))}</td><td className={tdNum}>{r.fundingGap === null ? 'per building' : r.fundingGap > 0 ? money(r.fundingGap) : 'none'}</td></tr>
+              })}</tbody>
+            </TableWrap>
+            <p className="mt-1 text-xs text-ink-mute">Each row re-runs the model with the shock applied; "All together" applies all four.</p>
+          </section>
+        )}
 
         <section>
           <h3 className="mb-2 text-base font-semibold">Site and policy</h3>

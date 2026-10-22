@@ -287,3 +287,13 @@ test('feasibility solves residual land, shows the funding gap and combined downs
   await page.getByLabel('Rebate').selectOption('none')
   await expect(page.getByText(/is a permanent cost not yet in total development cost/)).toBeVisible()
 })
+
+test('funding gap and combined downside reach the decision summary and the report', async ({ page }) => {
+  await fresh(page)
+  await expect(page.getByRole('button', { name: /Close the funding gap/ })).toBeVisible()
+  await openSection(page, 'Report & export')
+  const report = page.getByRole('article', { name: 'Report' })
+  await expect(report.getByRole('heading', { name: 'Funding and downside' })).toBeVisible()
+  await expect(report.getByRole('row', { name: /^All together/ })).toBeVisible()
+  await expect(report.getByText(/Funding gap of \$/)).toBeVisible()
+})

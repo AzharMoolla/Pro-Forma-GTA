@@ -98,6 +98,13 @@ export interface AnalysisInput {
   unaccountedItems?: number
   buildableSqft?: number | null // by-law GFA (or above-grade GCA) for land $/buildable ft²
   site?: SiteFacts
+  feasibility?: FeasibilityFacts
+}
+
+/** From src/engine/stress.ts: funding gaps (one building) and the combined downside. */
+export interface FeasibilityFacts {
+  funding: { construction: number; refinance: number; exit: number } | null
+  combined: { profitOnCost: number | null; fundingGap: number | null; shocks: string }
 }
 
 /** Zoning and site checks: where the proposal sits against mapped limits and policy areas. */
@@ -265,6 +272,26 @@ export function analyze(input: AnalysisInput): Analysis {
   }
   const em = value('equityMultiple')
   if (em !== null && em < 1) add({ id: 'equity-loss', severity: 'concern', title: `Equity multiple ${em.toFixed(2)}×`, detail: 'Investors get back less than they put in on these inputs.', drivers: ['equityMultiple'] })
+
+  const fz = input.feasibility
+  const fund = fz?.funding
+  const gap = fund ? fund.construction + fund.refinance + fund.exit : 0
+  if (fund && gap > 0.5) {
+    const parts = [
+      fund.construction > 0.5 ? `${M(fund.construction)} of construction loan above what a lender would commit (loan-to-cost × the full budget)` : '',
+      fund.refinance > 0.5 ? `${M(fund.refinance)} of construction loan the refinance does not repay` : '',
+      fund.exit > 0.5 ? `${M(fund.exit)} of loans the sale does not repay` : '',
+    ].filter(Boolean)
+    add({ id: 'funding-gap', severity: 'concern', title: `Funding gap of ${M(gap)}`, detail: `The plan needs ${parts.join('; ')}. That money has to come from more equity, mezzanine debt or a larger facility, and the returns shown assume it appears. See Feasibility & stress.`, drivers: ['peakDebt', 'debt.ltc', 'permanentLoan'] })
+  }
+  const base = value('profitOnCost')
+  const worst = fz?.combined.profitOnCost ?? null
+  if (fz && base !== null && worst !== null) {
+    const detail = `With ${fz.combined.shocks} all at once, profit on cost goes from ${(base * 100).toFixed(1)}% to ${(worst * 100).toFixed(1)}%${fz.combined.fundingGap ? ` and the funding gap to ${M(fz.combined.fundingGap)}` : ''}.`
+    if (worst < 0) add({ id: 'downside-loss', severity: 'concern', title: 'Loses money if several things go wrong together', detail: `${detail} Deals rarely fail from one shock; check the break-even rents and costs on Feasibility & stress.`, drivers: ['profitOnCost'] })
+    else if (worst < base / 2) add({ id: 'downside-thin', severity: 'watch', title: 'Thin margin in a combined downside', detail: `${detail} The margin more than halves.`, drivers: ['profitOnCost'] })
+    else add({ id: 'downside-holds', severity: 'good', title: 'Holds up in a combined downside', detail, drivers: ['profitOnCost'] })
+  }
 
   const units = value('totalUnits')
   const tdc = value('totalDevelopmentCost')

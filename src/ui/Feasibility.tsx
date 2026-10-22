@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react'
-import { funding, type FundingMonth } from '../engine/funding'
+import type { FundingMonth } from '../engine/funding'
 import { isPortfolio } from '../engine/portfolio'
-import { DOWNSIDE, downside, landTotal, solve, type Lever } from '../engine/stress'
+import { DOWNSIDE, landTotal, solve, type Lever } from '../engine/stress'
 import { hstTiming, type RebateRule } from '../engine/tax'
 import { toCsv } from './chartData'
 import { Card, Chip, TableWrap, td, tdNum, th } from './components'
 import { money, pct } from './format'
+import { useAnalysis } from './sections3'
 import { ChartFigure } from './Visuals'
 import { useWorkspace } from './workspace'
 
@@ -74,13 +75,14 @@ export function Feasibility() {
   const target = Number(targetText) / 100
   const project = isPortfolio(node) ? null : node
 
-  const fund = useMemo(() => (project && nodeResult?.project ? funding(project, nodeResult.project) : null), [project, nodeResult])
+  const analysis = useAnalysis()
+  const fund = analysis?.feasibility.funding ?? null
   const solved = useMemo(() => {
     if (!Number.isFinite(target)) return null
     const one = (lever: Lever, t: number) => solve(node, lever, metric.id, t)
     return { land: one('land', target), revenue: one('revenue', target), cost: one('cost', target), revenueZero: one('revenue', 0), costZero: one('cost', 0) }
   }, [node, metric, target])
-  const rows = useMemo(() => downside(node), [node])
+  const rows = analysis?.feasibility.downside ?? []
   const hst = useMemo(() => (project ? hstTiming(project, { rebate, itcLagMonths: 2 }) : null), [project, rebate])
   if (!nodeResult) return null
 
