@@ -1,11 +1,11 @@
-import { forwardRef, useEffect, useId, useMemo, useRef, useState, type ReactElement } from 'react'
+import { forwardRef, useEffect, useId, useMemo, useRef, useState } from 'react'
 import type { Attributes } from '../engine/catalogue'
 import type { Node, NodeResult } from '../engine/portfolio'
 import { Button, cx } from './components'
 import { projectsUnder } from './coverage'
 import { metricValue, money, num } from './format'
 import { buildingKey, GROUND_Y, KIT_MARGIN, kitArt, kitLayout, limitMetresOf, metresOf, px, py, type KitLayout } from './kitStreetscape'
-import { controllingLimit, sceneOf, type Building, type Cue, type Scene } from './streetscapeScene'
+import { controllingLimit, sceneOf, type Building, type Scene } from './streetscapeScene'
 import { getResult } from './tree'
 import { useWorkspace } from './workspace'
 
@@ -29,23 +29,90 @@ const skinOf = (style: ArtStyle) => (style === 'sketch' ? 'watercolour' : 'bluep
 
 export interface SvgProps { scene: Scene; style: ArtStyle; stats: Array<[string, string]>; title: string; uid: string; viewBox?: string; /** data-building key of the spotlit building */ selected?: string | null }
 
-/** Zoning notes wrapped to the picture width (about 6.3 drawing units per character at 11.5 px). */
-export function noteLines(scene: Scene, W = kitLayout(scene).W): string[] {
-  const budget = Math.floor((W - 32) / 6.3)
-  const lines: string[] = []
-  for (const note of scene.notes) {
-    const last = lines.at(-1)
-    if (last !== undefined && last.length + note.length + 3 <= budget) lines[lines.length - 1] = `${last} · ${note}`
-    else lines.push(note)
+export type Tone = 'limit' | 'info' | 'fact'
+export interface Notice { id: string; kind: 'cue' | 'tag' | 'note'; title: string; text: string; tone: Tone; detail: string; marker: number | null }
+export interface LegendPill extends Notice { x: number; y: number; w: number; shown: string }
+export interface LegendLayout { top: number; height: number; groups: Array<{ label: string; y: number }>; pills: LegendPill[] }
+export interface Marker { cueId: string; n: number; x: number; y: number; tone: Tone }
+
+const GROUP_OF: Record<string, string> = {
+  Parking: 'Parking & access', 'Bicycle parking': 'Parking & access', 'Loading and access': 'Parking & access',
+  Street: 'Street & transit', Sidewalks: 'Street & transit', Crossing: 'Street & transit', Transit: 'Street & transit',
+  Frontage: 'Site & servicing', 'Existing building': 'Site & servicing', Servicing: 'Site & servicing', 'New roads': 'Site & servicing', 'New services': 'Site & servicing',
+}
+const GROUPS = ['Policy & zoning', 'Parking & access', 'Street & transit', 'Site & servicing']
+
+/** Numbered markers on the pieces a policy concerns; the legend pill carries the same number. */
+export function markersOf(scene: Scene, K: KitLayout): Marker[] {
+  const out: Marker[] = []
+  const used = new Map<number, number>()
+  for (const c of scene.cues) {
+    if (c.at.kind === 'plan') continue
+    const at = c.at
+    const q = at.kind === 'heritage' ? K.placed.find((p) => p.part.kind === 'building' && p.part.b.id === at.building) : K.placed.find((p) => p.part.kind === at.part)
+    if (!q) continue
+    const k = used.get(q.x) ?? 0
+    used.set(q.x, k + 1)
+    const top = at.kind === 'heritage' ? 9 : q.top
+    const w = at.kind === 'heritage' ? 16.7 : q.w
+    out.push({ cueId: c.id, n: out.length + 1, x: px(K, q.x + (w / 2)) + (k * 18), y: py(K, top) - (q.part.kind === 'station' ? 26 : 12), tone: c.tone })
   }
-  return lines
+  return out
 }
 
-/** Layout for a scene: the kit layout, then requirement boxes and notes below the street. */
+/** Everything that applies, as notices: policy cues, the street and site requirements, and the zoning notes. */
+export function noticesOf(scene: Scene, markers: Marker[]): Array<Notice & { group: string }> {
+  const marker = (id: string) => markers.find((m) => m.cueId === id)?.n ?? null
+  const note = (n: string): Notice & { group: string } => {
+    const [title, text, tone] = n.startsWith('Zone ') ? ['Zone', n.slice(5), 'fact'] : n.startsWith('coverage') ? ['Lot coverage', n.replace('coverage ', ''), 'fact'] : n.startsWith('exception') ? ['Exception', n.replace('exception ', ''), 'fact'] : n.startsWith('near an aerodrome') ? ['Aerodrome', 'airport height limit to check', 'limit'] : ['Note', n, 'fact']
+    return { id: `note-${n}`, kind: 'note', title, text, tone: tone as Tone, detail: n, marker: null, group: 'Policy & zoning' }
+  }
+  return [
+    ...scene.cues.map((c) => { const [title, ...rest] = c.text.split(': '); return { id: c.id, kind: 'cue' as const, title: rest.length ? title! : c.text, text: rest.join(': '), tone: c.tone, detail: c.detail, marker: marker(c.id), group: 'Policy & zoning' } }),
+    ...scene.notes.map(note),
+    // Unknown stays visible: no height limit entered is a thing to check, not an all-clear
+    ...(scene.buildings.some((b) => b.limitStoreys !== null || b.airLimitStoreys !== null) ? [] : [{ id: 'no-height-limit', kind: 'note' as const, title: 'Height limit', text: 'not set: check the zoning', tone: 'info' as Tone, detail: 'No zoning or airport height limit is entered, so the drawing shows none. That means unknown, not unlimited.', marker: null, group: 'Policy & zoning' }]),
+    ...scene.tags.map((t) => ({ id: `tag-${t.title}`, kind: 'tag' as const, title: t.title, text: t.text, tone: 'fact' as Tone, detail: `${t.title}: ${t.text}`, marker: null, group: GROUP_OF[t.title] ?? 'Site & servicing' })),
+  ]
+}
+
+const LABEL_W = 132, ROW = 26, PILL_H = 20, FONT = 10.5
+const textW = (t: string, bold = false) => t.length * FONT * (bold ? .55 : .49)
+
+/** The legend under the street: one row of pills per group, wrapping; sized here so the picture's height is exact. */
+export function legendOf(scene: Scene, K: KitLayout, markers: Marker[]): LegendLayout {
+  const top = K.streetBottom + 40
+  const x0 = 20 + LABEL_W, x1 = K.W - 20
+  const pills: LegendPill[] = []
+  const groups: LegendLayout['groups'] = []
+  let y = top + 22
+  const all = noticesOf(scene, markers)
+  for (const g of GROUPS) {
+    const items = all.filter((n) => n.group === g)
+    if (!items.length) continue
+    groups.push({ label: g, y })
+    let x = x0
+    for (const n of items) {
+      const lead = n.marker !== null ? 22 : 14
+      const full = n.text ? `${n.title} · ${n.text}` : n.title
+      const room = x1 - x0
+      let shown = full
+      while (lead + textW(shown, false) + 10 > room && shown.length > 8) shown = `${shown.slice(0, -2).trimEnd()}…`
+      const w = lead + textW(shown) + (n.text ? textW(n.title, true) - textW(n.title) : 0) + 10
+      if (x + w > x1 && x > x0) { x = x0; y += ROW }
+      pills.push({ ...n, x, y, w, shown })
+      x += w + 6
+    }
+    y += ROW + 8
+  }
+  return { top, height: y - top, groups, pills }
+}
+
+/** Layout for a scene: the kit layout, then the legend below the street. */
 export function heightOf(scene: Scene, K: KitLayout = kitLayout(scene)) {
-  const perRow = Math.max(1, Math.floor((K.W - 40) / 230))
-  const tagsTop = K.streetBottom + 30
-  return { K, W: K.W, perRow, streetBottom: K.streetBottom, tagsTop, H: tagsTop + (Math.ceil(scene.tags.length / perRow) * 60) + (noteLines(scene, K.W).length * 17) + 16 }
+  const markers = markersOf(scene, K)
+  const legend = legendOf(scene, K, markers)
+  return { K, W: K.W, streetBottom: K.streetBottom, markers, legend, H: legend.top + legend.height + 10 }
 }
 
 export function summaryOf(scene: Scene, style: ArtStyle, title: string, stats: Array<[string, string]>) {
@@ -57,7 +124,6 @@ export function summaryOf(scene: Scene, style: ArtStyle, title: string, stats: A
 }
 
 type Look = (typeof LOOKS)[ArtStyle]
-const pillWidth = (text: string, size: number) => (text.length * size * .52) + 18
 
 /**
  * The height bar on the left edge: storeys from the ground up, with the controlling limit as a band (one limit, or
@@ -81,61 +147,51 @@ function HeightBar({ scene, K, L }: { scene: Scene; K: KitLayout; L: Look }) {
       ))}
       {lo !== null
         ? <g><line x1={x - 6} x2={x + 10} y1={y(lo)} y2={y(lo)} stroke={L.limit} strokeWidth={2} />{scene.uniformLimit === null && <text x={x + 4} y={y(hi!) - 6} fontWeight={700} fill={L.limit}>≤ {lo === hi ? lo : `${lo}–${hi}`} st</text>}</g>
-        : <text x={x + 4} y={y(top) - 6} fontWeight={600}>limit not set</text>}
+        : null}
       <text x={x - 6} y={y(top) - 16} fontSize="9" textAnchor="start">storeys</text>
     </g>
   )
 }
 
-/** Policy cues: pills on the pieces they concern, and a ribbon along the top for the ones that cover the whole site. */
-function Cues({ scene, K, L, W }: { scene: Scene; K: KitLayout; L: Look; W: number }) {
-  const pill = (c: Cue, cx: number, cy: number, anchorY?: number) => {
-    const w = pillWidth(c.text, 10)
-    const x = Math.max(30, Math.min(W - w - 4, cx - (w / 2))) // clear of the height bar
-    const colour = c.tone === 'limit' ? L.limit : L.air
-    return (
-      <g key={c.id} data-feature="cue" data-cue={c.id}>
-        <title>{`${c.text}. ${c.detail}`}</title>
-        {anchorY !== undefined && <line x1={cx} x2={cx} y1={cy + 8} y2={anchorY} stroke={colour} strokeWidth={1} strokeDasharray="2 2" />}
-        <rect x={x} y={cy - 8} width={w} height={16} rx={8} fill={L.paper} fillOpacity={0.95} stroke={colour} strokeWidth={1} />
-        <circle cx={x + 8} cy={cy} r={2.6} fill={colour} />
-        <text x={x + 14} y={cy + 3.5} fontSize="10" fontWeight={600} fill={L.text}>{c.text}</text>
-      </g>
-    )
-  }
-  // Pieces: centred over the piece, stacked when two land on the same one
-  const used = new Map<string, number>()
-  const onParts = scene.cues.filter((c) => c.at.kind !== 'plan').map((c) => {
-    const q = c.at.kind === 'heritage'
-      ? K.placed.find((p) => p.part.kind === 'building' && p.part.b.id === (c.at as { building: string }).building)
-      : K.placed.find((p) => p.part.kind === (c.at as { part: string }).part)
-    if (!q) return null
-    const key = `${q.x}`
-    const n = used.get(key) ?? 0
-    used.set(key, n + 1)
-    const top = c.at.kind === 'heritage' ? 9 : q.top
-    const w = c.at.kind === 'heritage' ? 16.7 : q.w
-    const anchor = py(K, top)
-    const label = q.part.kind === 'station' ? 14 : 0 // above the station's name
-    return pill(c, px(K, q.x + (w / 2)), anchor - 22 - label - (n * 20), anchor - 2 - label)
-  })
-  // The whole site: one row under the disclaimer; what does not fit is counted
-  const ribbon = scene.cues.filter((c) => c.at.kind === 'plan')
-  let x = 30
-  const shown: ReactElement[] = []
-  ribbon.forEach((c, k) => {
-    const w = pillWidth(c.text, 10)
-    const rest = ribbon.length - k
-    if (x + w > W - (rest > 1 ? 70 : 16)) return
-    shown.push(pill(c, x + (w / 2), 40))
-    x += w + 6
-  })
-  const hidden = ribbon.length - shown.length
+/** Numbered markers on the pieces a policy concerns (the legend explains each). */
+function Markers({ markers, L }: { markers: Marker[]; L: Look }) {
   return (
-    <g data-feature="policy-cues">
-      {shown}
-      {hidden > 0 && <text x={x + 2} y={44} fontSize="10" fill={L.soft}><title>{ribbon.slice(shown.length).map((c) => c.text).join(' · ')}</title>+{hidden} more</text>}
-      {onParts}
+    <g data-feature="policy-markers">
+      {markers.map((m) => (
+        <g key={m.cueId} data-feature="cue-marker">
+          <circle cx={m.x} cy={m.y} r={8} fill={L.paper} stroke={m.tone === 'limit' ? L.limit : L.air} strokeWidth={1.5} />
+          <text x={m.x} y={m.y + 3.6} textAnchor="middle" fontSize="10" fontWeight={700} fill={m.tone === 'limit' ? L.limit : L.air}>{m.n}</text>
+        </g>
+      ))}
+    </g>
+  )
+}
+
+/** The legend: a key, then each group's pills (policy first). Colour says what a notice does; the number finds it on the drawing. */
+function Legend({ legend, L, W }: { legend: LegendLayout; L: Look; W: number }) {
+  const colour = (t: Tone) => (t === 'limit' ? L.limit : t === 'info' ? L.air : L.soft)
+  return (
+    <g data-feature="legend" fontSize={FONT}>
+      <line x1={20} x2={W - 20} y1={legend.top} y2={legend.top} stroke={L.line} strokeWidth={0.6} opacity={0.4} />
+      <text x={20} y={legend.top + 12} fontSize="10" fontWeight={700} fill={L.soft} letterSpacing=".06em">WHAT APPLIES HERE</text>
+      <g fontSize="9.5" fill={L.soft}>
+        {([['limit', 'limits what can be built'], ['info', 'adds a study, review or requirement'], ['fact', 'site fact']] as Array<[Tone, string]>).map(([t, label], i) => (
+          <g key={t} transform={`translate(${W - 20 - ((3 - i) * 175)} ${legend.top + 12})`}><circle cx={0} cy={-3.5} r={3} fill={colour(t)} /><text x={7} y={0}>{label}</text></g>
+        ))}
+      </g>
+      {legend.groups.map((g) => <text key={g.label} x={20} y={g.y + 14} fontSize="10" fontWeight={700} fill={L.soft}>{g.label}</text>)}
+      {legend.pills.map((p) => (
+        <g key={p.id} data-feature={p.kind === 'cue' ? 'cue' : p.kind === 'tag' ? 'tag' : 'note'} data-cue={p.kind === 'cue' ? p.id : undefined}>
+          <title>{p.detail}</title>
+          <rect x={p.x} y={p.y} width={p.w} height={PILL_H} rx={PILL_H / 2} fill={L.paper} fillOpacity={0.95} stroke={colour(p.tone)} strokeWidth={p.tone === 'fact' ? 0.8 : 1.2} />
+          {p.marker !== null
+            ? <g><circle cx={p.x + 10} cy={p.y + 10} r={7} fill={colour(p.tone)} /><text x={p.x + 10} y={p.y + 13.4} textAnchor="middle" fontSize="9" fontWeight={700} fill={L.paper}>{p.marker}</text></g>
+            : <circle cx={p.x + 8} cy={p.y + 10} r={2.8} fill={colour(p.tone)} />}
+          <text x={p.x + (p.marker !== null ? 22 : 14)} y={p.y + 13.8} fill={L.text}>
+            {p.text && p.shown.startsWith(p.title) ? <><tspan fontWeight={700}>{p.title}</tspan><tspan fill={L.soft}>{p.shown.slice(p.title.length)}</tspan></> : <tspan fontWeight={700}>{p.shown}</tspan>}
+          </text>
+        </g>
+      ))}
     </g>
   )
 }
@@ -146,7 +202,7 @@ const GLOW = '#ffd36b'
 /** The drawing alone (no interaction): used by the interactive view, the report and the stress tests. */
 export const StreetscapeSvg = forwardRef<SVGSVGElement, SvgProps>(function StreetscapeSvg({ scene, style, stats, title, uid, viewBox, selected = null }, ref) {
   const L = LOOKS[style]
-  const { K, W, perRow, tagsTop, H } = heightOf(scene)
+  const { K, W, H, markers, legend } = heightOf(scene)
   // The spotlit building gets an id so the window shine can be masked to its silhouette
   // Built once per scene and style (it is large); panning, zooming and the spotlight reuse it
   const base = useMemo(() => kitArt(scene, skinOf(style), uid, K), [scene, style, uid]) // eslint-disable-line react-hooks/exhaustive-deps -- K follows from scene
@@ -255,32 +311,18 @@ export const StreetscapeSvg = forwardRef<SVGSVGElement, SvgProps>(function Stree
       ))}
 
       <HeightBar scene={scene} K={K} L={L} />
-      <Cues scene={scene} K={K} L={L} W={W} />
+      <Markers markers={markers} L={L} />
 
       {/* Right-of-way marker beside the street */}
       <g fontSize="10.5" fill={L.soft} data-feature="row-marker">
         <path d={`M${W - 18},${GROUND_Y} h6 V${K.streetBottom} h-6`} fill="none" stroke={L.soft} strokeWidth={0.9} />
-        <text x={W - 16} y={K.streetBottom + 14} textAnchor="end">{scene.street.rowM ? `ROW ${scene.street.rowM} m` : 'ROW width: check OP Map 3'}{scene.street.roadClass ? ` · ${scene.street.roadClass}` : ''}</text>
+        <text x={W - 16} y={K.streetBottom + 14} textAnchor="end">{scene.street.rowM ? `ROW ${scene.street.rowM} m` : 'ROW'}</text>
       </g>
 
       {/* Not a drawing: said on the picture itself so it travels with downloads */}
       <text x={16} y={22} fontSize="10.5" fill={L.soft} data-feature="disclaimer">Illustration only · not to scale horizontally · not a building envelope, survey or approval</text>
 
-      {/* Requirements, listed along the bottom */}
-      {scene.tags.map((t, k) => {
-        const tw = Math.min(220, ((W - 40) / perRow) - 12)
-        const tx = 20 + ((k % perRow) * (tw + 12))
-        const ty = tagsTop + (Math.floor(k / perRow) * 60)
-        return (
-          <g key={t.title} data-feature="tag">
-            <title>{`${t.title}: ${t.text}`}</title>
-            <rect x={tx} y={ty} width={tw} height={44} rx={style === 'blueprint' ? 0 : 8} fill={L.paper} fillOpacity={0.9} stroke={L.line} strokeWidth={0.8} />
-            <text x={tx + 9} y={ty + 16} fontSize="11" fontWeight={700} fill={L.text}>{t.title}</text>
-            <text x={tx + 9} y={ty + 33} fontSize="10.5" fill={L.soft}>{t.text.length > (tw / 5.6) ? `${t.text.slice(0, Math.floor(tw / 5.6) - 1)}…` : t.text}</text>
-          </g>
-        )
-      })}
-      {noteLines(scene, W).map((line, k, all) => <text key={k} x={16} y={H - 14 - ((all.length - 1 - k) * 17)} fontSize="11.5" fill={L.text}>{line}</text>)}
+      <Legend legend={legend} L={L} W={W} />
     </svg>
   )
 })

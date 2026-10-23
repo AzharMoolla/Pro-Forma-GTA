@@ -193,12 +193,12 @@ describe('streetscape: field-to-visual rules', () => {
 
 describe('streetscape: policy cues and the height bar', () => {
   const one = (a: Attributes) => sceneOf([{ path: [], project: tinyProject() }], a)
-  it('no policy entered: only the FSI the program gives, and the height bar says the limit is not set', () => {
+  it('no policy entered: only the FSI the program gives, and the legend says the height limit is not set', () => {
     const scene = one({})
     expect(scene.cues.map((c) => c.id)).toEqual(['fsi'])
     const svg = render(scene, 'sketch', 'Bare')
     expect(svg).toContain('data-feature="height-bar"')
-    expect(svg).toContain('limit not set')
+    expect(svg).toContain('not set: check the zoning')
     expect(svg).not.toContain('data-feature="height-band"')
   })
   it('each policy is said once, on the piece it concerns or in the ribbon, not also in the notes', () => {
@@ -250,5 +250,28 @@ describe('streetscape: varied placement, grounded, nothing stacked', () => {
     expect(m).not.toBeNull()
     const x = Number(m![1]) - K.bleed
     for (const q of K.placed.filter((p) => p.part.kind === 'building')) expect(x + 5.5 <= q.x || x >= q.x + q.w).toBe(true)
+  })
+})
+
+describe('streetscape: the legend carries everything, the drawing only numbered markers', () => {
+  it('every cue, requirement and zoning note is a pill in its group; piece cues share their number with a marker', async () => {
+    const { heightOf } = await import('../../src/ui/Streetscape')
+    const a: Attributes = { 'site.heritage': true, 'site.regulatedArea': true, 'zoning.holding': true, 'planning.carParkingStalls': 120, 'zoning.code': 'CR 5.0', 'site.frontageRoadClass': 'major arterial' }
+    const scene = sceneOf([{ path: [], project: tinyProject() }], a)
+    const { legend, markers, H } = heightOf(scene)
+    expect(legend.pills.filter((p) => p.kind === 'cue')).toHaveLength(scene.cues.length)
+    expect(legend.pills.filter((p) => p.kind === 'tag')).toHaveLength(scene.tags.length)
+    expect(legend.groups[0]!.label).toBe('Policy & zoning')
+    expect(markers.map((m) => m.n)).toEqual(markers.map((_, i) => i + 1))
+    for (const m of markers) expect(legend.pills.find((p) => p.id === m.cueId)!.marker).toBe(m.n)
+    // pills never overlap on a row and stay inside the picture, and the picture is tall enough to hold them
+    for (const p of legend.pills) {
+      expect(p.x + p.w).toBeLessThanOrEqual(heightOf(scene).W - 20 + 0.001)
+      expect(p.y + 20).toBeLessThanOrEqual(H)
+      for (const q of legend.pills) if (q !== p && q.y === p.y) expect(q.x >= p.x + p.w || q.x + q.w <= p.x).toBe(true)
+    }
+    const svg = render(scene, 'sketch', 'Legend')
+    write('legend-sketch', svg)
+    expect(count(svg, 'data-feature="cue-marker"')).toBe(markers.length)
   })
 })

@@ -43,7 +43,7 @@ Every piece is illustrative. None of it is a surveyed layout, a building envelop
 
 **Height bar.** It runs up the left edge in storeys. A band shows the controlling limit: the lower of the zoning and aeronautical limits, or their range when blocks differ. With neither entered it reads "limit not set" rather than nothing.
 
-**Policy pills.** Each pill sits on the piece it concerns. Hovering shows what it means and what to confirm.
+**Policy pills.** Each one is a pill in the legend under the street ("What applies here"). Where it concerns a piece, the piece carries a small numbered marker matching the pill. Hovering shows what it means and what to confirm.
 
 | Field | Pill | Where |
 |---|---|---|
