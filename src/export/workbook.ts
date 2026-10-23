@@ -57,6 +57,7 @@ const driverText = (l: CostLine) => {
     case 'perArea': return `${d.rate} × ${d.area} ft²`
     case 'perLinear': return `${d.rate}/m × ${d.metres} m`
     case 'perHectare': return `${d.rate}/ha × ${d.hectares} ha`
+    case 'perStall': return `${d.rate}/ft² × ${d.stalls} stalls × ${d.sqftPerStall} ft²/stall`
     case 'percentOf': return `${(d.rate * 100).toFixed(2)}% of ${d.of.join(' + ')}`
   }
 }

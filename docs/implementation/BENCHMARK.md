@@ -104,6 +104,14 @@ A residual magnifies small differences. On a $170M project, missing by 1% of rev
 
 **The rental miss is systematic, not noise.** The 2019 study reports rental land values typically 31% below condo. With Peel's 2021 spread, the model's rental values come out higher than condo at most Toronto sites. So the 2019 study held rental to a higher return than the 2021 study did, and a single rental spread does not carry across studies or years. In practice the rental return target should be the user's own, and that is how the tool already treats it: the target is an input on Feasibility & stress.
 
+## What changed in the tool because of this
+
+- **Parking** is now entered as stalls × area per stall × $/ft², in its own card in Cost & budget, so the input that drove the Peel misses is visible and editable.
+- **The rental return** is a saved required spread over the exit cap, on a Rental return test card in Feasibility & stress. It is never defaulted, because the two studies disagree on it.
+- **Market inputs** can carry dated, cited evidence (TRREB, CMHC and others) in Market evidence.
+
+The benchmark itself is unchanged: it still uses 375 ft² per stall and the fitted 0.25% spread.
+
 ## How to read this
 
 - **What it shows:** where the inputs are stated, the tool reproduces a professional consultant's residual land model within a couple of percent of revenue (Peel), and reaches the same viable-or-challenge verdict in 18 of 22 cases (Toronto).

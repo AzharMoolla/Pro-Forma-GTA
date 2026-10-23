@@ -19,6 +19,7 @@ import { Verification } from './Verification'
 import { People } from './People'
 import { Report } from './Report'
 import { PrivacyPolicy, Terms } from './Legal'
+import { EVIDENCE_KEY, EVIDENCE_SOURCES, evidenceOf, evidenceProblems, type Evidence } from './evidence'
 import { ASKED_ELSEWHERE, FROM_MODEL, GROUPS_ELSEWHERE, SIMPLE_QUESTIONS, fromModel } from './modelFacts'
 import { atLeast, type SectionId } from './store'
 import { getResult } from './tree'
@@ -137,17 +138,77 @@ function Overview() {
   )
 }
 
+/** The figures behind the market assumptions: source, link, period and date read, typed in by the user. */
+function EvidenceLog() {
+  const { state, dispatch } = useWorkspace()
+  const list = evidenceOf(state.projects[state.projectId]!.attributes)
+  const blank = { source: EVIDENCE_SOURCES[0]!.label, url: EVIDENCE_SOURCES[0]!.url, figure: '', value: '', period: '', retrievedAt: new Date().toISOString().slice(0, 10) }
+  const [draft, setDraft] = useState(blank)
+  const [problems, setProblems] = useState<string[]>([])
+  const save = (next: Evidence[]) => dispatch({ type: 'attribute', id: EVIDENCE_KEY, value: next.length ? JSON.stringify(next) : null })
+  const add = () => {
+    const p = evidenceProblems(draft)
+    setProblems(p)
+    if (p.length) return
+    save([...list, { ...draft, id: `ev-${list.length + 1}-${draft.retrievedAt}` }])
+    setDraft({ ...blank, source: draft.source, url: draft.url })
+  }
+  const preset = EVIDENCE_SOURCES.find((x) => x.label === draft.source)
+  const field = 'min-h-9 rounded border border-line-strong bg-surface px-2'
+  return (
+    <Card title={`Market evidence (${list.length})`}>
+      <p className="mb-3 text-sm text-ink-soft">Record the figures your rents, prices and cap rates rest on: where each came from, the period it describes and when you read it. You type the figures in; the project keeps the citation, not the publisher's data. TRREB's figures are resale and lease data from MLS: strong for rents and resale comparables, a check (not a substitute) for new-condo pricing, which comes from new-home sources such as Urbanation or Altus.</p>
+      {list.length > 0 && (
+        <TableWrap caption="Market evidence">
+          <thead><tr>{['Figure', 'Value', 'Period', 'Source', 'Read', ''].map((h, i) => <th key={h || i} scope="col" className={th}>{h}</th>)}</tr></thead>
+          <tbody>{list.map((e) => (
+            <tr key={e.id}>
+              <td className={td}>{e.figure}</td>
+              <td className={`${td} num`}>{e.value}</td>
+              <td className={td}>{e.period}</td>
+              <td className={td}><a className="text-accent underline" href={e.url} target="_blank" rel="noreferrer">{e.source}</a></td>
+              <td className={`${td} num`}>{e.retrievedAt}</td>
+              <td className={td}><button type="button" className="text-xs text-ink-soft underline" onClick={() => save(list.filter((x) => x.id !== e.id))}>Remove</button></td>
+            </tr>
+          ))}</tbody>
+        </TableWrap>
+      )}
+      <fieldset className="mt-3 grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-3">
+        <legend className="mb-1 font-medium">Add a figure</legend>
+        <label className="flex flex-col gap-1">Source
+          <select className={field} value={preset ? draft.source : 'other'} onChange={(e) => { const x = EVIDENCE_SOURCES.find((y) => y.label === e.target.value); setDraft({ ...draft, source: x ? x.label : '', url: x ? x.url : '' }) }}>
+            {EVIDENCE_SOURCES.map((x) => <option key={x.id} value={x.label}>{x.label}</option>)}
+            <option value="other">Other source</option>
+          </select>
+        </label>
+        {!preset && <label className="flex flex-col gap-1">Source name<input className={field} value={draft.source} onChange={(e) => setDraft({ ...draft, source: e.target.value })} /></label>}
+        <label className="flex flex-col gap-1">Link<input className={field} value={draft.url} placeholder="https://" onChange={(e) => setDraft({ ...draft, url: e.target.value })} /></label>
+        <label className="flex flex-col gap-1">Figure<input className={field} value={draft.figure} placeholder="Average 1-bed condo lease, C01" onChange={(e) => setDraft({ ...draft, figure: e.target.value })} /></label>
+        <label className="flex flex-col gap-1">Value<input className={field} value={draft.value} placeholder="$2,450 / month" onChange={(e) => setDraft({ ...draft, value: e.target.value })} /></label>
+        <label className="flex flex-col gap-1">Period it describes<input className={field} value={draft.period} placeholder="2026 Q3" onChange={(e) => setDraft({ ...draft, period: e.target.value })} /></label>
+        <label className="flex flex-col gap-1">Date read<input type="date" className={field} value={draft.retrievedAt} onChange={(e) => setDraft({ ...draft, retrievedAt: e.target.value })} /></label>
+      </fieldset>
+      {preset && <p className="mt-2 text-xs text-ink-mute">{preset.covers}</p>}
+      <div className="mt-2 flex flex-wrap items-center gap-3">
+        <Button variant="primary" onClick={add}>Add figure</Button>
+        {problems.length > 0 && <p role="alert" className="text-sm text-bad">{problems.join(' · ')}</p>}
+      </div>
+    </Card>
+  )
+}
+
 function Market() {
   const { node } = useWorkspace()
   const projects = projectsUnder(node)
   const provenance = (
     <p className="text-xs text-ink-mute">
       <Chip>user assumption · synthetic</Chip>{' '}
-      Live sources load in Milestone D: CMHC Rental Market Survey (rents and vacancy by bedroom type and zone), Urbanation / Altus Data Studio (condo pricing and absorption), broker reports and CBRE cap-rate surveys.
+      Back these with dated figures in Market evidence above: TRREB (resale prices and lease rates by area), CMHC's Rental Market Survey (purpose-built rents and vacancy), and new-home sources such as Urbanation or Altus for condo pricing and absorption.
     </p>
   )
   return (
     <div className="flex flex-col gap-4">
+      <EvidenceLog />
       {projects.map(({ path, project }) => (
         <Card key={path.join('/') || project.id} title={`${project.name}: market assumptions`}>
           <div className="flex flex-col gap-4">
@@ -279,7 +340,53 @@ function primaryField(d: Driver): { key: string; label: string; scale: number; s
     case 'perArea': return { key: 'rate', label: 'Rate', scale: 1, suffix: `$ × ${num(d.area)}` }
     case 'perLinear': return { key: 'rate', label: 'Rate', scale: 1, suffix: `$/m × ${num(d.metres)}` }
     case 'perHectare': return { key: 'rate', label: 'Rate', scale: 1, suffix: `$/ha × ${d.hectares}` }
+    case 'perStall': return { key: 'rate', label: 'Rate', scale: 1, suffix: `$/ft² × ${num(d.stalls)} stalls × ${num(d.sqftPerStall)} ft²` }
   }
+}
+
+const DEFAULT_SQFT_PER_STALL = 400
+
+/** A $/stall parking line as stalls × area × $/ft², with the same total. */
+export function toPerStall(l: CostLine): CostLine {
+  if (l.driver?.kind !== 'perUnit') return l
+  return { ...l, driver: { kind: 'perStall', stalls: l.driver.units, sqftPerStall: DEFAULT_SQFT_PER_STALL, rate: l.driver.rate / DEFAULT_SQFT_PER_STALL } }
+}
+
+/**
+ * Parking as its three real inputs: how many stalls, how much gross area each takes (stall, aisle and its share of
+ * ramps), and what that area costs. Editable in both modes: it is one of the largest and least visible costs.
+ */
+function Parking({ lines, edit, convert }: { lines: CostLine[]; edit: (id: string, key: string, v: number) => void; convert: (id: string) => void }) {
+  const parking = lines.filter((l) => l.catalogueId === 'underground-parking' || l.catalogueId === 'shared-parking-structure')
+  if (!parking.length) return null
+  return (
+    <Card title="Parking">
+      <p className="mb-3 text-sm text-ink-soft">Underground parking is often 5 to 10% of revenue, and the area each stall takes is the input that moves it most. Gross area per stall includes the aisle and the stall's share of ramps; underground it is usually 350 to 450 ft². The stall count here is the project's (it is not asked again under Site & program).</p>
+      <div className="flex flex-col gap-3">
+        {parking.map((l) => {
+          const d = l.driver
+          if (d?.kind === 'perStall') return (
+            <div key={l.id} className="flex flex-wrap items-end gap-3">
+              <span className="min-w-48 text-sm font-medium">{l.label}</span>
+              <div className="w-28"><NumberField label="Stalls" value={d.stalls} onCommit={(v) => edit(l.id, 'stalls', Math.max(0, Math.round(v)))} /></div>
+              <div className="w-36"><NumberField label="Area per stall" suffix="ft²" value={d.sqftPerStall} onCommit={(v) => edit(l.id, 'sqftPerStall', Math.max(0, v))} /></div>
+              <div className="w-36"><NumberField label="Cost" suffix="$/ft²" value={d.rate} onCommit={(v) => edit(l.id, 'rate', Math.max(0, v))} /></div>
+              <p className="num text-sm">= {money(d.rate * d.sqftPerStall, false)} a stall · {money(d.rate * d.sqftPerStall * d.stalls)}</p>
+            </div>
+          )
+          if (d?.kind === 'perUnit') return (
+            <div key={l.id} className="flex flex-wrap items-center gap-3 text-sm">
+              <span className="font-medium">{l.label}</span>
+              <span className="num">{money(d.rate, false)} a stall × {num(d.units)} stalls</span>
+              <Button onClick={() => convert(l.id)}>Split into stalls × area × $/ft²</Button>
+              <span className="text-xs text-ink-mute">Keeps the same total, at {DEFAULT_SQFT_PER_STALL} ft² a stall, which you can then change.</span>
+            </div>
+          )
+          return null
+        })}
+      </div>
+    </Card>
+  )
 }
 
 function Costs() {
@@ -303,6 +410,7 @@ function Costs() {
 
   return (
     <div className="flex flex-col gap-4">
+      <Parking lines={node.costLines} edit={editLine} convert={(id) => dispatch({ type: 'edit', path: state.path, update: (n) => ({ ...n, costLines: n.costLines.map((l) => (l.id === id ? toPerStall(l) : l)) }) })} />
       {isPortfolio(node) && <p className="rounded border border-line bg-surface p-3 text-sm text-ink-soft">These are the shared costs carried at <strong>{node.name}</strong> level (land, remediation, infrastructure, parks). Each block's own budget is under its name in Plan structure.</p>}
       <Card title={`Budget by stage · ${money(grand)}`} actions={<Chip tone="neutral">{editable ? 'Editable: commit with Enter' : 'Switch to Professional to edit lines'}</Chip>}>
         <TableWrap caption="Cost lines by stage">

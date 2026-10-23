@@ -8,16 +8,16 @@ Audit date: 2026-10-22. Code: `src/ui/modelFacts.ts`; tests: `tests/engine/model
 
 | Kind | Count | Now |
 |---|---|---|
-| Read from the pro forma | 17 | Shown read-only, marked "from the pro forma", with where to change them. Cost triggers use the model's figure, so a typed duplicate can't disagree. |
+| Read from the pro forma | 18 (with the parking stall count) | Shown read-only, marked "from the pro forma", with where to change them. Cost triggers use the model's figure, so a typed duplicate can't disagree. |
 | Asked on another page | 16 market and land questions, plus the 18 census figures | Removed from this list. Market rents, prices, cap rates and land price are asked in Revenue & operations and Cost & budget; census figures in People & affordability. |
-| Real questions | 168 | Full detail: grouped as before. Simple: the 13 below. |
+| Real questions | 168 (including the required rental spread, which is asked on Feasibility & stress) | Full detail: grouped as before. Simple: the 12 below. |
 
 **Read from the pro forma:**
 - **Program:** storeys, residential units, tenure, retail, office and industrial area, above- and below-grade GCA, by-law GFA, site area.
 - **Schedule and finance:** construction months, cost escalation, construction rate, loan-to-cost, refinance, discount rate.
 - **Phasing:** the number of phases, taken from the phasing plan.
 
-**Simple mode asks 13 questions.** They are the ones that switch the most costs, and the site map answers most of them:
+**Simple mode asks 12 questions.** They are the ones that switch the most costs, and the site map answers most of them:
 - municipality;
 - existing building, existing rental units;
 - contamination;
@@ -25,7 +25,9 @@ Audit date: 2026-10-22. Code: `src/ui/modelFacts.ts`; tests: `tests/engine/model
 - within 60 m of TTC infrastructure;
 - zoning by-law amendment, site plan;
 - affordable share;
-- parking stalls, below-grade parking levels.
+- below-grade parking levels.
+
+The parking stall count now comes from the parking line in Cost & budget (stalls × area per stall × $/ft²), so it is no longer asked here.
 
 The rest stay unknown, and Sources & audit lists them as "to confirm". People & affordability in Simple asks only the incomes the 30% test runs on.
 

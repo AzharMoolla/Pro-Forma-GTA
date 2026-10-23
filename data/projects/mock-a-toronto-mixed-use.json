@@ -1149,11 +1149,12 @@
       {
         "id": "underground-parking",
         "catalogueId": "underground-parking",
-        "label": "Underground parking, 3 levels ($/stall)",
+        "label": "Underground parking, 3 levels (stalls × area × $/ft²)",
         "driver": {
-          "kind": "perUnit",
-          "rate": 150000,
-          "units": 120
+          "kind": "perStall",
+          "rate": 375,
+          "stalls": 120,
+          "sqftPerStall": 400
         },
         "timing": {
           "kind": "spread",

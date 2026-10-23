@@ -1241,6 +1241,14 @@
       "source": "sponsor"
     },
     {
+      "id": "finance.requiredSpread",
+      "group": "finance",
+      "label": "Required development spread (rental yield on cost over the exit cap rate)",
+      "type": "number",
+      "unit": "fraction",
+      "source": "your investors or lender; published feasibility studies imply anywhere from 0.25 points (Peel, 2021) to well above that (Toronto, 2019)"
+    },
+    {
       "id": "policy.dcDeferral",
       "group": "policy",
       "label": "DC deferral elected (rental instalments / Bill 17 occupancy deferral / Durham rental deferral)",

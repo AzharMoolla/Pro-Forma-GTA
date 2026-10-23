@@ -32,7 +32,7 @@ function condoTower(id: string, name: string, units1b: number, units2b: number, 
     costEscalation: 0.025,
     costLines: [
       { id: 'hard-benchmark', label: 'Hard cost, $/ft² GCA (incl. GCs and fee)', catalogueId: 'hard-benchmark', driver: { kind: 'perArea', rate: 330, area: gcaAbove }, timing: { kind: 'construction' }, estimateClass: 'C', escalate: true },
-      { id: 'underground-parking', label: 'Underground parking ($/stall)', catalogueId: 'underground-parking', driver: { kind: 'perUnit', rate: 95_000, units: stalls }, timing: { kind: 'spread', from: 13, to: 24 }, estimateClass: 'C', escalate: true },
+      { id: 'underground-parking', label: 'Underground parking (stalls × area × $/ft²)', catalogueId: 'underground-parking', driver: { kind: 'perStall', rate: 237.5, stalls, sqftPerStall: 400 }, timing: { kind: 'spread', from: 13, to: 24 }, estimateClass: 'C', escalate: true },
       { id: 'elevators', label: 'Elevators', catalogueId: 'elevators', driver: { kind: 'perUnit', rate: 400_000, units: Math.ceil(units / 90) }, timing: { kind: 'spread', from: 34, to: 46 }, estimateClass: 'C', escalate: true },
       percentOfHard('soft-costs', 'Design, consultants, management, legal (20% of hard)', 0.2, { kind: 'spread', from: 0, to: 48 }, 'C'),
       percentOfHard('construction-contingency', 'Design + construction contingency (8% of hard)', 0.08, { kind: 'construction' }, 'C'),
@@ -80,7 +80,7 @@ function rentalBlock(id: string, name: string, scale: number, retailSqft: number
     costEscalation: 0.025,
     costLines: [
       { id: 'hard-benchmark', label: 'Hard cost, $/ft² GCA (incl. GCs and fee)', catalogueId: 'hard-benchmark', driver: { kind: 'perArea', rate: 300, area: gca }, timing: { kind: 'construction' }, estimateClass: 'C', escalate: true },
-      { id: 'underground-parking', label: 'Underground parking ($/stall)', catalogueId: 'underground-parking', driver: { kind: 'perUnit', rate: 85_000, units: stalls }, timing: { kind: 'spread', from: 13, to: 22 }, estimateClass: 'C', escalate: true },
+      { id: 'underground-parking', label: 'Underground parking (stalls × area × $/ft²)', catalogueId: 'underground-parking', driver: { kind: 'perStall', rate: 212.5, stalls, sqftPerStall: 400 }, timing: { kind: 'spread', from: 13, to: 22 }, estimateClass: 'C', escalate: true },
       { id: 'elevators', label: 'Elevators', catalogueId: 'elevators', driver: { kind: 'perUnit', rate: 300_000, units: Math.ceil(units / 90) }, timing: { kind: 'spread', from: 30, to: 40 }, estimateClass: 'C', escalate: true },
       percentOfHard('soft-costs', 'Design, consultants, management, legal (18% of hard)', 0.18, { kind: 'spread', from: 0, to: 42 }, 'C'),
       percentOfHard('construction-contingency', 'Design + construction contingency (7% of hard)', 0.07, { kind: 'construction' }, 'C'),

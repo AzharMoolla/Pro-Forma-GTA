@@ -10,6 +10,53 @@ import { useAnalysis } from './sections3'
 import { ChartFigure } from './Visuals'
 import { axis, EChart, type EChartsOption, type Tokens } from './EChart'
 import { useWorkspace } from './workspace'
+import { projectsUnder } from './coverage'
+
+export const SPREAD_KEY = 'finance.requiredSpread'
+
+/**
+ * Rental return test: a rental is worth building when what it yields on its cost beats what buyers pay for it (the
+ * exit cap rate) by the spread the investors require for the risk and the wait. The spread is the user's, never a
+ * default: published studies disagree on it (docs/implementation/BENCHMARK.md).
+ */
+function RentalReturn() {
+  const { node, nodeResult, state, dispatch } = useWorkspace()
+  const attributes = state.projects[state.projectId]!.attributes
+  const required = typeof attributes[SPREAD_KEY] === 'number' ? (attributes[SPREAD_KEY] as number) : null
+  const caps = [...new Set(projectsUnder(node).flatMap(({ project }) => project.components.flatMap((c) => (c.kind === 'rental' ? [c.exitCapRate] : []))))]
+  const yoc = nodeResult?.metrics.yieldOnCost?.value ?? null
+  const cap = caps.length === 1 ? caps[0]! : null
+  const land = useMemo(() => (cap !== null && required !== null && !isPortfolio(node) ? solve(node, 'land', 'yieldOnCost', cap + required) : null), [node, cap, required])
+  if (!caps.length) return null
+  const achieved = yoc !== null && cap !== null ? yoc - cap : null
+  const landNow = landTotal(node)
+  return (
+    <Card title="Rental return test">
+      <p className="mb-3 text-sm text-ink-soft">A rental pays when its yield on cost (stabilized NOI ÷ total development cost) beats the exit cap rate (what a buyer would pay for that NOI) by the spread your investors require for the risk and the years of waiting. The spread is yours to set: there is no safe default, and published studies disagree.</p>
+      <div className="flex flex-wrap items-end gap-4">
+        <dl className="grid grid-cols-3 gap-4 text-sm">
+          <div><dt className="text-xs text-ink-soft"><GlossaryText text="Yield on cost" /></dt><dd className="num text-lg">{yoc === null ? '—' : pct(yoc, 2)}</dd></div>
+          <div><dt className="text-xs text-ink-soft"><GlossaryText text="Exit cap rate" /></dt><dd className="num text-lg">{cap === null ? 'varies by block' : pct(cap, 2)}</dd></div>
+          <div><dt className="text-xs text-ink-soft">Spread achieved</dt><dd className="num text-lg">{achieved === null ? '—' : `${achieved >= 0 ? '+' : ''}${(achieved * 100).toFixed(2)} pts`}</dd></div>
+        </dl>
+        <label className="flex items-center gap-2 text-sm">Required spread
+          <input aria-label="Required spread (percentage points)" inputMode="decimal" placeholder="not set" className="num min-h-9 w-20 rounded border border-line-strong bg-surface px-2 text-right" defaultValue={required === null ? '' : String(Number((required * 100).toFixed(4)))} key={String(required)}
+            onBlur={(e) => { const t = e.target.value.trim(); const n = t === '' ? null : Number(t) / 100; if (n !== null && !Number.isFinite(n)) return; if (n !== required) dispatch({ type: 'attribute', id: SPREAD_KEY, value: n }) }}
+            onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }} />
+          <span className="text-ink-mute">points</span>
+        </label>
+      </div>
+      {required === null ? (
+        <p className="mt-3 text-sm text-ink-soft">Set the spread your investors require to test the rental and see the land price it supports.</p>
+      ) : achieved !== null && (
+        <div className="mt-3 flex flex-col gap-2 text-sm">
+          <p><Chip tone={achieved >= required ? 'good' : 'bad'}>{achieved >= required ? `Meets the required ${(required * 100).toFixed(2)}-point spread` : `Short of the required spread by ${((required - achieved) * 100).toFixed(2)} points`}</Chip></p>
+          {land && <p>Most you could pay for the land and still earn a {pct(cap! + required, 2)} yield on cost: <strong className="num">{land.multiplier === null ? (land.reason.startsWith('no land') ? `not reachable through the land price: even free land leaves the yield on cost below ${pct(cap! + required, 2)}, so rents or costs have to change` : land.reason) : landNow === null ? 'land price not estimated' : money(landNow * land.multiplier)}</strong>{landNow !== null && <span className="text-ink-soft"> (land as entered: {money(landNow)})</span>}</p>}
+        </div>
+      )}
+    </Card>
+  )
+}
 import { GlossaryText } from './Glossary'
 
 // Feasibility: can the project be funded, what land price and revenue it supports, how it holds up when several
@@ -34,6 +81,7 @@ function FundingChart({ months }: { months: FundingMonth[] }) {
 
 const METRICS = [
   { id: 'profitOnCost', label: 'Profit on cost', target: 0.15 },
+  { id: 'yieldOnCost', label: 'Yield on cost', target: 0.05 },
   { id: 'unleveredIrr', label: 'Unlevered IRR', target: 0.1 },
   { id: 'leveredIrr', label: 'Levered IRR', target: 0.15 },
 ]
@@ -93,6 +141,8 @@ export function Feasibility() {
       ) : (
         <Card title="Can it be funded?"><p className="text-sm text-ink-soft">Each building carries its own construction loan: choose a building to see its funding gap. The combined downside below covers the whole plan.</p></Card>
       )}
+
+      <RentalReturn />
 
       <Card title="Residual land value and break-even">
         <div className="mb-3 flex flex-wrap items-end gap-3 text-sm">

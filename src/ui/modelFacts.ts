@@ -28,11 +28,13 @@ export const FROM_MODEL: Record<string, string> = {
   'finance.refinance': 'refinance terms, Finance & ledger',
   'finance.discountRate': 'discount rate of the plan',
   'mp.phases': 'the phasing plan, above',
+  'planning.carParkingStalls': 'the parking line, Cost & budget',
 }
 
 /** Variables asked on another page: listed there, not here. */
 export const ASKED_ELSEWHERE: Record<string, string> = {
   'deal.landPrice': 'Cost & budget (the land line)',
+  'finance.requiredSpread': 'Feasibility & stress (rental return test)',
   'deal.holdMonths': 'Finance & ledger (pre-construction months)',
   'market.rentsByType': 'Revenue & operations', 'market.rentGrowth': 'Revenue & operations', 'market.condoPsf': 'Revenue & operations',
   'market.absorption': 'Revenue & operations', 'market.depositStructure': 'Revenue & operations', 'market.retailRentPsf': 'Revenue & operations',
@@ -46,7 +48,7 @@ export const GROUPS_ELSEWHERE: Record<string, string> = { demographics: 'People 
 /** The few questions Simple mode asks: the ones that switch the most costs, most of them filled in by the site map. */
 export const SIMPLE_QUESTIONS = [
   'site.municipality', 'site.existingBuilding', 'site.existingRentalUnits', 'site.contamination', 'site.heritage', 'site.regulatedArea',
-  'site.floodplain', 'site.nearTtc60m', 'planning.zba', 'planning.sitePlan', 'planning.affordableShare', 'planning.carParkingStalls',
+  'site.floodplain', 'site.nearTtc60m', 'planning.zba', 'planning.sitePlan', 'planning.affordableShare',
   'planning.parkingLevelsBelowGrade',
 ]
 
@@ -72,6 +74,9 @@ export function fromModel(node: Node): Attributes {
     'finance.discountRate': node.discountRate,
     'mp.phases': isPortfolio(node) && node.children.every((c) => isPortfolio(c.node)) ? node.children.length : 1,
   }
+  // Stalls from the parking lines carried as stalls × area × $/ft² (a $/stall line counts its units)
+  const stallLines = ps.flatMap((p) => p.costLines).filter((l) => l.catalogueId === 'underground-parking')
+  if (stallLines.length) a['planning.carParkingStalls'] = sum(stallLines.map((l) => (l.driver?.kind === 'perStall' ? l.driver.stalls : l.driver?.kind === 'perUnit' ? l.driver.units : 0)))
   if (rental || condo) a['program.tenure'] = rental && condo ? 'mixed' : rental ? 'rental' : 'condo'
   if (progs.length === ps.length && progs.length) {
     a['program.gcaAboveSqft'] = sum(progs.map((g) => g.gcaAboveSqft))

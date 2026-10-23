@@ -21,6 +21,7 @@ import { Feasibility } from './Feasibility'
 import { People } from './People'
 import { fromCsv, pinnedOf, ReportChartsContext, type ReportCharts } from './pins'
 import { Visuals } from './Visuals'
+import { evidenceOf } from './evidence'
 
 const KEY_METRICS = ['totalUnits', 'totalDevelopmentCost', 'totalRevenue', 'profit', 'profitOnCost', 'profitOnCostBeforeFinancing', 'yieldOnCost', 'unleveredIrr', 'leveredIrr', 'equityMultiple', 'equityContributed', 'peakDebt']
 const SITE_VARS = ['site.address', 'site.municipality', 'site.region', 'site.ward', 'site.treaty', 'zoning.code', 'zoning.heightLimitM', 'zoning.heightLimitStoreys', 'zoning.fsiLimit', 'zoning.exception', 'zoning.holding', 'site.secondaryPlan', 'site.mtsaType', 'site.heritage', 'site.regulatedArea', 'site.greenbelt', 'site.nearAerodrome', 'site.aeronauticalLimitM', 'site.frontageRoadClass', 'site.nearestTransitStop', 'planning.zba']
@@ -128,6 +129,13 @@ export function Report() {
               </ReportChartsContext.Provider>
             )}
         </section>
+
+        {evidenceOf(project.attributes).length > 0 && (
+          <section className="break-inside-avoid">
+            <h3 className="mb-2 text-base font-semibold">Market evidence</h3>
+            <ul className="flex flex-col gap-1 text-sm">{evidenceOf(project.attributes).map((e) => <li key={e.id}><strong>{e.figure}:</strong> {e.value} ({e.period}). <span className="text-ink-soft">{e.source}, {e.url}, read {e.retrievedAt}.</span></li>)}</ul>
+          </section>
+        )}
 
         <section>
           <h3 className="mb-2 text-base font-semibold">Observations</h3>

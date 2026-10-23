@@ -122,7 +122,7 @@ function costLines(s: StudySite, land: number, pre: number): CostLine[] {
   return [
     line('land', 'Land (residual)', { kind: 'lumpSum', amount: land }, { kind: 'month', month: 0 }),
     line('hard', 'Hard costs (by height)', { kind: 'perArea', rate: c.hardPsf, area: s.gfaSqft }, { kind: 'construction' }, true),
-    line('parking', 'Underground parking', { kind: 'perArea', rate: c.parkingPsf, area: stalls * A.parkingSqftPerStall }, { kind: 'construction' }, true),
+    line('parking', 'Underground parking', { kind: 'perStall', rate: c.parkingPsf, stalls, sqftPerStall: A.parkingSqftPerStall }, { kind: 'construction' }, true),
     line('site', 'Servicing, landscaping, demolition', { kind: 'lumpSum', amount: (s.units * (A.servicingPerUnit + A.landscapingPerUnit)) + (s.acres * 43_560 * A.demolitionPsfSite) }, { kind: 'construction' }, true),
     line('contingency', 'Contingency', { kind: 'percentOf', rate: A.contingency, of: hard }, { kind: 'construction' }),
     line('soft', 'Consultants, PM, legal, insurance, marketing', { kind: 'percentOf', rate: A.consultantsPm + A.insurance + A.marketing, of: hard }, { kind: 'spread', from: 0, to: pre + A.constructionMonths(s.storeys) - 1 }),

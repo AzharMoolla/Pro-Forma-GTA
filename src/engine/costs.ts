@@ -25,6 +25,8 @@ export type Driver =
   | { kind: 'perArea'; rate: number; area: number }
   | { kind: 'perLinear'; rate: number; metres: number }
   | { kind: 'perHectare'; rate: number; hectares: number }
+  /** Structured parking: stalls × gross area per stall (stall, aisle and ramp share) × $ per ft². Rate is $/ft². */
+  | { kind: 'perStall'; rate: number; stalls: number; sqftPerStall: number }
   | { kind: 'percentOf'; rate: number; of: string[] }
 
 export type Timing =
@@ -79,6 +81,7 @@ function baseAmount(driver: Exclude<Driver, { kind: 'percentOf' }>): number {
     case 'perArea': return driver.rate * driver.area
     case 'perLinear': return driver.rate * driver.metres
     case 'perHectare': return driver.rate * driver.hectares
+    case 'perStall': return driver.rate * driver.stalls * driver.sqftPerStall
   }
 }
 

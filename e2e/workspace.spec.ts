@@ -371,7 +371,7 @@ test('simple mode asks only the key questions; full detail shows the rest, with 
   await fresh(page)
   await page.getByText('Simple', { exact: true }).click()
   await openSection(page, 'Site & program')
-  await expect(page.getByRole('heading', { name: 'Key questions (13)' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Key questions (12)' })).toBeVisible()
   await expect(page.getByRole('combobox', { name: 'Pool' })).toHaveCount(0)
   await page.getByText('Full detail', { exact: true }).click()
   await expect(page.getByRole('heading', { name: /Project variables \(\d+\)/ })).toBeVisible()
@@ -394,4 +394,36 @@ test('pin charts: pinned charts appear in the report, unpinned ones leave it', a
   await expect(charts.locator('[data-pinned-chart="timeline"]')).toBeVisible()
   await expect(charts.locator('[data-pinned-chart="costs"]')).toHaveCount(0)
   await expect(charts.getByText('Residual land')).toHaveCount(0) // the rest of the Feasibility page stays there
+})
+
+test('rental return test: the required spread is the user\'s, and the verdict follows it', async ({ page }) => {
+  await fresh(page)
+  await openSection(page, 'Feasibility & stress')
+  await expect(page.getByText('Set the spread your investors require')).toBeVisible()
+  const spread = page.getByLabel('Required spread (percentage points)')
+  await spread.fill('1.25')
+  await spread.press('Enter')
+  await expect(page.getByText(/Short of the required spread by/)).toBeVisible()
+})
+
+test('market evidence: a dated, cited TRREB figure is recorded and reaches the report', async ({ page }) => {
+  await fresh(page)
+  await openSection(page, 'Market evidence')
+  await page.getByLabel('Figure', { exact: true }).fill('Average 1-bed condo lease, C01')
+  await page.getByLabel('Value', { exact: true }).fill('$2,450 / month')
+  await page.getByRole('button', { name: 'Add figure' }).click()
+  await expect(page.getByRole('alert')).toContainText('Say which period it describes')
+  await page.getByLabel('Period it describes').fill('2026 Q3')
+  await page.getByRole('button', { name: 'Add figure' }).click()
+  await expect(page.getByRole('table', { name: 'Market evidence' })).toContainText('TRREB Rental Report')
+  await openSection(page, 'Report & export')
+  await expect(page.getByText('Average 1-bed condo lease, C01:')).toBeVisible()
+})
+
+test('parking: stalls, area per stall and cost per ft² are their own inputs', async ({ page }) => {
+  await fresh(page)
+  await page.getByText('Simple', { exact: true }).click()
+  await openSection(page, 'Cost & budget')
+  await expect(page.getByRole('heading', { name: 'Parking' })).toBeVisible()
+  await expect(page.getByLabel('Area per stall')).toHaveValue('400')
 })

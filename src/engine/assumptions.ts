@@ -94,7 +94,7 @@ export function listAssumptions(node: Node, off: Set<string>): Assumption[] {
     if (seen.has(line.id)) continue
     seen.add(line.id)
     const d = line.driver!
-    const value = d.kind === 'percentOf' ? `${pct(d.rate, d.rate < 0.01 ? 2 : 1)} of ${d.of.length} line${d.of.length === 1 ? '' : 's'}` : d.kind === 'lumpSum' ? `${d.amount < 0 ? '−' : ''}$${Math.round(Math.abs(d.amount)).toLocaleString('en-CA')}` : `$${d.rate.toLocaleString('en-CA')} × ${(d.kind === 'perUnit' ? d.units : d.kind === 'perArea' ? d.area : d.kind === 'perLinear' ? d.metres : d.hectares).toLocaleString('en-CA')}`
+    const value = d.kind === 'percentOf' ? `${pct(d.rate, d.rate < 0.01 ? 2 : 1)} of ${d.of.length} line${d.of.length === 1 ? '' : 's'}` : d.kind === 'lumpSum' ? `${d.amount < 0 ? '−' : ''}$${Math.round(Math.abs(d.amount)).toLocaleString('en-CA')}` : `$${d.rate.toLocaleString('en-CA')} × ${(d.kind === 'perUnit' ? d.units : d.kind === 'perArea' ? d.area : d.kind === 'perLinear' ? d.metres : d.kind === 'perStall' ? d.stalls * d.sqftPerStall : d.hectares).toLocaleString('en-CA')}`
     out.push({ id: `line:${line.id}`, group: 'rule', label: line.label, value, basis: line.source?.ref ?? (line.estimateClass === 'exact' ? 'Entered as exact.' : `Estimate class ${line.estimateClass}${line.source ? ` (${line.source.kind})` : ''}.`), effect: '', toggle: true, on: !off.has(`line:${line.id}`), toVerify: toVerify(line) })
   }
 
