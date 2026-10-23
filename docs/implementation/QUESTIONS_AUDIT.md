@@ -10,7 +10,7 @@ Audit date: 2026-10-22. Code: `src/ui/modelFacts.ts`; tests: `tests/engine/model
 |---|---|---|
 | Read from the pro forma | 18 (with the parking stall count) | Shown read-only, marked "from the pro forma", with where to change them. Cost triggers use the model's figure, so a typed duplicate can't disagree. |
 | Asked on another page | 16 market and land questions, the required rental spread, plus the 18 census figures | Removed from this list. Market rents, prices, cap rates and land price are asked in Revenue & operations and Cost & budget; the rental spread on Feasibility & stress; census figures in People & affordability. |
-| Real questions | 167 | Full detail: grouped as before. Simple: the 12 below. |
+| Shown in Site & program | 168 of 203 (18 of them read-only from the pro forma) | Full detail: grouped as before. Simple: the 12 below. |
 
 **Read from the pro forma:**
 - **Program:** storeys, residential units, tenure, retail, office and industrial area, above- and below-grade GCA, by-law GFA, site area.
