@@ -22,6 +22,7 @@ import { People } from './People'
 import { fromCsv, pinnedOf, ReportChartsContext, type ReportCharts } from './pins'
 import { Visuals } from './Visuals'
 import { evidenceOf } from './evidence'
+import { APPRAISAL_KEY, appraisalOf, landSummary } from './LandValue'
 
 const KEY_METRICS = ['totalUnits', 'totalDevelopmentCost', 'totalRevenue', 'profit', 'profitOnCost', 'profitOnCostBeforeFinancing', 'yieldOnCost', 'unleveredIrr', 'leveredIrr', 'equityMultiple', 'equityContributed', 'peakDebt']
 const SITE_VARS = ['site.address', 'site.municipality', 'site.region', 'site.ward', 'site.treaty', 'zoning.code', 'zoning.heightLimitM', 'zoning.heightLimitStoreys', 'zoning.fsiLimit', 'zoning.exception', 'zoning.holding', 'site.secondaryPlan', 'site.mtsaType', 'site.heritage', 'site.regulatedArea', 'site.greenbelt', 'site.nearAerodrome', 'site.aeronauticalLimitM', 'site.frontageRoadClass', 'site.nearestTransitStop', 'planning.zba']
@@ -129,6 +130,19 @@ export function Report() {
               </ReportChartsContext.Provider>
             )}
         </section>
+
+        {project.attributes[APPRAISAL_KEY] && (() => {
+          const a = appraisalOf(project.attributes, exportedAt.slice(0, 10))
+          const l = landSummary(node, a)
+          return (
+            <section className="break-inside-avoid">
+              <h3 className="mb-2 text-base font-semibold">Land value</h3>
+              <p className="text-sm">Reconciled value <strong className="num">{l.r.value === null ? 'not available' : money(l.r.value)}</strong>{l.r.low !== null && <> (range <span className="num">{money(l.r.low)} – {money(l.r.high!)}</span>)</>} as of {a.effectiveDate}; land in the model <span className="num">{l.landNow === null ? 'not estimated' : money(l.landNow)}</span>.{l.r.redevelopmentMakesSense !== null && (l.r.redevelopmentMakesSense ? ' The value beats the existing use by the margin.' : ' The value does not beat the existing use by the margin.')}</p>
+              <ul className="mt-1 list-disc pl-5 text-xs text-ink-soft">{l.r.basis.map((b) => <li key={b}>{b}</li>)}{a.comps.map((c) => <li key={c.id}>{c.label}: {money(c.price)} on {c.saleDate} ({c.source})</li>)}</ul>
+              <p className="mt-1 text-xs text-ink-mute">A screening estimate, not an appraisal.</p>
+            </section>
+          )
+        })()}
 
         {evidenceOf(project.attributes).length > 0 && (
           <section className="break-inside-avoid">

@@ -9,16 +9,17 @@ import { updateNode, type NodePath } from './tree'
 /** Detail level: Simple hides the ledger, scenarios and cost editing; Full detail shows everything. Never changes the math. */
 export type Mode = 'quick' | 'professional'
 export const MODE_LABEL: Record<Mode, string> = { quick: 'Simple', professional: 'Full detail' }
-export type SectionId = 'overview' | 'map' | 'people' | 'charts' | 'feasibility' | 'assumptions' | 'verification' | 'report' | 'privacy' | 'terms' | 'progress' | 'market' | 'program' | 'costs' | 'revenue' | 'finance' | 'returns' | 'scenarios' | 'audit'
+export type SectionId = 'overview' | 'map' | 'people' | 'charts' | 'feasibility' | 'assumptions' | 'verification' | 'report' | 'privacy' | 'terms' | 'progress' | 'market' | 'program' | 'costs' | 'revenue' | 'finance' | 'returns' | 'scenarios' | 'audit' | 'land'
 
 /** Sections grouped by the question they answer, in the order a project is worked through. */
-export type GroupId = 'site' | 'model' | 'results' | 'checks' | 'deliver'
+export type GroupId = 'site' | 'model' | 'results' | 'checks' | 'deliver' | 'tools'
 export const GROUPS: Array<{ id: GroupId; label: string }> = [
   { id: 'site', label: 'Site & context' },
   { id: 'model', label: 'Pro forma' },
   { id: 'results', label: 'Results & risk' },
   { id: 'checks', label: 'Assumptions & checks' },
   { id: 'deliver', label: 'Track & share' },
+  { id: 'tools', label: 'Side tools' },
 ]
 
 export const SECTIONS: Array<{ id: SectionId; label: string; minMode: Mode; group?: GroupId; kpis?: boolean }> = [
@@ -39,6 +40,7 @@ export const SECTIONS: Array<{ id: SectionId; label: string; minMode: Mode; grou
   { id: 'verification', label: 'Verification', minMode: 'quick', group: 'checks' },
   { id: 'progress', label: 'Development tracker', minMode: 'quick', group: 'deliver' },
   { id: 'report', label: 'Report & export', minMode: 'quick', group: 'deliver' },
+  { id: 'land', label: 'Land value', minMode: 'quick', group: 'tools' },
 ]
 
 const rank: Record<Mode, number> = { quick: 0, professional: 1 }

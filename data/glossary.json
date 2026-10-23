@@ -667,6 +667,38 @@
       ],
       "definition": "The largest balance the construction loan reaches, including interest added to it, before it is repaid by sales or a refinance.",
       "note": "Lenders size the facility as loan-to-cost × the budget; a peak above that is a funding gap."
+    },
+    {
+      "id": "direct-comparison",
+      "term": "Direct comparison",
+      "aliases": [
+        "comparables",
+        "comparable sales",
+        "direct comparison approach"
+      ],
+      "definition": "Valuing land from what similar sites recently sold for, each sale adjusted to the subject for time, location, site and zoning, then applied per buildable ft² (or per acre).",
+      "formula": "value = median(adjusted price ÷ buildable ft² of each sale) × subject buildable ft²",
+      "note": "Adjustments are added (net); a sale needing more than 15% net or 25% gross adjustment is a weak comparable."
+    },
+    {
+      "id": "existing-use-value",
+      "term": "Existing-use value",
+      "aliases": [
+        "existing use",
+        "existing use value"
+      ],
+      "definition": "What a site is worth as it stands: the net operating income from its current use (a building, a parking lot) capitalized at a market cap rate. The floor below which an owner will rarely sell.",
+      "formula": "existing-use value = NOI ÷ cap rate",
+      "note": "Redevelopment makes sense when the land value beats it by a margin (NBLC uses 10%)."
+    },
+    {
+      "id": "reconciliation",
+      "term": "Reconciliation",
+      "aliases": [
+        "reconciled value",
+        "reconciled"
+      ],
+      "definition": "Weighing the value indications from different approaches (here comparables and the residual) into one value and a range, giving more weight to the more reliable evidence."
     }
   ]
 }

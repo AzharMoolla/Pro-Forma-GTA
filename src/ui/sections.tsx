@@ -11,6 +11,7 @@ import { Audit, Finance, Returns, Revenue, Scenarios } from './sections2'
 import { CostBuckets, DecisionSummary, Progress } from './sections3'
 import { readSources, SiteMap } from './SiteMap'
 import { Streetscape } from './Streetscape'
+import { LandValue } from './LandValue'
 import { Phasing } from './Phasing'
 import { Visuals } from './Visuals'
 import { Feasibility } from './Feasibility'
@@ -47,6 +48,7 @@ export function Sections({ section }: { section: SectionId }) {
     case 'returns': return <Returns />
     case 'scenarios': return <Scenarios />
     case 'audit': return <Audit />
+    case 'land': return <LandValue />
   }
 }
 
