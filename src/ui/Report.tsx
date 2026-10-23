@@ -22,6 +22,8 @@ import { People } from './People'
 import { fromCsv, pinnedOf, ReportChartsContext, type ReportCharts } from './pins'
 import { Visuals } from './Visuals'
 import { evidenceOf } from './evidence'
+import { Cited, CitedList } from './Cited'
+import { citationsForCue, citationsForInsight } from './citations'
 import { APPRAISAL_KEY, appraisalOf, landSummary } from './LandValue'
 
 const KEY_METRICS = ['totalUnits', 'totalDevelopmentCost', 'totalRevenue', 'profit', 'profitOnCost', 'profitOnCostBeforeFinancing', 'yieldOnCost', 'unleveredIrr', 'leveredIrr', 'equityMultiple', 'equityContributed', 'peakDebt']
@@ -144,6 +146,17 @@ export function Report() {
           )
         })()}
 
+        {(() => {
+          // Every section the findings and the streetscape's policy pills rest on, quoted, with the reproduction notice
+          const used = new Map([...insights.flatMap((i) => citationsForInsight(i.id)), ...(scene?.cues ?? []).flatMap((c) => citationsForCue(c.id))].map((c) => [c.id, c]))
+          return used.size > 0 && (
+            <section>
+              <h3 className="mb-2 text-base font-semibold">Legislation and policy cited</h3>
+              <CitedList citations={[...used.values()]} />
+            </section>
+          )
+        })()}
+
         {evidenceOf(project.attributes).length > 0 && (
           <section className="break-inside-avoid">
             <h3 className="mb-2 text-base font-semibold">Market evidence</h3>
@@ -154,7 +167,7 @@ export function Report() {
         <section>
           <h3 className="mb-2 text-base font-semibold">Observations</h3>
           <ul className="flex flex-col gap-1 text-sm">
-            {insights.map((i) => <li key={i.id} className="break-inside-avoid"><strong>{i.severity === 'concern' ? '▲ Concern' : i.severity === 'watch' ? '! Watch' : i.severity === 'good' ? '✓ Strength' : 'i Note'}: {i.title}.</strong> <span className="text-ink-soft">{i.detail}</span>{i.source && <span className="text-xs text-ink-mute"> Source: {i.source}.</span>}</li>)}
+            {insights.map((i) => <li key={i.id} className="break-inside-avoid"><strong>{i.severity === 'concern' ? '▲ Concern' : i.severity === 'watch' ? '! Watch' : i.severity === 'good' ? '✓ Strength' : 'i Note'}: {i.title}.</strong> <span className="text-ink-soft">{i.detail}</span>{i.source && <span className="text-xs text-ink-mute"> Source: {i.source}.</span>}<Cited compact citations={citationsForInsight(i.id)} /></li>)}
           </ul>
         </section>
 

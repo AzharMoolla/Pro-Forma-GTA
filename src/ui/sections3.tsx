@@ -19,6 +19,8 @@ import { money, pct } from './format'
 import { deleteReceipt, getReceipt, putReceipt, sha256File } from './receipts'
 import { receiptUrl, removeReceipt as removeCloudReceipt, saveTask, uploadReceipt } from '../cloud/cloud'
 import { useWorkspace } from './workspace'
+import { Cited } from './Cited'
+import { citationsForInsight } from './citations'
 
 const stageOf = (id?: string) => (id ? catalogueItem.get(id)?.stage : undefined)
 
@@ -200,6 +202,7 @@ export function Observations({ limit }: { limit?: number }) {
                   <p className="text-ink-soft">{i.detail}</p>
                   {i.drivers.length > 0 && i.drivers[0]!.includes('$') && <p className="text-xs text-ink-soft">Driven by: {i.drivers.join(' · ')}</p>}
                   {i.source && <p className="text-xs text-ink-soft">Source: {i.source} (screening data; check the by-law and plans)</p>}
+                  <Cited citations={citationsForInsight(i.id)} />
                   {i === firstAction && <ModelRezoning insight={i} />}
                 </div>
               </details>

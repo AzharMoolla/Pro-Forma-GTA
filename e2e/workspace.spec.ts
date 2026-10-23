@@ -451,3 +451,15 @@ test('land value: comparables, residual and existing use reconcile into a value,
   await openSection(page, 'Report & export')
   await expect(page.getByRole('heading', { name: 'Land value' })).toBeVisible()
 })
+
+test('policy citations: a finding names its section with the exact words, and the report lists every section cited', async ({ page }) => {
+  await fresh(page)
+  await page.getByText(/over the zoning height/).first().click()
+  const law = page.getByRole('list', { name: 'Legislation and policy' }).first()
+  await expect(law).toContainText('Planning Act, R.S.O. 1990, c. P.13, s. 34 (1), para. 4')
+  await law.getByText('Zoning regulates height, bulk and floor area').click()
+  await expect(law).toContainText('For regulating the type of construction and the height, bulk')
+  await openSection(page, 'Report & export')
+  await expect(page.getByRole('heading', { name: 'Legislation and policy cited' })).toBeVisible()
+  await expect(page.getByText(/© King's Printer for Ontario/)).toBeVisible()
+})

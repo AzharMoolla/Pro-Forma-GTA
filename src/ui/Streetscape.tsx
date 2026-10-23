@@ -7,6 +7,7 @@ import { metricValue, money, num } from './format'
 import { buildingKey, GROUND_Y, KIT_MARGIN, kitArt, kitLayout, limitMetresOf, metresOf, px, py, type KitLayout } from './kitStreetscape'
 import { controllingLimit, sceneOf, type Building, type Scene } from './streetscapeScene'
 import { getResult } from './tree'
+import { citationsForCue, citeText } from './citations'
 import { useWorkspace } from './workspace'
 
 // A picture of the project assembled from the component kit (src/design-lab/components.ts): buildings, podiums,
@@ -68,7 +69,7 @@ export function noticesOf(scene: Scene, markers: Marker[]): Array<Notice & { gro
     return { id: `note-${n}`, kind: 'note', title, text, tone: tone as Tone, detail: n, marker: null, group: 'Policy & zoning' }
   }
   return [
-    ...scene.cues.map((c) => { const [title, ...rest] = c.text.split(': '); return { id: c.id, kind: 'cue' as const, title: rest.length ? title! : c.text, text: rest.join(': '), tone: c.tone, detail: c.detail, marker: marker(c.id), group: 'Policy & zoning' } }),
+    ...scene.cues.map((c) => { const [title, ...rest] = c.text.split(': '); const law = citationsForCue(c.id); return { id: c.id, kind: 'cue' as const, title: rest.length ? title! : c.text, text: rest.join(': ') + (law.length ? ' §' : ''), tone: c.tone, detail: [c.detail, ...law.map(citeText)].join('\n\n'), marker: marker(c.id), group: 'Policy & zoning' } }),
     ...scene.notes.map(note),
     // Unknown stays visible: no height limit entered is a thing to check, not an all-clear
     ...(scene.buildings.some((b) => b.limitStoreys !== null || b.airLimitStoreys !== null) ? [] : [{ id: 'no-height-limit', kind: 'note' as const, title: 'Height limit', text: 'not set: check the zoning', tone: 'info' as Tone, detail: 'No zoning or airport height limit is entered, so the drawing shows none. That means unknown, not unlimited.', marker: null, group: 'Policy & zoning' }]),

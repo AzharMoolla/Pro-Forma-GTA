@@ -1,0 +1,127 @@
+{
+  "version": "2026-10-23",
+  "notice": "Ontario statutes are reproduced under the King's Printer's permission: © King's Printer for Ontario. These excerpts are not the official versions; the official text is on e-Laws (ontario.ca/laws). Federal text: Justice Laws Website (laws-lois.justice.gc.ca), not the official version. Provincial Planning Statement, 2024: Government of Ontario.",
+  "citations": [
+    {
+      "id": "pa-34-1-4", "kind": "statute", "jurisdiction": "Ontario", "instrument": "Planning Act, R.S.O. 1990, c. P.13", "section": "s. 34 (1), para. 4",
+      "topic": "Zoning regulates height, bulk and floor area",
+      "quote": "4. For regulating the type of construction and the height, bulk, location, size, floor area, spacing, character and use of buildings or structures to be erected or located within the municipality…",
+      "url": "https://www.ontario.ca/laws/statute/90p13", "currency": "Consolidated to July 1, 2026 (e-Laws currency date October 20, 2026)", "verified": "2026-10-23"
+    },
+    {
+      "id": "pa-45-1", "kind": "statute", "jurisdiction": "Ontario", "instrument": "Planning Act, R.S.O. 1990, c. P.13", "section": "s. 45 (1)",
+      "topic": "Minor variances from the zoning by-law",
+      "quote": "The committee of adjustment, upon the application of the owner of any land, building or structure affected by any by-law that is passed under section 34 or 38… may, despite any other Act, authorize such minor variance from the provisions of the by-law…",
+      "url": "https://www.ontario.ca/laws/statute/90p13", "currency": "Consolidated to July 1, 2026 (e-Laws currency date October 20, 2026)", "verified": "2026-10-23"
+    },
+    {
+      "id": "pa-36-1", "kind": "statute", "jurisdiction": "Ontario", "instrument": "Planning Act, R.S.O. 1990, c. P.13", "section": "s. 36 (1)",
+      "topic": "Holding (H) provisions",
+      "quote": "The council of a local municipality may, in a by-law passed under section 34, by the use of the holding symbol “H” (or “h”) in conjunction with any use designation, specify the use to which lands, buildings or structures may be put at such time in the future as the holding symbol is removed by amendment to the by-law.",
+      "url": "https://www.ontario.ca/laws/statute/90p13", "currency": "Consolidated to July 1, 2026 (e-Laws currency date October 20, 2026)", "verified": "2026-10-23"
+    },
+    {
+      "id": "pa-16-4", "kind": "statute", "jurisdiction": "Ontario", "instrument": "Planning Act, R.S.O. 1990, c. P.13", "section": "s. 16 (4)",
+      "topic": "Inclusionary zoning policies in the official plan",
+      "quote": "An official plan of a municipality that is prescribed for the purpose of this subsection shall contain policies that authorize inclusionary zoning by, (a) authorizing the inclusion of affordable housing units within buildings or projects containing other residential units…",
+      "url": "https://www.ontario.ca/laws/statute/90p13", "currency": "Consolidated to July 1, 2026 (e-Laws currency date October 20, 2026)", "verified": "2026-10-23"
+    },
+    {
+      "id": "pa-35-2-1", "kind": "statute", "jurisdiction": "Ontario", "instrument": "Planning Act, R.S.O. 1990, c. P.13", "section": "s. 35.2 (1)",
+      "topic": "Inclusionary zoning by-laws",
+      "quote": "If the official plan in effect in a local municipality contains policies described in subsection 16 (4), (a) the council of the municipality shall pass one or more by-laws under section 34 to give effect to the policies…",
+      "url": "https://www.ontario.ca/laws/statute/90p13", "currency": "Consolidated to July 1, 2026 (e-Laws currency date October 20, 2026)", "verified": "2026-10-23"
+    },
+    {
+      "id": "pa-16-15", "kind": "statute", "jurisdiction": "Ontario", "instrument": "Planning Act, R.S.O. 1990, c. P.13", "section": "s. 16 (15)",
+      "topic": "Protected major transit station areas",
+      "quote": "The official plan of a single-tier municipality or a lower-tier municipality… may include policies that identify the area surrounding and including an existing or planned higher order transit station or stop as a protected major transit station area… (a) identify the minimum number of residents and jobs, collectively, per hectare that are planned to be accommodated within the area…",
+      "url": "https://www.ontario.ca/laws/statute/90p13", "currency": "Consolidated to July 1, 2026 (e-Laws currency date October 20, 2026)", "verified": "2026-10-23"
+    },
+    {
+      "id": "pa-37-2", "kind": "statute", "jurisdiction": "Ontario", "instrument": "Planning Act, R.S.O. 1990, c. P.13", "section": "s. 37 (2), (4)",
+      "topic": "Community benefits charge, and when it cannot be imposed",
+      "quote": "The council of a local municipality may by by-law impose community benefits charges against land to pay for the capital costs of facilities, services and matters required because of development or redevelopment… (4) A community benefits charge may not be imposed with respect to, (a) development of a proposed building or structure with fewer than five storeys at or above ground; (b) development of a proposed building or structure with fewer than 10 residential units…",
+      "url": "https://www.ontario.ca/laws/statute/90p13", "currency": "Consolidated to July 1, 2026 (e-Laws currency date October 20, 2026)", "verified": "2026-10-23"
+    },
+    {
+      "id": "pa-42-1", "kind": "statute", "jurisdiction": "Ontario", "instrument": "Planning Act, R.S.O. 1990, c. P.13", "section": "s. 42 (1)",
+      "topic": "Parkland conveyance",
+      "quote": "…in the case of land proposed for development or redevelopment for commercial or industrial purposes, 2 per cent and in all other cases 5 per cent of the land be conveyed to the municipality for park or other public recreational purposes.",
+      "url": "https://www.ontario.ca/laws/statute/90p13", "currency": "Consolidated to July 1, 2026 (e-Laws currency date October 20, 2026)", "verified": "2026-10-23"
+    },
+    {
+      "id": "oha-33-1", "kind": "statute", "jurisdiction": "Ontario", "instrument": "Ontario Heritage Act, R.S.O. 1990, c. O.18", "section": "s. 33 (1)",
+      "topic": "Altering a designated heritage property needs council's consent",
+      "quote": "No owner of property designated under section 29 shall alter the property or permit the alteration of the property if the alteration is likely to affect the property’s heritage attributes… unless the owner applies to the council…",
+      "url": "https://www.ontario.ca/laws/statute/90o18", "currency": "Current from April 1, 2026 (e-Laws currency date October 20, 2026)", "verified": "2026-10-23"
+    },
+    {
+      "id": "oha-34-1", "kind": "statute", "jurisdiction": "Ontario", "instrument": "Ontario Heritage Act, R.S.O. 1990, c. O.18", "section": "s. 34 (1)",
+      "topic": "Demolishing a designated heritage property needs council's consent",
+      "quote": "No owner of property designated under section 29 shall do either of the following, unless the owner applies to the council of the municipality in which the property is situate and receives consent in writing to the demolition or removal: 1. Demolish or remove, or permit the demolition or removal of, any of the property’s…",
+      "url": "https://www.ontario.ca/laws/statute/90o18", "currency": "Current from April 1, 2026 (e-Laws currency date October 20, 2026)", "verified": "2026-10-23"
+    },
+    {
+      "id": "oha-48-1", "kind": "statute", "jurisdiction": "Ontario", "instrument": "Ontario Heritage Act, R.S.O. 1990, c. O.18", "section": "s. 48 (1)",
+      "topic": "Archaeological fieldwork needs a licence",
+      "quote": "Subject to subsection (2), no person shall do any of the following unless the person applies to the Minister and is issued a licence under this Part that allows the person to carry out the activity in question: 1. Carry out archaeological fieldwork.",
+      "url": "https://www.ontario.ca/laws/statute/90o18", "currency": "Current from April 1, 2026 (e-Laws currency date October 20, 2026)", "verified": "2026-10-23"
+    },
+    {
+      "id": "caa-28-1", "kind": "statute", "jurisdiction": "Ontario", "instrument": "Conservation Authorities Act, R.S.O. 1990, c. C.27", "section": "s. 28 (1)",
+      "topic": "Development in hazardous lands, wetlands and valleys is prohibited without a permit",
+      "quote": "No person shall carry on the following activities, or permit another person to carry on the following activities, in the area of jurisdiction of an authority: … 2. Development activities in areas that are within the authority’s area of jurisdiction and are, i. hazardous lands, ii. wetlands, iii. river or stream valleys…",
+      "url": "https://www.ontario.ca/laws/statute/90c27", "currency": "Current from April 24, 2026 (e-Laws currency date October 20, 2026)", "verified": "2026-10-23"
+    },
+    {
+      "id": "caa-28-1-1", "kind": "statute", "jurisdiction": "Ontario", "instrument": "Conservation Authorities Act, R.S.O. 1990, c. C.27", "section": "s. 28.1 (1)",
+      "topic": "Conservation authority permits",
+      "quote": "An authority may issue a permit to a person to engage in an activity specified in the permit that would otherwise be prohibited by section 28, if, in the opinion of the authority, (a) the activity is not likely to affect the control of flooding, erosion, dynamic beaches or unstable soil or bedrock…",
+      "url": "https://www.ontario.ca/laws/statute/90c27", "currency": "Current from April 24, 2026 (e-Laws currency date October 20, 2026)", "verified": "2026-10-23"
+    },
+    {
+      "id": "ga-7-1", "kind": "statute", "jurisdiction": "Ontario", "instrument": "Greenbelt Act, 2005, S.O. 2005, c. 1", "section": "s. 7 (1)",
+      "topic": "Planning decisions must conform with the Greenbelt Plan",
+      "quote": "A decision that is made under the Ontario Planning and Development Act, 1994, the Planning Act or the Condominium Act, 1998 or in relation to a prescribed matter by a municipal council… shall conform with the Greenbelt Plan.",
+      "url": "https://www.ontario.ca/laws/statute/05g01", "currency": "Current from December 6, 2023 (e-Laws currency date October 20, 2026)", "verified": "2026-10-23"
+    },
+    {
+      "id": "pthia-34-2", "kind": "statute", "jurisdiction": "Ontario", "instrument": "Public Transportation and Highway Improvement Act, R.S.O. 1990, c. P.50", "section": "s. 34 (2)",
+      "topic": "Building near a King's Highway needs a Minister's permit",
+      "quote": "…no person shall, except under a permit therefor from the Minister, (a) place, erect or alter any building, fence, gasoline pump or other structure or any road, or perform any grading upon or within 45 metres of any limit of the King’s Highway or upon or within 180 metres of the centre point of an intersection…",
+      "url": "https://www.ontario.ca/laws/statute/90p50", "currency": "Current from November 27, 2025 (e-Laws currency date October 20, 2026)", "verified": "2026-10-23"
+    },
+    {
+      "id": "pthia-38-2", "kind": "statute", "jurisdiction": "Ontario", "instrument": "Public Transportation and Highway Improvement Act, R.S.O. 1990, c. P.50", "section": "s. 38 (2)",
+      "topic": "Building near a controlled-access highway needs a Minister's permit",
+      "quote": "…no person shall, except under a permit therefor from the Minister, (a) place, erect or alter any building, fence, gasoline pump or other structure or any road, or perform any grading upon or within 45 metres of any limit of a controlled-access highway or upon or within 395 metres of the centre point of an intersection…",
+      "url": "https://www.ontario.ca/laws/statute/90p50", "currency": "Current from November 27, 2025 (e-Laws currency date October 20, 2026)", "verified": "2026-10-23"
+    },
+    {
+      "id": "pps-5-2-2", "kind": "policy", "jurisdiction": "Ontario", "instrument": "Provincial Planning Statement, 2024", "section": "policy 5.2.2",
+      "topic": "Development is directed away from flooding and erosion hazards",
+      "quote": "Development shall generally be directed to areas outside of: a) hazardous lands adjacent to the shorelines of the Great Lakes - St. Lawrence River System and large inland lakes which are impacted by flooding hazards, erosion hazards and/or dynamic beach hazards; b) hazardous lands adjacent to river, stream and small inland lake systems which are impacted by flooding hazards and/or erosion hazards…",
+      "url": "https://www.ontario.ca/page/provincial-planning-statement-2024", "currency": "In effect October 20, 2024", "verified": "2026-10-23"
+    },
+    {
+      "id": "pps-2-4-2-2", "kind": "policy", "jurisdiction": "Ontario", "instrument": "Provincial Planning Statement, 2024", "section": "policy 2.4.2.2",
+      "topic": "Minimum densities in major transit station areas",
+      "quote": "Within major transit station areas on higher order transit corridors, planning authorities shall plan for a minimum density target of: a) 200 residents and jobs combined per hectare for those that are served by subways; b) 160 residents and jobs combined per hectare for those that are served by light rail or bus rapid transit; or c) 150 residents and jobs combined per hectare for those that are served by commuter or regional rail.",
+      "url": "https://www.ontario.ca/page/provincial-planning-statement-2024", "currency": "In effect October 20, 2024", "verified": "2026-10-23"
+    },
+    {
+      "id": "aa-5-4-2", "kind": "statute", "jurisdiction": "Canada", "instrument": "Aeronautics Act, R.S.C. 1985, c. A-2", "section": "s. 5.4 (2) (b)",
+      "topic": "Federal airport zoning regulations",
+      "quote": "The Governor in Council may make regulations for the purposes of… (b) preventing lands adjacent to or in the vicinity of an airport or airport site from being used or developed in a manner that is, in the opinion of the Minister, incompatible with the safe operation of an airport or aircraft…",
+      "url": "https://laws-lois.justice.gc.ca/eng/acts/a-2/page-5.html", "currency": "Act current to September 30, 2026", "verified": "2026-10-23"
+    },
+    {
+      "id": "fcm-rac-2013", "kind": "guideline", "jurisdiction": "Canada", "instrument": "FCM/RAC Guidelines for New Development in Proximity to Railway Operations (2013)", "section": "recommended setbacks",
+      "topic": "Setbacks and berms beside rail lines (guidance, not law)",
+      "quote": "Main lines: 30 m setback with a 2.5 m berm (principal) or 2.0 m (secondary); branch lines: 15 m with a 2.0 m berm; measured from the property line to the building face; a crash wall can reduce the setback.",
+      "url": "https://www.mississauga.ca/wp-content/uploads/2024/12/06083141/rail-safety-report-oz-opa-23-3-w1.pdf", "currency": "2013 edition", "verified": "2026-10-23",
+      "secondary": "Figures as summarized in municipal rail safety reports (Mississauga 2022 and 2024; Toronto 2017), not quoted from the Guidelines themselves: confirm against the original."
+    }
+  ]
+}
