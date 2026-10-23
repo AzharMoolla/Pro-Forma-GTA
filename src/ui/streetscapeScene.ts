@@ -239,27 +239,45 @@ export function sceneOf(projects: Array<{ path: string[]; project: ProjectInput;
   const loading = num(a['planning.loadingSpaces']) > 0 || num(a['planning.parkingLevelsBelowGrade']) > 0 || a['mp.sharedParkingStructure'] === true
   const utility = a['design.hydroVault'] === true || a['design.standbyGenerator'] === true || a['mp.districtEnergy'] === true || a['mp.pumpingStation'] === true
   const park = num(a['mp.parksHa']) > 0 || a['planning.parklandOnSite'] === true
+  // Layout: each building travels with its station (in front, where it is near transit), its own pieces and a street
+  // tree. Shared pieces (park, school, community centre, pond) take different gaps between buildings, and water and
+  // woodland sit at one end of the street. The order is seeded by the project, so a project always looks the same and
+  // only an input changes it; pieces are laid end to end, so nothing overlaps.
+  const rand = seeded(projects.map((q) => q.project.id).join('|'))
+  const groups: PartSpec[][] = buildings.map((b, i) => [
+    ...(b.transit && buildings[i - 1]?.transit !== b.transit ? [{ kind: 'station', transit: b.transit, w: 86 } as PartSpec] : []),
+    { kind: 'building', b, w: widthOf(b, single) },
+    // Beside the first building: its public space, its garage or loading door and its utility box
+    ...(i === 0 && a['planning.pops'] === true ? [{ kind: 'pops', w: 100 } as PartSpec] : []),
+    ...(i === 0 && loading ? [{ kind: 'garage', w: 44 } as PartSpec] : []),
+    ...(i === 0 && utility ? [{ kind: 'utility', w: 24 } as PartSpec] : []),
+    ...(trees || i < buildings.length - 1 ? [{ kind: 'tree', w: 26 } as PartSpec] : []),
+  ])
+  const shared: PartSpec[] = [
+    ...(park ? [{ kind: 'park', w: 120 } as PartSpec] : []),
+    ...(num(a['mp.schoolSites']) > 0 ? [{ kind: 'school', w: 104 } as PartSpec] : []),
+    ...(a['mp.communityCentre'] === true ? [{ kind: 'community', w: 124 } as PartSpec] : []),
+    ...(num(a['mp.swmPonds']) > 0 ? [{ kind: 'pond', w: 110 } as PartSpec] : []),
+  ]
+  // Gaps after each building (and at the street's ends), shuffled, so shared pieces spread out rather than bunch up
+  const gaps = shuffle(Array.from({ length: groups.length + 1 }, (_, k) => k), rand)
+  const into = new Map<number, PartSpec[]>()
+  shared.forEach((piece, k) => { const g = gaps[k % gaps.length]!; into.set(g, [...(into.get(g) ?? []), piece]) })
+  const edge: PartSpec[] = [
+    ...(a['site.floodplain'] === true ? [{ kind: 'creek', w: 160 } as PartSpec] : []),
+    ...(a['site.waterfront'] === true || a['mp.shorelineWorks'] === true ? [{ kind: 'lake', w: 180 } as PartSpec] : a['site.regulatedArea'] === true ? [{ kind: 'ravine', w: 180 } as PartSpec] : []),
+    ...(a['site.greenbelt'] === true ? [{ kind: 'greenbelt', w: 60 } as PartSpec] : []),
+  ]
+  const edgeFirst = rand() < 0.5
+  const order: PartSpec[] = [
+    ...(edgeFirst ? edge : []),
+    ...(into.get(0) ?? []),
+    ...groups.flatMap((g, k) => [...g, ...(into.get(k + 1) ?? [])]),
+    ...(edgeFirst ? [] : edge),
+  ]
   const parts: Part[] = []
   let x = 30
-  const push = (p: PartSpec) => { parts.push({ ...p, x } as Part); x += p.w + GAP }
-  buildings.forEach((b, i) => {
-    if (b.transit && buildings[i - 1]?.transit !== b.transit) push({ kind: 'station', transit: b.transit, w: 86 })
-    push({ kind: 'building', b, w: widthOf(b, single) })
-    // Beside the first building: its public space, its garage or loading door and its utility box
-    if (i === 0 && a['planning.pops'] === true) push({ kind: 'pops', w: 100 })
-    if (i === 0 && loading) push({ kind: 'garage', w: 44 })
-    if (i === 0 && utility) push({ kind: 'utility', w: 24 })
-    if (trees || i < buildings.length - 1) push({ kind: 'tree', w: 26 })
-    if (park && i === Math.max(0, Math.floor(buildings.length / 2) - 1)) push({ kind: 'park', w: 120 })
-  })
-  if (num(a['mp.schoolSites']) > 0) push({ kind: 'school', w: 104 })
-  if (a['mp.communityCentre'] === true) push({ kind: 'community', w: 124 })
-  // Water and nature context at the end of the street, only where the map or the program says so
-  if (num(a['mp.swmPonds']) > 0) push({ kind: 'pond', w: 110 })
-  if (a['site.floodplain'] === true) push({ kind: 'creek', w: 160 })
-  if (a['site.waterfront'] === true || a['mp.shorelineWorks'] === true) push({ kind: 'lake', w: 180 })
-  else if (a['site.regulatedArea'] === true) push({ kind: 'ravine', w: 180 })
-  if (a['site.greenbelt'] === true) push({ kind: 'greenbelt', w: 60 })
+  for (const piece of order) { parts.push({ ...piece, x } as Part); x += piece.w + GAP }
   const W = Math.max(980, x + 30)
   const street = streetOf(a)
   const uniform = (pick: (b: Building) => number | null) => {
@@ -354,4 +372,23 @@ function cuesOf(buildings: Building[], parts: Part[], a: Attributes, fsi: number
     a['site.archaeologicalPotential'] === true && { id: 'archaeology', text: 'Archaeological assessment', detail: 'Archaeological potential: a licensed archaeologist assesses the site before soil is disturbed (Stage 1, then 2 to 4 if needed).', at: plan, tone: 'info' },
   ]
   return cues.filter((c): c is Cue => typeof c === 'object' && c !== null)
+}
+
+/** A small seeded random generator (mulberry32 over a string hash): the same project always draws the same street. */
+export function seeded(key: string): () => number {
+  let h = 1779033703 ^ key.length
+  for (let i = 0; i < key.length; i++) { h = Math.imul(h ^ key.charCodeAt(i), 3432918353); h = (h << 13) | (h >>> 19) }
+  let t = h >>> 0
+  return () => {
+    t = (t + 0x6D2B79F5) | 0
+    let r = Math.imul(t ^ (t >>> 15), 1 | t)
+    r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+const shuffle = <T>(xs: T[], rand: () => number): T[] => {
+  const out = [...xs]
+  for (let i = out.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [out[i], out[j]] = [out[j]!, out[i]!] }
+  return out
 }

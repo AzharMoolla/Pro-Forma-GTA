@@ -219,3 +219,36 @@ describe('streetscape: policy cues and the height bar', () => {
     expect(fsiOf(30_000)).toMatchObject({ text: 'FSI 3.0 of 4', tone: 'info' })
   })
 })
+
+describe('streetscape: varied placement, grounded, nothing stacked', () => {
+  const planAttrs: Attributes = { 'mp.parksHa': 2, 'mp.schoolSites': 1, 'mp.communityCentre': true, 'mp.swmPonds': 1, 'site.waterfront': true, 'site.nearestTransitStopM': 120, 'site.transitInfrastructureBelow': true }
+  const scene = () => sceneFor(stress, planAttrs)
+  it('the same project always draws the same street', () => {
+    expect(scene().parts.map((p) => p.kind)).toEqual(scene().parts.map((p) => p.kind))
+  })
+  it('pieces never overlap, and each station sits just before the building it serves', () => {
+    const K = kitLayout(scene())
+    for (let i = 1; i < K.placed.length; i++) expect(K.placed[i]!.x).toBeGreaterThanOrEqual(K.placed[i - 1]!.x + K.placed[i - 1]!.w)
+    scene().parts.forEach((p, i, all) => { if (p.kind === 'station') expect(all[i + 1]!.kind).toBe('building') })
+  })
+  it('shared pieces spread over different gaps instead of bunching at the end', () => {
+    const kinds = scene().parts.map((p) => p.kind)
+    const at = ['park', 'school', 'community', 'pond'].map((k) => kinds.indexOf(k as never))
+    expect(new Set(at).size).toBe(4)
+    expect(Math.max(...at) - Math.min(...at)).toBeGreaterThan(4) // not four in a row
+  })
+  it('the street stands on ground with a plain skyline behind it, and the tunnel holds one train', () => {
+    const svg = kitArt(scene(), 'watercolour', 's')
+    for (const f of ['ground', 'skyline', 'subway-tunnel']) expect(svg).toContain(`data-feature="${f}"`)
+    const tunnel = svg.slice(svg.indexOf('data-feature="subway-tunnel"'))
+    expect(tunnel.split('Q').length - 1).toBeGreaterThanOrEqual(1) // one lead car with a cab
+  })
+  it('the bus shelter stands on clear sidewalk, never in front of a building', () => {
+    const K = kitLayout(scene())
+    const svg = kitArt(scene(), 'watercolour', 's', K)
+    const m = /data-feature="bus-stop"><g transform="translate\(([-\d.]+) /.exec(svg)
+    expect(m).not.toBeNull()
+    const x = Number(m![1]) - K.bleed
+    for (const q of K.placed.filter((p) => p.part.kind === 'building')) expect(x + 5.5 <= q.x || x >= q.x + q.w).toBe(true)
+  })
+})

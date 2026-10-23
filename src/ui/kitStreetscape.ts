@@ -3,12 +3,12 @@
 // Only what the data says is drawn; everything is illustrative, not a surveyed layout or a building envelope.
 
 import {
-  RISE, amenityBadge, background, building, creek, lakeEdge, pond, ravine, bus, car, civic, definitions, existingBuilding, greenRoof, industrial, lamp, landPlot, office,
+  RISE, amenityBadge, building, creek, lakeEdge, pond, ravine, bus, car, civic, definitions, existingBuilding, greenRoof, industrial, lamp, landPlot, office,
   palettes, park, phaseBadge, pieces, playgroundPiece, railPlatform, roofTerrace, schoolSite, solar, subway, townhouses, train, tree, uniqueSvg,
   type Palette, type Skin,
 } from '../design-lab/components'
 import { FLOOR_TO_FLOOR_M } from '../location/zoning'
-import { controllingLimit, type Building, type Part, type Scene } from './streetscapeScene'
+import { controllingLimit, seeded, type Building, type Part, type Scene } from './streetscapeScene'
 
 export const GROUND_Y = 384 // drawing units: the street front, as before
 const MARGIN = 40
@@ -108,7 +108,7 @@ function buildingArt(p: Palette, b: Building, x: number, phases: number): string
   if (b.phase !== null && phases > 0) s += wrap('phase-badge', at(x - 2.6, phaseBadge(p, b.phase, phases)), ` data-phase="${b.phase}"`)
   // Street life in front of shops, and a bicycle rack where the program provides bike parking (on the sidewalk)
   if (b.retail) s += wrap('street-life', at(x + 2, piece(p, '48'), 1.3) + at(x + 9, piece(p, '52'), 1.1) + at(x + 11.6, piece(p, '53'), 1.1))
-  if (b.bikeParking) s += wrap('bike-rack', at(x + 13.6, piece(p, '38'), 1.6))
+  if (b.bikeParking) s += wrap('bike-rack', at(x + size({ kind: 'building', b, x: 0, w: 0 }).w + .1, `<g transform="scale(.7)">${piece(p, '38')}</g>`, 1.6))
   if (b.childcare) s += wrap('playground', at(x + size({ kind: 'building', b, x: 0, w: 0 }).w - 12.6, `<g transform="scale(.95)">${playgroundPiece(p)}</g>`))
   return `<g data-building="${buildingKey(b.id)}">${s}</g>`
 }
@@ -148,12 +148,7 @@ function streetArt(p: Palette, scene: Scene, L: KitLayout): string {
     s += `<line x1="0" y1="${y}" x2="${Wm}" y2="${y}" stroke="${k === st.lanes / 2 ? p.warm : p.paper}" stroke-width="${k === st.lanes / 2 ? .14 : .1}" ${k === st.lanes / 2 ? '' : 'stroke-dasharray="1.6 1.4"'}/>`
   }
   // A subway under the frontage: the tube in section below the street
-  if (st.tunnel) {
-    const ty = road1 + (st.sidewalkFar ? 2 : .15)
-    let t = ''
-    for (let tx = 0; tx < Wm; tx += 18) t += at(tx, piece(p, '62'), ty + .2)
-    s += wrap('subway-tunnel', t)
-  }
+  if (st.tunnel) s += wrap('subway-tunnel', at(0, tunnel(p, Wm, seeded(scene.buildings.map((b) => b.id).join('|'))), road1 + (st.sidewalkFar ? 2 : .15)))
   if (st.sidewalkFar) s += `<rect x="0" y="${road1 + .15}" width="${Wm}" height="1.85" fill="${p.wall}"/>`
   // Driveways: dropped curbs at the first buildings, one per mapped access
   const firstBuildings = L.placed.filter((q) => q.part.kind === 'building').slice(0, st.accesses)
@@ -165,8 +160,84 @@ function streetArt(p: Palette, scene: Scene, L: KitLayout): string {
   for (let i = 0, cx = 8; cx < Wm - 10; i++, cx += 23) s += wrap('car', at(cx, car(p), laneMid(i % st.lanes)))
   // The nearest stop, when the map has one: a shelter and pole on the near sidewalk, behind the bus
   const busX = e + Math.min(L.Wm - 16, L.Wm * .55)
-  if (st.stopM) s += wrap('bus-stop', at(busX - 7, piece(p, '39'), 1.8) + at(busX - 1.2, piece(p, '40'), 1.8))
+  if (st.stopM) {
+    // The shelter needs a clear stretch of sidewalk (not in front of a building); the pole fits any gap
+    const shelter = clearSpot(L, 6.4, busX - e - 7)
+    const pole = shelter ?? clearSpot(L, 1.4, busX - e - 1.2)
+    s += wrap('bus-stop', (shelter !== null ? at(e + shelter, piece(p, '39'), 1.8) : '') + (pole !== null ? at(e + pole + (shelter !== null ? 5.4 : 0), piece(p, '40'), 1.8) : ''))
+  }
   if (scene.buildings.some((b) => b.transit) || st.stopM) s += at(busX, bus(p), laneMid(0))
+  return s
+}
+
+/** Left edge of the clear stretch of sidewalk nearest `want` that is at least `w` metres long, or null. */
+function clearSpot(L: KitLayout, w: number, want: number): number | null {
+  const taken = L.placed.map((q) => [q.x - .3, q.x + q.w + .3] as const).sort((a, b) => a[0] - b[0])
+  const gaps: Array<[number, number]> = []
+  let from = 0
+  for (const [a, b] of taken) { if (a - from >= w) gaps.push([from, a]); from = Math.max(from, b) }
+  if (L.Wm - from >= w) gaps.push([from, L.Wm])
+  let best: number | null = null
+  for (const [a, b] of gaps) {
+    const x = Math.min(Math.max(want, a), b - w)
+    if (best === null || Math.abs(x - want) < Math.abs(best - want)) best = x
+  }
+  return best
+}
+
+/** Ground the pieces stand on: a strip receding behind the street line, so nothing floats and the city stays behind it. */
+const GROUND_DEPTH = 6 // metres back from the street line
+const ground = (p: Palette, x0: number, x1: number) => {
+  const h = GROUND_DEPTH * RISE
+  let s = `<rect x="${x0}" y="${-h}" width="${x1 - x0}" height="${h}" fill="${p.wall}"/>`
+  // A few faint receding joints so it reads as ground, not paper
+  for (let x = Math.ceil(x0 / 6) * 6; x < x1; x += 6) s += `<line x1="${x}" y1="0" x2="${x + (GROUND_DEPTH * .8)}" y2="${-h}" stroke="${p.fine}" stroke-width=".02" opacity=".5"/>`
+  return `<g data-feature="ground">${s}<line x1="${x0}" y1="${-h}" x2="${x1}" y2="${-h}" stroke="${p.fine}" stroke-width=".03" opacity=".6"/></g>`
+}
+
+/** A quiet distant skyline standing behind the ground strip: plain massing, no detail that competes with the project. */
+function skyline(p: Palette, x0: number, x1: number, rand: () => number): string {
+  const base = -GROUND_DEPTH * RISE
+  const layer = (heightLo: number, heightHi: number, opacity: number) => {
+    let s = '', x = x0
+    while (x < x1) {
+      const w = 7 + (rand() * 14), h = heightLo + (rand() * (heightHi - heightLo))
+      if (rand() > .2) s += `<rect x="${x}" y="${base - h}" width="${w}" height="${h}" fill="${p.shade}"/>`
+      x += w + (rand() * 3)
+    }
+    return `<g opacity="${opacity}">${s}</g>`
+  }
+  return `<g data-feature="skyline">${layer(18, 55, .28)}${layer(8, 28, .42)}</g>`
+}
+
+/** Rails on ties along the whole street: one continuous line, not a repeated tile. */
+const rails = (p: Palette, x0: number, x1: number, y: number) => {
+  let s = `<rect x="${x0}" y="${y - .12}" width="${x1 - x0}" height=".3" fill="${p.shade}"/>`
+  for (let x = Math.ceil(x0 / 1.2) * 1.2; x < x1; x += 1.2) s += `<rect x="${x}" y="${y - .08}" width=".35" height=".16" fill="${p.roof}"/>`
+  return s + `<line x1="${x0}" y1="${y - .1}" x2="${x1}" y2="${y - .1}" stroke="${p.ink}" stroke-width=".06"/><line x1="${x0}" y1="${y + .02}" x2="${x1}" y2="${y + .02}" stroke="${p.ink}" stroke-width=".05"/>`
+}
+
+/** A subway in section under the street: the tube along the whole width and one train of coupled cars. */
+function tunnel(p: Palette, Wm: number, rand: () => number): string {
+  const top = .2, tubeY = 1.4, tubeH = 4, trackY = tubeY + tubeH - .45
+  let s = `<rect x="0" y="${top}" width="${Wm}" height="6" fill="${p.shade}" opacity=".35"/><rect x="0" y="${top}" width="${Wm}" height="6" fill="url(#HATCH)"/>`
+  s += `<rect x="0" y="${tubeY}" width="${Wm}" height="${tubeH}" fill="${p.paper}" stroke="${p.ink}" stroke-width=".045" stroke-dasharray=".5 .35"/>` + rails(p, 0, Wm, trackY + .15)
+  // One train: a lead car with a sloped cab, then coupled cars; 5 to 9 cars where the street is long enough
+  const carW = 15.5, gap = .5
+  const cars = Math.max(2, Math.min(9, Math.max(5, Math.round(Wm / 60)), Math.floor((Wm - 4) / (carW + gap))))
+  const length = (cars * carW) + ((cars - 1) * gap)
+  const start = 2 + (rand() * Math.max(0, Wm - length - 4))
+  const cy = trackY - 2.6
+  for (let k = 0; k < cars; k++) {
+    const x = start + (k * (carW + gap))
+    const lead = k === cars - 1
+    const body = lead ? `M${x},${cy} H${x + carW - 1.4} Q${x + carW},${cy} ${x + carW},${cy + 1.2} V${cy + 2.45} H${x}Z` : `M${x},${cy} H${x + carW} V${cy + 2.45} H${x}Z`
+    s += `<path d="${body}" fill="${p.wall}" stroke="${p.ink}" stroke-width=".06"/>`
+    for (let w = x + 1; w < x + carW - (lead ? 2.4 : 1); w += 1.35) s += `<rect x="${w}" y="${cy + .45}" width=".9" height=".8" fill="${p.glass}" stroke="${p.fine}" stroke-width=".02"/>`
+    if (lead) s += `<path d="M${x + carW - 1.25},${cy + .35} Q${x + carW - .3},${cy + .4} ${x + carW - .2},${cy + 1.2} H${x + carW - 1.25}Z" fill="${p.glassShade}" stroke="${p.ink}" stroke-width=".03"/>`
+    for (const wx of [x + 1.6, x + 3, x + carW - 3, x + carW - 1.6]) s += `<circle cx="${wx}" cy="${cy + 2.6}" r=".22" fill="${p.ink}"/>`
+    if (k < cars - 1) s += `<line x1="${x + carW}" y1="${cy + 1.9}" x2="${x + carW + gap}" y2="${cy + 1.9}" stroke="${p.ink}" stroke-width=".12"/>`
+  }
   return s
 }
 
@@ -183,13 +254,11 @@ export function kitArt(scene: Scene, skin: Skin, uid: string, L: KitLayout = kit
   // Context street trees in the padding either side of the project
   let context = ''
   for (let x = 4 - (Math.ceil(L.bleed / 9) * 9); x < L.padding - 4; x += 9) context += at(x, tree(p, 0, 0, .55, Math.round(x) % 3)) + at(L.Wm - x, tree(p, 0, 0, .55, (Math.round(x) + 1) % 3))
-  // A soft city backdrop behind everything, tiled across the width (atmosphere, not the actual neighbours)
-  // One tile defined once and reused: drawn out in full per tile it was most of the picture's size
-  let backdrop = `<defs><g id="kit-${uid}-backdrop">${background(p)}</g></defs>`
-  for (let x = -L.bleed - 10; x < L.Wm + L.bleed; x += 178) backdrop += `<use href="#kit-${uid}-backdrop" x="${x}"/>`
-  // A rail corridor beside the site: track behind the buildings, on the GO train's line (3 m back on the shared projection)
-  let rail = ''
-  if (scene.street.rail) for (let x = -L.bleed; x < L.Wm + L.bleed; x += 20) rail += at(x, piece(p, '61'), -3 * RISE)
+  // A quiet skyline (atmosphere, not the actual neighbours) standing behind the ground the project stands on
+  const rand = seeded(scene.buildings.map((b) => b.id).join('|'))
+  const backdrop = skyline(p, -L.bleed, L.Wm + L.bleed, rand) + ground(p, -L.bleed, L.Wm + L.bleed)
+  // A rail corridor beside the site: one track behind the buildings, on the GO train's line (3 m back on the shared projection)
+  const rail = scene.street.rail ? rails(p, -L.bleed, L.Wm + L.bleed, -3 * RISE) : ''
   const art = definitions(skin) + backdrop + (rail && `<g data-feature="rail-corridor">${rail}</g>`) + `<g data-feature="street" transform="translate(${-L.bleed} 0)">${streetArt(p, scene, L)}</g>` + `<g data-feature="context" opacity=".85">${context}</g>` + L.placed.map((q) => partArt(p, q, scene.phases)).join('') + lamps(p, L)
   return uniqueSvg(art, `kit-${uid}`)
 }

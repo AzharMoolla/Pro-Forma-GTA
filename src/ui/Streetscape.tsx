@@ -82,7 +82,7 @@ function HeightBar({ scene, K, L }: { scene: Scene; K: KitLayout; L: Look }) {
       {lo !== null
         ? <g><line x1={x - 6} x2={x + 10} y1={y(lo)} y2={y(lo)} stroke={L.limit} strokeWidth={2} />{scene.uniformLimit === null && <text x={x + 4} y={y(hi!) - 6} fontWeight={700} fill={L.limit}>≤ {lo === hi ? lo : `${lo}–${hi}`} st</text>}</g>
         : <text x={x + 4} y={y(top) - 6} fontWeight={600}>limit not set</text>}
-      <text x={x - 6} y={y0 + 12} textAnchor="end">st</text>
+      <text x={x - 6} y={y(top) - 16} fontSize="9" textAnchor="start">storeys</text>
     </g>
   )
 }
@@ -258,9 +258,9 @@ export const StreetscapeSvg = forwardRef<SVGSVGElement, SvgProps>(function Stree
       <Cues scene={scene} K={K} L={L} W={W} />
 
       {/* Right-of-way marker beside the street */}
-      <g fontSize="10.5" fill={L.soft}>
-        <line x1={12} x2={12} y1={GROUND_Y} y2={K.streetBottom} stroke={L.soft} strokeWidth={0.9} />
-        <text x={16} y={K.streetBottom + 14}>{scene.street.rowM ? `ROW ${scene.street.rowM} m` : 'ROW width: check OP Map 3'}{scene.street.roadClass ? ` · ${scene.street.roadClass}` : ''}</text>
+      <g fontSize="10.5" fill={L.soft} data-feature="row-marker">
+        <path d={`M${W - 18},${GROUND_Y} h6 V${K.streetBottom} h-6`} fill="none" stroke={L.soft} strokeWidth={0.9} />
+        <text x={W - 16} y={K.streetBottom + 14} textAnchor="end">{scene.street.rowM ? `ROW ${scene.street.rowM} m` : 'ROW width: check OP Map 3'}{scene.street.roadClass ? ` · ${scene.street.roadClass}` : ''}</text>
       </g>
 
       {/* Not a drawing: said on the picture itself so it travels with downloads */}
