@@ -3,8 +3,9 @@ import { eraseProject, renameProject } from '../cloud/cloud'
 import { parseProjectFile, toProjectFile } from '../export/projectFile'
 import type { TrackerState } from '../tracker/tracker'
 import { Button } from './components'
-import { demoProjects } from './data'
-import { metaOf, type ProjectState } from './store'
+import { catalogue, demoProjects } from './data'
+import { blankProject } from './blank'
+import { BLANK_PREFIX, metaOf, type ProjectState } from './store'
 import { useWorkspace } from './workspace'
 
 const field = 'min-h-10 w-full rounded border border-line-strong bg-surface px-2'
@@ -15,7 +16,8 @@ export function ProjectMenu() {
   const { state, dispatch, cloud } = useWorkspace()
   const project = state.projects[state.projectId]!
   const [open, setOpen] = useState(false)
-  const [template, setTemplate] = useState(demoProjects[0]!.id)
+  const [template, setTemplate] = useState('blank')
+  const [blankType, setBlankType] = useState(catalogue.projectTypes[0]!.id)
   const [name, setName] = useState('')
   const [rename, setRename] = useState(project.meta.name)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -28,6 +30,19 @@ export function ProjectMenu() {
   const failed = (e: Error) => setMessage({ text: e.message, tone: 'bad' })
 
   const create = () => {
+    if (template === 'blank') {
+      const type = catalogue.projectTypes.find((t) => t.id === blankType)!
+      const id = newId()
+      const label = name.trim() || `New ${type.label.toLowerCase()}`
+      const fresh: ProjectState = {
+        meta: { name: label, projectType: type.id, reference: `Blank project: ${type.label}`, notes: ['Started blank: every figure is yours to enter. Costs show "not yet estimated" until you give them a figure, and results are withheld until then.'], coverage: {}, templateId: `${BLANK_PREFIX}${type.id}` },
+        draft: blankProject(catalogue, type.id, id, label), draftParentId: null, scenarios: [], attributes: {}, tracker: {} as TrackerState,
+      }
+      dispatch({ type: 'createProject', id, project: fresh })
+      setName('')
+      done(`Created "${label}" blank. Start with the Site map, then Site & program, Revenue and Cost & budget.`)
+      return
+    }
     const t = demoProjects.find((d) => d.id === template)!
     const fresh: ProjectState = { meta: { ...metaOf(t), name: name.trim() || `New ${t.projectType} project` }, draft: structuredClone(t.input), draftParentId: null, scenarios: [], attributes: structuredClone(t.attributes), tracker: {} as TrackerState }
     dispatch({ type: 'createProject', id: newId(), project: fresh })
@@ -90,9 +105,17 @@ export function ProjectMenu() {
             <label className="flex flex-col gap-1">Name<input className={field} value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. 123 Main St rental" /></label>
             <label className="flex flex-col gap-1">Start from
               <select className={field} value={template} onChange={(e) => setTemplate(e.target.value)}>
-                {demoProjects.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                <option value="blank">Blank project (no figures)</option>
+                {demoProjects.map((d) => <option key={d.id} value={d.id}>Example: {d.name}</option>)}
               </select>
             </label>
+            {template === 'blank' && (
+              <label className="flex flex-col gap-1">Project type
+                <select className={field} value={blankType} onChange={(e) => setBlankType(e.target.value)}>
+                  {catalogue.projectTypes.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+                </select>
+              </label>
+            )}
             <Button type="submit" variant="primary">Create project</Button>
           </form>
 

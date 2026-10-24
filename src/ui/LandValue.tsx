@@ -31,7 +31,7 @@ const field = 'min-h-9 rounded border border-line-strong bg-surface px-2'
 const numberOrNull = (t: string) => { const s = t.replace(/[,$\s%]/g, ''); if (s === '') return null; const n = Number(s); return Number.isFinite(n) ? n : undefined }
 
 /** A number box that commits on blur or Enter; blank means unknown. `scale` shows fractions as percent. */
-function Num({ label, value, onCommit, scale = 1, suffix, width = 'w-32' }: { label: string; value: number | null; onCommit: (v: number | null) => void; scale?: number; suffix?: string; width?: string }) {
+export function Num({ label, value, onCommit, scale = 1, suffix, width = 'w-32' }: { label: string; value: number | null; onCommit: (v: number | null) => void; scale?: number; suffix?: string; width?: string }) {
   const shown = value === null ? '' : String(Number((value * scale).toPrecision(10)))
   return (
     <label className="flex flex-col gap-1 text-sm"><GlossaryText text={label} />

@@ -11,7 +11,7 @@ import { useCloud } from './useCloud'
 import { MetricLabel } from './Glossary'
 import { Sections } from './sections'
 import { readinessLabels, useReadiness } from './sections2'
-import { atLeast, GROUPS, MODE_LABEL, SECTIONS, useStore, type Mode, type SectionId } from './store'
+import { atLeast, GROUPS, MODE_LABEL, SECTIONS, useStore, type Mode, type SectionId, isBlank } from './store'
 import { flatten, getNode, getResult } from './tree'
 import { WorkspaceContext, type Workspace } from './workspace'
 
@@ -104,9 +104,11 @@ export function App() {
   const current = state.projects[state.projectId]!
   // The open project, in the shape the sections expect: its own name and notes, its template's starting values
   const demo = useMemo(() => {
-    const template = demoProjects.find((p) => p.id === current.meta.templateId) ?? demoProjects[0]!
+    const template = isBlank(current.meta)
+      ? { id: current.meta.templateId, name: current.meta.name, projectType: current.meta.projectType, reference: current.meta.reference, notes: current.meta.notes, attributes: {}, coverage: {}, input: current.draft }
+      : demoProjects.find((p) => p.id === current.meta.templateId) ?? demoProjects[0]!
     return { ...template, id: state.projectId, name: current.meta.name, projectType: current.meta.projectType, reference: current.meta.reference, notes: current.meta.notes, coverage: current.meta.coverage }
-  }, [state.projectId, current.meta])
+  }, [state.projectId, current.meta, current.draft])
   const draft = current.draft
   const model = useMemo(() => modelOf(draft, current.attributes), [draft, current.attributes])
 
@@ -181,7 +183,7 @@ export function App() {
           </fieldset>
           <div className="ml-auto flex flex-wrap items-center gap-2" aria-live="polite">
             <Account state={cloudState} />
-            <StatusMenu synthetic draftLabel={parent ? `Draft from scenario ${parent}` : 'Unsaved draft'} off={offSet(current.attributes).size} error={!!error} go={(id) => dispatch({ type: 'section', id })} />
+            <StatusMenu synthetic={!isBlank(current.meta)} draftLabel={parent ? `Draft from scenario ${parent}` : 'Unsaved draft'} off={offSet(current.attributes).size} error={!!error} go={(id) => dispatch({ type: 'section', id })} />
           </div>
         </div>
       </header>

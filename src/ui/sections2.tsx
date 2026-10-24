@@ -14,6 +14,7 @@ import { metricValue, money, monthLabel, pct } from './format'
 import type { SimRequest } from './simulate.worker'
 import { atLeast } from './store'
 import { useWorkspace } from './workspace'
+import { NEW_STREAM, NEW_UNIT, STREAM_LABEL, uniqueStreamId, type StreamKind } from './streams'
 
 function download(name: string, text: string, type: string) {
   const url = URL.createObjectURL(new Blob([text], { type }))
@@ -30,6 +31,33 @@ function SelectBlock() {
 
 // ---------------------------------------------------------------- revenue
 
+/** Add an income stream: homes to rent or sell, or commercial space. */
+function AddStream({ onAdd, empty }: { onAdd: (kind: StreamKind) => void; empty: boolean }) {
+  const [kind, setKind] = useState<StreamKind>('rental')
+  return (
+    <Card title="Income streams">
+      {empty && <p className="mb-3 text-sm text-ink-soft">No income yet. Add what this project earns: homes to rent or sell, or retail, office or industrial space. Counts, rents and prices start at zero; the few rates the model needs to run (cap rate, sales pace, deposits, vacancy) start at stated values you should replace.</p>}
+      <div className="flex flex-wrap items-end gap-2">
+        <label className="flex flex-col gap-1 text-sm">Add
+          <select className="min-h-9 rounded border border-line-strong bg-surface px-2" value={kind} onChange={(e) => setKind(e.target.value as StreamKind)}>
+            {(Object.keys(STREAM_LABEL) as StreamKind[]).map((k) => <option key={k} value={k}>{STREAM_LABEL[k]}</option>)}
+          </select>
+        </label>
+        <Button variant="primary" onClick={() => onAdd(kind)}>Add stream</Button>
+      </div>
+    </Card>
+  )
+}
+
+/** A unit type's name, editable; must stay unique within its stream. */
+function UnitName({ id, taken, onRename }: { id: string; taken: string[]; onRename: (id: string) => void }) {
+  return (
+    <input aria-label={`Name of ${id}`} className="min-h-8 w-32 rounded border border-transparent bg-transparent px-1 hover:border-line-strong focus:border-line-strong" defaultValue={id.replaceAll('_', ' ')} key={id}
+      onBlur={(e) => { const next = e.target.value.trim().replace(/\s+/g, '_'); if (!next || next === id || taken.includes(next)) { e.target.value = id.replaceAll('_', ' '); return } onRename(next) }}
+      onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }} />
+  )
+}
+
 export function Revenue() {
   const { node, state, dispatch } = useWorkspace()
   if (isPortfolio(node)) return <SelectBlock />
@@ -38,26 +66,33 @@ export function Revenue() {
   const field = (c: Component, key: string, label: string, opts: { scale?: number; suffix?: string } = {}) => (
     <NumberField key={key} label={label} value={(c as unknown as Record<string, number>)[key]!} scale={opts.scale} suffix={opts.suffix} onCommit={(v) => edit(c.id, (x) => ({ ...x, [key]: v }) as Component)} />
   )
+  const project = node
+  const setComponents = (f: (cs: Component[]) => Component[]) => dispatch({ type: 'edit', path: state.path, update: (n) => ({ ...(n as ProjectInput), components: f((n as ProjectInput).components) }) })
+  const unitName = (taken: string[]) => uniqueStreamId('unit', taken)
   return (
     <div className="flex flex-col gap-4">
+      <AddStream onAdd={(kind) => setComponents((cs) => [...cs, NEW_STREAM(kind, uniqueStreamId(kind, cs.map((c) => c.id)))])} empty={project.components.length === 0} />
       {node.components.map((c) => (
-        <Card key={c.id} title={`${c.id} · ${c.kind === 'commercial' ? c.use : c.kind}`}>
+        <Card key={c.id} title={`${c.id} · ${c.kind === 'commercial' ? c.use : c.kind}`} actions={<Button variant="ghost" onClick={() => { if (window.confirm(`Remove ${c.id} and its figures?`)) setComponents((cs) => cs.filter((x) => x.id !== c.id)) }}>Remove</Button>}>
           {c.kind === 'rental' && (
             <div className="flex flex-col gap-4">
               <TableWrap caption={`${c.id} unit mix`}>
-                <thead><tr>{['Unit type', 'Units', 'Rent / month', 'Vacancy %'].map((h, i) => <th key={h} scope="col" className={cx(th, i > 0 && 'text-right')}><GlossaryText text={h} /></th>)}</tr></thead>
+                <thead><tr>{['Unit type', 'Units', 'Net ft²', 'Rent / month', 'Vacancy %', ''].map((h, i) => <th key={h || i} scope="col" className={cx(th, i > 0 && i < 5 && 'text-right')}><GlossaryText text={h} /></th>)}</tr></thead>
                 <tbody>{c.unitMix.map((u) => {
                   const setU = (patch: Partial<typeof u>) => edit(c.id, (x) => (x.kind === 'rental' ? { ...x, unitMix: x.unitMix.map((y) => (y.id === u.id ? { ...y, ...patch } : y)) } : x))
                   return (
                     <tr key={u.id}>
-                      <td className={td}>{u.id.replaceAll('_', ' ')}</td>
+                      <td className={td}><UnitName id={u.id} taken={c.unitMix.map((y) => y.id)} onRename={(id) => setU({ id })} /></td>
                       <td className={`${td} w-28`}><NumberField compact label={`${u.id} units`} value={u.count} onCommit={(v) => setU({ count: Math.max(0, Math.round(v)) })} /></td>
+                      <td className={`${td} w-28`}><NumberField compact label={`${u.id} net ft²`} value={u.netSqftPerUnit} onCommit={(v) => setU({ netSqftPerUnit: Math.max(0, v) })} /></td>
                       <td className={`${td} w-36`}><NumberField compact label={`${u.id} rent`} value={u.monthlyRent} onCommit={(v) => setU({ monthlyRent: v })} /></td>
                       <td className={`${td} w-28`}><NumberField compact label={`${u.id} vacancy`} value={u.vacancy} scale={100} onCommit={(v) => setU({ vacancy: v })} /></td>
+                      <td className={td}>{c.unitMix.length > 1 && <button type="button" className="text-xs text-ink-soft underline" onClick={() => edit(c.id, (x) => (x.kind === 'rental' ? { ...x, unitMix: x.unitMix.filter((y) => y.id !== u.id) } : x))}>Remove</button>}</td>
                     </tr>
                   )
                 })}</tbody>
               </TableWrap>
+              <Button className="self-start" onClick={() => edit(c.id, (x) => (x.kind === 'rental' ? { ...x, unitMix: [...x.unitMix, NEW_UNIT('rental', unitName(x.unitMix.map((y) => y.id))) as typeof x.unitMix[number]] } : x))}>Add a unit type</Button>
               <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                 {field(c, 'otherIncomeMonthly', 'Other income / month', { suffix: '$' })}
                 {field(c, 'opexPerUnitMonthly', 'Opex / unit / month', { suffix: '$' })}
@@ -71,19 +106,21 @@ export function Revenue() {
           {c.kind === 'condo' && (
             <div className="flex flex-col gap-4">
               <TableWrap caption={`${c.id} units`}>
-                <thead><tr>{['Unit type', 'Units', 'Net ft²', '$ / ft²'].map((h, i) => <th key={h} scope="col" className={cx(th, i > 0 && 'text-right')}><GlossaryText text={h} /></th>)}</tr></thead>
+                <thead><tr>{['Unit type', 'Units', 'Net ft²', '$ / ft²', ''].map((h, i) => <th key={h || i} scope="col" className={cx(th, i > 0 && i < 4 && 'text-right')}><GlossaryText text={h} /></th>)}</tr></thead>
                 <tbody>{c.units.map((u) => {
                   const setU = (patch: Partial<typeof u>) => edit(c.id, (x) => (x.kind === 'condo' ? { ...x, units: x.units.map((y) => (y.id === u.id ? { ...y, ...patch } : y)) } : x))
                   return (
                     <tr key={u.id}>
-                      <td className={td}>{u.id}</td>
+                      <td className={td}><UnitName id={u.id} taken={c.units.map((y) => y.id)} onRename={(id) => setU({ id })} /></td>
                       <td className={`${td} w-28`}><NumberField compact label={`${u.id} units`} value={u.count} onCommit={(v) => setU({ count: Math.max(0, Math.round(v)) })} /></td>
                       <td className={`${td} w-28`}><NumberField compact label={`${u.id} net ft²`} value={u.netSqftPerUnit} onCommit={(v) => setU({ netSqftPerUnit: v })} /></td>
                       <td className={`${td} w-28`}><NumberField compact label={`${u.id} price per ft²`} value={u.pricePerSqft} onCommit={(v) => setU({ pricePerSqft: v })} /></td>
+                      <td className={td}>{c.units.length > 1 && <button type="button" className="text-xs text-ink-soft underline" onClick={() => edit(c.id, (x) => (x.kind === 'condo' ? { ...x, units: x.units.filter((y) => y.id !== u.id) } : x))}>Remove</button>}</td>
                     </tr>
                   )
                 })}</tbody>
               </TableWrap>
+              <Button className="self-start" onClick={() => edit(c.id, (x) => (x.kind === 'condo' ? { ...x, units: [...x.units, NEW_UNIT('condo', unitName(x.units.map((y) => y.id))) as typeof x.units[number]] } : x))}>Add a unit type</Button>
               <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                 {field(c, 'salesStartMonth', 'Sales start', { suffix: 'month' })}
                 {field(c, 'salesPerMonth', 'Sales pace', { suffix: 'units/mo' })}

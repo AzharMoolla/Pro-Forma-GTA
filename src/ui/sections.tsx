@@ -11,7 +11,7 @@ import { Audit, Finance, Returns, Revenue, Scenarios } from './sections2'
 import { CostBuckets, DecisionSummary, Progress } from './sections3'
 import { readSources, SiteMap } from './SiteMap'
 import { Streetscape } from './Streetscape'
-import { LandValue } from './LandValue'
+import { LandValue, Num } from './LandValue'
 import { Phasing } from './Phasing'
 import { Visuals } from './Visuals'
 import { Feasibility } from './Feasibility'
@@ -26,6 +26,7 @@ import { atLeast, type SectionId } from './store'
 import { getResult } from './tree'
 import { useWorkspace } from './workspace'
 import { GlossaryText, VarHint } from './Glossary'
+import type { ProjectInput } from '../engine/project'
 
 export function Sections({ section }: { section: SectionId }) {
   switch (section) {
@@ -269,7 +270,7 @@ function Program() {
         <span className="min-w-0">
           <GlossaryText text={v.label} />{v.unit && <span className="text-ink-mute"> ({v.unit})</span>} <VarHint v={v} />
           {mapSources[v.id] && (mapSources[v.id]!.value === value
-            ? <> <Chip tone="accent" title={`${mapSources[v.id]!.layer} · retrieved ${mapSources[v.id]!.retrievedAt}`}>from map</Chip></>
+            ? <> <Chip tone="good" title={`Filled in from the site's location: ${mapSources[v.id]!.layer}, retrieved ${mapSources[v.id]!.retrievedAt}. Change it if you know better (your project details, or what the policy team told you).`}><span aria-hidden>✓</span> from map</Chip></>
             : <> <Chip tone="warn" title={`Map said ${String(mapSources[v.id]!.value)} (${mapSources[v.id]!.layer})`}>changed from map</Chip></>)}
         </span>
         {v.id in derived ? (
@@ -307,6 +308,7 @@ function Program() {
           </dl>
         </Card>
       )}
+      <BuildingProgram />
       <Phasing />
       <Card title={simple ? `Key questions (${simpleVars.length})` : `Project variables (${shown.length})`}>
         <p className="mb-3 text-sm text-ink-soft">
@@ -344,6 +346,35 @@ function primaryField(d: Driver): { key: string; label: string; scale: number; s
     case 'perHectare': return { key: 'rate', label: 'Rate', scale: 1, suffix: `$/ha × ${d.hectares}` }
     case 'perStall': return { key: 'rate', label: 'Rate', scale: 1, suffix: `$/ft² × ${num(d.stalls)} stalls × ${num(d.sqftPerStall)} ft²` }
   }
+}
+
+/** The building's program and schedule: the inputs every other figure is measured against. */
+function BuildingProgram() {
+  const { node, state, dispatch } = useWorkspace()
+  if (isPortfolio(node)) return null
+  const p = node.program ?? { lotAreaSqft: null, planningGfaSqft: null, gcaAboveSqft: 0, gcaBelowSqft: 0 }
+  const set = (patch: Partial<NonNullable<ProjectInput['program']>>) => dispatch({ type: 'edit', path: state.path, update: (n) => ({ ...(n as ProjectInput), program: { ...p, ...patch } }) })
+  const setTiming = (patch: Partial<ProjectInput['timing']>) => dispatch({ type: 'edit', path: state.path, update: (n) => ({ ...(n as ProjectInput), timing: { ...(n as ProjectInput).timing, ...patch } }) })
+  const whole = (v: number | null) => (v === null ? null : Math.max(0, Math.round(v)))
+  return (
+    <Card title={`Building program: ${node.name}`}>
+      <p className="mb-3 text-sm text-ink-soft">The size of what you are building, and when. Unknown stays blank: density (FSI) and land value per ft² need the lot area and by-law floor area.</p>
+      <div className="flex flex-wrap items-end gap-3">
+        <Num label="Lot area" value={p.lotAreaSqft} suffix="ft²" onCommit={(v) => set({ lotAreaSqft: v })} />
+        <Num label="By-law GFA" value={p.planningGfaSqft} suffix="ft²" onCommit={(v) => set({ planningGfaSqft: v })} />
+        <Num label="Above-grade GCA" value={p.gcaAboveSqft} suffix="ft²" onCommit={(v) => set({ gcaAboveSqft: v ?? 0 })} />
+        <Num label="Below-grade GCA" value={p.gcaBelowSqft} suffix="ft²" onCommit={(v) => set({ gcaBelowSqft: v ?? 0 })} />
+        <Num label="Storeys" value={p.storeys ?? null} width="w-20" onCommit={(v) => set({ storeys: whole(v) ?? undefined })} />
+        <Num label="Podium storeys" value={p.podiumStoreys ?? null} width="w-20" onCommit={(v) => set({ podiumStoreys: whole(v) ?? undefined })} />
+      </div>
+      <div className="mt-3 flex flex-wrap items-end gap-3">
+        <Num label="Months before construction" value={node.timing.preConstructionMonths} width="w-20" onCommit={(v) => v !== null && setTiming({ preConstructionMonths: whole(v)! })} />
+        <Num label="Construction" value={node.timing.constructionMonths} suffix="months" width="w-20" onCommit={(v) => v !== null && v >= 1 && setTiming({ constructionMonths: whole(v)! })} />
+        <Num label="Sale or hold to month" value={node.timing.exitMonth} width="w-20" onCommit={(v) => v !== null && setTiming({ exitMonth: whole(v)! })} />
+      </div>
+      <p className="mt-2 text-xs text-ink-mute">GCA is everything built (what costs scale with); by-law GFA is what zoning counts (what FSI measures). A blank project's schedule starts at 12, 24 and 60 months: replace them.</p>
+    </Card>
+  )
 }
 
 const DEFAULT_SQFT_PER_STALL = 400
@@ -388,6 +419,37 @@ function Parking({ lines, edit, convert }: { lines: CostLine[]; edit: (id: strin
         })}
       </div>
     </Card>
+  )
+}
+
+/**
+ * Give a "not yet estimated" line its first figure: a lump sum, a rate per home, or a rate per ft² of above-grade
+ * floor area (the units and area come from the model). Available in both modes: a blank project starts here.
+ */
+function Estimate({ line }: { line: CostLine }) {
+  const { node, nodeResult, state, dispatch } = useWorkspace()
+  const [basis, setBasis] = useState<'lumpSum' | 'perUnit' | 'perArea'>('lumpSum')
+  const [text, setText] = useState('')
+  const units = nodeResult?.metrics.totalUnits?.value ?? 0
+  const area = isPortfolio(node) ? 0 : node.program?.gcaAboveSqft ?? 0
+  const save = () => {
+    const v = Number(text.replace(/[,$\s]/g, ''))
+    if (!Number.isFinite(v) || text.trim() === '') return
+    const driver: Driver = basis === 'lumpSum' ? { kind: 'lumpSum', amount: v } : basis === 'perUnit' ? { kind: 'perUnit', rate: v, units } : { kind: 'perArea', rate: v, area }
+    dispatch({ type: 'edit', path: state.path, update: (n) => ({ ...n, costLines: n.costLines.map((l) => (l.id === line.id ? { ...l, driver, source: { kind: 'estimate' } } : l)) }) })
+  }
+  const blocked = (basis === 'perUnit' && !units) || (basis === 'perArea' && !area)
+  return (
+    <span className="inline-flex flex-wrap items-center justify-end gap-1">
+      <Chip tone="warn">not yet estimated</Chip>
+      <select aria-label={`${line.label}: basis`} className="min-h-8 rounded border border-line-strong bg-surface px-1 text-xs" value={basis} onChange={(e) => setBasis(e.target.value as typeof basis)}>
+        <option value="lumpSum">$ total</option>
+        <option value="perUnit">$ per home ({num(units)})</option>
+        <option value="perArea">$ per ft² GCA ({num(area)})</option>
+      </select>
+      <input aria-label={`${line.label}: amount`} inputMode="decimal" placeholder="amount" className="num min-h-8 w-24 rounded border border-line-strong bg-surface px-1 text-right text-xs" value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') save() }} />
+      <Button onClick={save} disabled={blocked || text.trim() === ''} title={blocked ? 'Enter the homes or floor area first (Revenue, Site & program)' : undefined}>Set</Button>
+    </span>
   )
 }
 
@@ -445,10 +507,10 @@ function Costs() {
                       <td className={`${td} w-64`}>
                         {l.driver && f ? (
                           <NumberField compact label={`${l.label} ${f.label}`} value={(l.driver as Record<string, unknown>)[f.key] as number} scale={f.scale} suffix={f.suffix} onCommit={(v) => editLine(l.id, f.key, v)} />
-                        ) : <Chip tone="warn">not yet estimated</Chip>}
+                        ) : <Estimate line={l} />}
                       </td>
                     )}
-                    <td className={tdNum}>{l.driver === null ? '—' : money(lineTotal(l, ws, state.path))}</td>
+                    <td className={tdNum}>{l.driver === null ? (editable ? '—' : <Estimate line={l} />) : money(lineTotal(l, ws, state.path))}</td>
                   </tr>
                 )
               })}

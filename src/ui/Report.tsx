@@ -25,6 +25,7 @@ import { evidenceOf } from './evidence'
 import { Cited, CitedList } from './Cited'
 import { citationsForCue, citationsForInsight } from './citations'
 import { APPRAISAL_KEY, appraisalOf, landSummary } from './LandValue'
+import { isBlank } from './store'
 
 const KEY_METRICS = ['totalUnits', 'totalDevelopmentCost', 'totalRevenue', 'profit', 'profitOnCost', 'profitOnCostBeforeFinancing', 'yieldOnCost', 'unleveredIrr', 'leveredIrr', 'equityMultiple', 'equityContributed', 'peakDebt']
 const SITE_VARS = ['site.address', 'site.municipality', 'site.region', 'site.ward', 'site.treaty', 'zoning.code', 'zoning.heightLimitM', 'zoning.heightLimitStoreys', 'zoning.fsiLimit', 'zoning.exception', 'zoning.holding', 'site.secondaryPlan', 'site.mtsaType', 'site.heritage', 'site.regulatedArea', 'site.greenbelt', 'site.nearAerodrome', 'site.aeronauticalLimitM', 'site.frontageRoadClass', 'site.nearestTransitStop', 'planning.zba']
@@ -37,7 +38,7 @@ export function Report() {
   const labels = readinessLabels(ready)
   const { view: tracker } = useTrackerView()
   const [busy, setBusy] = useState(false)
-  const synthetic = !project.draft || demo.notes.some((n) => /synthetic/i.test(n))
+  const synthetic = !isBlank(project.meta) && (!project.draft || demo.notes.some((n) => /synthetic/i.test(n)))
 
   const analysis = useAnalysis()
   const insights = analysis?.insights ?? []

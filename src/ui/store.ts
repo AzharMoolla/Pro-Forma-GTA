@@ -3,8 +3,9 @@ import type { Attributes } from '../engine/catalogue'
 import type { Node } from '../engine/portfolio'
 import type { Snapshot } from '../scenario/snapshot'
 import { emptyRecord, type TaskRecord, type TrackerState } from '../tracker/tracker'
-import { demoProjects } from './data'
+import { demoProjects, catalogue } from './data'
 import { updateNode, type NodePath } from './tree'
+import { blankProject } from './blank'
 
 /** Detail level: Simple hides the ledger, scenarios and cost editing; Full detail shows everything. Never changes the math. */
 export type Mode = 'quick' | 'professional'
@@ -60,6 +61,10 @@ export interface ProjectMeta {
   coverage: Record<string, string> // where applicable catalogue items are carried (from the template)
   templateId: string // demo the project started from; "Reset draft" returns to it
 }
+
+/** Template id of a blank project: "blank:" and its project type. */
+export const BLANK_PREFIX = 'blank:'
+export const isBlank = (meta: ProjectMeta) => meta.templateId.startsWith(BLANK_PREFIX)
 
 export const metaOf = (demo: (typeof demoProjects)[number]): ProjectMeta => ({ name: demo.name, projectType: demo.projectType, reference: demo.reference, notes: demo.notes, coverage: demo.coverage, templateId: demo.id })
 
@@ -169,6 +174,8 @@ export function reducer(state: State, action: Action): State {
       return s ? { ...withProject({ draft: structuredClone(s.input), draftParentId: s.id, ...(s.attributes ? { attributes: structuredClone(s.attributes) } : {}) }), path: [] } : state
     }
     case 'resetDraft': {
+      // A blank project resets to blank (its type is in the template id); a copy of a demo resets to that demo
+      if (project.meta.templateId.startsWith(BLANK_PREFIX)) return { ...withProject({ draft: blankProject(catalogue, project.meta.templateId.slice(BLANK_PREFIX.length), state.projectId, project.meta.name), draftParentId: null, attributes: {} }), path: [] }
       const demo = demoProjects.find((p) => p.id === project.meta.templateId) ?? demoProjects[0]!
       return { ...withProject({ draft: demo.input, draftParentId: null, attributes: demo.attributes }), path: [] }
     }
